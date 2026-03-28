@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>卡牌配置后台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+        .header { background: #16213e; padding: 20px; border-bottom: 2px solid #0f3460; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .header h1 { color: #e94560; }
+        .header-controls { display: flex; align-items: center; gap: 10px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .panel { background: #16213e; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+        .panel h2 { color: #e94560; margin-bottom: 15px; }
+        .panel h3 { color: #e94560; margin: 15px 0 10px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #aaa; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #0f3460; background: #1a1a2e; color: #eee; border-radius: 5px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px; }
+        .btn-primary { background: #e94560; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-small { padding: 5px 10px; font-size: 12px; }
+        
+        /* 视图切换按钮 */
+        .view-toggle { display: flex; gap: 5px; }
+        .view-toggle button { padding: 8px 15px; background: #0f3460; color: #aaa; border: none; border-radius: 5px; cursor: pointer; }
+        .view-toggle button.active { background: #e94560; color: white; }
+        
+        /* 卡片视图 */
+        .card-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .card-item { background: #0f3460; border-radius: 10px; padding: 15px; cursor: pointer; }
+        .card-item.rarity-1 { background: #2a2a2a; }
+        .card-item.rarity-2 { background: #1a3a1a; }
+        .card-item.rarity-3 { background: #1a1a3a; }
+        .card-item.rarity-4 { background: #2a1a3a; }
+        .card-item.rarity-5 { background: #3a2a1a; }
+        .card-item:hover { background: #1a4a7a; }
+        .card-item.rarity-1:hover { background: #3a3a3a; }
+        .card-item.rarity-2:hover { background: #2a4a2a; }
+        .card-item.rarity-3:hover { background: #2a2a4a; }
+        .card-item.rarity-4:hover { background: #3a2a4a; }
+        .card-item.rarity-5:hover { background: #4a3a2a; }
+        .card-item:hover { background: #1a4a7a; }
+        .card-item h3 { margin: 10px 0 5px; }
+        .card-item .rarity { color: #aaa; }
+        /* 稀有度颜色 */
+        .rarity-1 { color: #ffffff; }
+        .rarity-2 { color: #4caf50; }
+        .rarity-3 { color: #2196f3; }
+        .rarity-4 { color: #9c27b0; }
+        .rarity-5 { color: #ff9800; }
+        .card-name-1 { color: #ffffff; }
+        .card-name-2 { color: #4caf50; }
+        .card-name-3 { color: #2196f3; }
+        .card-name-4 { color: #9c27b0; }
+        .card-name-5 { color: #ff9800; font-weight: bold; }
+        .card-item .actions { margin-top: 10px; display: flex; gap: 5px; }
+        
+        /* 列表视图 */
+        .table-container { overflow-x: auto; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th, .data-table td { padding: 12px; text-align: left; border-bottom: 1px solid #0f3460; }
+        .data-table th { background: #0f3460; cursor: pointer; user-select: none; }
+        .data-table th:hover { background: #1a4a7a; }
+        .data-table th.sorted-asc::after { content: ' ▲'; }
+        .data-table th.sorted-desc::after { content: ' ▼'; }
+        .data-table tr { cursor: pointer; }
+        .data-table tr:hover { background: #0f3460; }
+        .data-table .actions-cell { cursor: default; }
+        .data-table .actions-cell:hover { background: transparent; }
+        
+        /* 分页 */
+        .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; flex-wrap: wrap; gap: 10px; }
+        .pagination-info { color: #aaa; }
+        .pagination-controls { display: flex; gap: 5px; }
+        .pagination-controls button { padding: 8px 12px; background: #0f3460; color: #eee; border: none; border-radius: 5px; cursor: pointer; }
+        .pagination-controls button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pagination-controls button.active { background: #e94560; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        
+        /* 弹窗 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto; }
+        .modal.show { display: flex; justify-content: center; padding: 20px; }
+        .modal-content { background: #16213e; border-radius: 10px; padding: 30px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; }
+        
+        /* 卡片详情弹窗 */
+        #cardDetailPopup { max-width: 800px; }
+        .popup-container { display: flex; gap: 20px; flex-wrap: wrap; }
+        .popup-image { flex: 0 0 250px; }
+        .popup-image img { width: 100%; border-radius: 10px; }
+        .popup-info { flex: 1; min-width: 300px; }
+        .popup-name { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+        .popup-rarity { font-size: 18px; margin-bottom: 10px; }
+        .popup-desc { color: #aaa; margin-bottom: 15px; line-height: 1.5; }
+        .popup-stats { margin-top: 20px; }
+        .popup-stats h4 { color: #e94560; margin-bottom: 10px; }
+        .stats-grid-2 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; text-align: center; }
+        .stat-row { background: #0f3460; padding: 10px; border-radius: 5px; }
+        .stat-label { display: block; color: #aaa; font-size: 12px; margin-bottom: 5px; }
+        .stat-value { display: block; font-size: 18px; font-weight: bold; }
+        .popup-radar { margin-top: 20px; }
+        .popup-radar canvas { width: 100%; max-width: 300px; height: 300px; margin: 0 auto; display: block; }
+        .close-popup { position: absolute; top: 20px; right: 20px; background: #e94560; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        
+        /* 过滤区域 */
+        .filter-panel { background: #0f3460; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+        .filter-panel h4 { color: #e94560; margin-bottom: 10px; font-size: 14px; }
+        .filter-row { display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; }
+        .filter-item { display: flex; flex-direction: column; gap: 5px; }
+        .filter-item label { color: #aaa; font-size: 12px; }
+        .filter-item input, .filter-item select { padding: 6px 10px; background: #1a1a2e; color: #eee; border: 1px solid #16213e; border-radius: 4px; font-size: 12px; }
+        .filter-item input[type="number"] { width: 80px; }
+        .filter-item select { min-width: 100px; }
+        .filter-item-name input { width: 150px; }
+        .filter-actions { display: flex; gap: 10px; align-items: flex-end; }
+        .filter-actions button { padding: 6px 15px; font-size: 12px; }
+        .btn-reset { background: #666; color: white; }
+        
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎮 卡牌配置后台</h1>
+        <div class="header-controls">
+            <div class="view-toggle">
+                <button id="btnCardView" class="active" onclick="switchView('card')">卡片视图</button>
+                <button id="btnListView" onclick="switchView('list')">列表视图</button>
+            </div>
+            <button class="btn btn-primary" onclick="showAddModal()">+ 添加新卡牌</button>
+        </div>
+    </div>
+    <div class="container">
+        <div class="panel">
+            <h2>⚙️ 基础设置</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>单抽消耗元宝</label>
+                    <input type="number" id="drawCost" value="100">
+                </div>
+                <div class="form-group">
+                    <label>货币名称</label>
+                    <input type="text" id="currencyName" value="元宝">
+                </div>
+            </div>
+            <button class="btn btn-success" onclick="saveSettings()">保存设置</button>
+        </div>
+        <div class="panel">
+            <h2>🃏 卡牌列表</h2>
+            <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                <label>卡池：</label>
+                <select id="poolSelect" onchange="changePool(this.value)" style="padding: 8px; background: #0f3460; color: #eee; border: 1px solid #0f3460; border-radius: 5px;">
+                <option value="NIKKE" selected>NIKKE</option>
+                </select>
+            </div>
+            
+            <!-- 过滤面板 -->
+            <div class="filter-panel">
+                <h4>🔍 筛选条件</h4>
+                <div class="filter-row">
+                    <div class="filter-item filter-item-name">
+                        <label>名字（模糊）</label>
+                        <input type="text" id="filterName" placeholder="输入名字..." oninput="applyFilter()">
+                    </div>
+                    <div class="filter-item">
+                        <label>稀有度</label>
+                        <select id="filterRarity" onchange="applyFilter()">
+                            <option value="">全部</option>
+                            <option value="1">⭐ 普通</option>
+                            <option value="2">⭐⭐ 稀有</option>
+                            <option value="3">⭐⭐⭐ 杰出</option>
+                            <option value="4">⭐⭐⭐⭐ 史诗</option>
+                            <option value="5">⭐⭐⭐⭐⭐ 传说</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>HP</label>
+                        <div style="display:flex;gap:5px;">
+                            <select id="filterHpOp" onchange="applyFilter()" style="width:60px;">
+                                <option value="">=</option>
+                                <option value=">=">≥</option>
+                                <option value="<=">≤</option>
+                            </select>
+                            <input type="number" id="filterHp" placeholder="值" oninput="applyFilter()">
+                        </div>
+                    </div>
+                    <div class="filter-item">
+                        <label>MP</label>
+                        <div style="display:flex;gap:5px;">
+                            <select id="filterMpOp" onchange="applyFilter()" style="width:60px;">
+                                <option value="">=</option>
+                                <option value=">=">≥</option>
+                                <option value="<=">≤</option>
+                            </select>
+                            <input type="number" id="filterMp" placeholder="值" oninput="applyFilter()">
+                        </div>
+                    </div>
+                    <div class="filter-item">
+                        <label>攻击</label>
+                        <div style="display:flex;gap:5px;">
+                            <select id="filterAttackOp" onchange="applyFilter()" style="width:60px;">
+                                <option value="">=</option>
+                                <option value=">=">≥</option>
+                                <option value="<=">≤</option>
+                            </select>
+                            <input type="number" id="filterAttack" placeholder="值" oninput="applyFilter()">
+                        </div>
+                    </div>
+                    <div class="filter-item">
+                        <label>防御</label>
+                        <div style="display:flex;gap:5px;">
+                            <select id="filterDefenseOp" onchange="applyFilter()" style="width:60px;">
+                                <option value="">=</option>
+                                <option value=">=">≥</option>
+                                <option value="<=">≤</option>
+                            </select>
+                            <input type="number" id="filterDefense" placeholder="值" oninput="applyFilter()">
+                        </div>
+                    </div>
+                    <div class="filter-item">
+                        <label>敏捷</label>
+                        <div style="display:flex;gap:5px;">
+                            <select id="filterAgilityOp" onchange="applyFilter()" style="width:60px;">
+                                <option value="">=</option>
+                                <option value=">=">≥</option>
+                                <option value="<=">≤</option>
+                            </select>
+                            <input type="number" id="filterAgility" placeholder="值" oninput="applyFilter()">
+                        </div>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="btn btn-reset" onclick="resetFilter()">重置</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 卡片视图 -->
+            <div id="cardView">
+                <div class="card-list" id="cardList"></div>
+            </div>
+            
+            <!-- 列表视图 -->
+            <div id="listView" class="hidden">
+                <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <label>每页显示：</label>
+                    <select id="pageSize" onchange="changePageSize()">
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="all">全部</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('name')">名字</th>
+                                <th onclick="sortTable('rarity')">稀有度</th>
+                                <th onclick="sortTable('hp')">HP</th>
+                                <th onclick="sortTable('mp')">MP</th>
+                                <th onclick="sortTable('attack')">攻击</th>
+                                <th onclick="sortTable('defense')">防御</th>
+                                <th onclick="sortTable('agility')">敏捷</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 编辑弹窗 -->
+    <div class="modal" id="cardModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">添加新卡牌</h2>
+            <form id="cardForm">
+                <input type="hidden" id="cardId">
+                <div class="form-group">
+                    <label>卡牌名称</label>
+                    <input type="text" id="cardName" required>
+                </div>
+                <div class="form-group">
+                    <label>稀有度 (1-5)</label>
+                    <select id="cardRarity">
+                        <option value="1">⭐ 普通 (1)</option>
+                        <option value="2">⭐⭐ 稀有 (2)</option>
+                        <option value="3">⭐⭐⭐ 杰出 (3)</option>
+                        <option value="4">⭐⭐⭐⭐ 史诗 (4)</option>
+                        <option value="5">⭐⭐⭐⭐⭐ 传说 (5)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>卡牌图像 URL</label>
+                    <input type="text" id="cardImage" placeholder="可选">
+                </div>
+                <div class="form-group">
+                    <label>卡牌描述</label>
+                    <input type="text" id="cardDesc">
+                </div>
+                <h3>基础属性</h3>
+                <div class="stats-grid">
+                    <div class="form-group"><label>HP</label><input type="number" id="baseHp" value="0"></div>
+                    <div class="form-group"><label>MP</label><input type="number" id="baseMp" value="0"></div>
+                    <div class="form-group"><label>攻击</label><input type="number" id="baseAttack" value="0"></div>
+                    <div class="form-group"><label>防御</label><input type="number" id="baseDefense" value="0"></div>
+                    <div class="form-group"><label>敏捷</label><input type="number" id="baseAgility" value="0"></div>
+                </div>
+                <h3>成长属性</h3>
+                <div class="stats-grid">
+                    <div class="form-group"><label>HP</label><input type="number" id="growthHp" value="0"></div>
+                    <div class="form-group"><label>MP</label><input type="number" id="growthMp" value="0"></div>
+                    <div class="form-group"><label>攻击</label><input type="number" id="growthAttack" value="0"></div>
+                    <div class="form-group"><label>防御</label><input type="number" id="growthDefense" value="0"></div>
+                    <div class="form-group"><label>敏捷</label><input type="number" id="growthAgility" value="0"></div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <button type="submit" class="btn btn-success">保存</button>
+                    <button type="button" class="btn btn-danger" onclick="closeModal()">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 卡片详情弹窗 -->
+    <div class="modal" id="cardDetailPopup">
+        <div class="modal-content" style="position: relative;">
+            <button class="close-popup" onclick="closeDetailPopup()">关闭</button>
+            <div class="popup-container">
+                <div class="popup-image">
+                    <img id="detailImage" src="" alt="">
+                </div>
+                <div class="popup-info">
+                    <div id="detailName" class="popup-name"></div>
+                    <div id="detailRarity" class="popup-rarity"></div>
+                    <div id="detailDesc" class="popup-desc"></div>
+                    <div class="popup-stats">
+                        <h4>📊 基础属性</h4>
+                        <div id="detailStats" class="stats-grid-2"></div>
+                    </div>
+                    <div class="popup-radar">
+                        <canvas id="radarCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let gameData = { settings: {}, characters: [], rarityWeights: {} };
+        let currentView = 'card';
+        let currentPool = 'NIKKE';
+        let poolList = [];
+        let filteredCharacters = [];
+        
+        // 过滤状态
+        let filterState = {
+            name: '',
+            rarity: '',
+            hp: { op: '', value: '' },
+            mp: { op: '', value: '' },
+            attack: { op: '', value: '' },
+            defense: { op: '', value: '' },
+            agility: { op: '', value: '' }
+        };
+        
+        function changePool(pool) {
+            currentPool = pool;
+            resetFilter();
+            loadData();
+        }
+        
+        // 过滤函数
+        function applyFilter() {
+            filterState.name = document.getElementById('filterName').value.trim().toLowerCase();
+            filterState.rarity = document.getElementById('filterRarity').value;
+            filterState.hp.op = document.getElementById('filterHpOp').value;
+            filterState.hp.value = document.getElementById('filterHp').value;
+            filterState.mp.op = document.getElementById('filterMpOp').value;
+            filterState.mp.value = document.getElementById('filterMp').value;
+            filterState.attack.op = document.getElementById('filterAttackOp').value;
+            filterState.attack.value = document.getElementById('filterAttack').value;
+            filterState.defense.op = document.getElementById('filterDefenseOp').value;
+            filterState.defense.value = document.getElementById('filterDefense').value;
+            filterState.agility.op = document.getElementById('filterAgilityOp').value;
+            filterState.agility.value = document.getElementById('filterAgility').value;
+            
+            filteredCharacters = gameData.characters.filter(card => {
+                if (filterState.name && !card.name.toLowerCase().includes(filterState.name)) return false;
+                if (filterState.rarity && card.rarity !== parseInt(filterState.rarity)) return false;
+                if (!filterByStat(card.baseStats.hp, filterState.hp)) return false;
+                if (!filterByStat(card.baseStats.mp, filterState.mp)) return false;
+                if (!filterByStat(card.baseStats.attack, filterState.attack)) return false;
+                if (!filterByStat(card.baseStats.defense, filterState.defense)) return false;
+                if (!filterByStat(card.baseStats.agility, filterState.agility)) return false;
+                return true;
+            });
+            
+            currentPage = 1;
+            renderCards();
+            renderListView();
+        }
+        
+        function filterByStat(cardValue, filter) {
+            if (!filter.op || !filter.value) return true;
+            const filterValue = parseInt(filter.value);
+            if (isNaN(filterValue)) return true;
+            if (filter.op === '=') return cardValue === filterValue;
+            if (filter.op === '>=') return cardValue >= filterValue;
+            if (filter.op === '<=') return cardValue <= filterValue;
+            return true;
+        }
+        
+        function resetFilter() {
+            document.getElementById('filterName').value = '';
+            document.getElementById('filterRarity').value = '';
+            document.getElementById('filterHpOp').value = '';
+            document.getElementById('filterHp').value = '';
+            document.getElementById('filterMpOp').value = '';
+            document.getElementById('filterMp').value = '';
+            document.getElementById('filterAttackOp').value = '';
+            document.getElementById('filterAttack').value = '';
+            document.getElementById('filterDefenseOp').value = '';
+            document.getElementById('filterDefense').value = '';
+            document.getElementById('filterAgilityOp').value = '';
+            document.getElementById('filterAgility').value = '';
+            
+            filterState = {
+                name: '', rarity: '',
+                hp: { op: '', value: '' }, mp: { op: '', value: '' },
+                attack: { op: '', value: '' }, defense: { op: '', value: '' },
+                agility: { op: '', value: '' }
+            };
+            filteredCharacters = [...gameData.characters];
+            currentPage = 1;
+            renderCards();
+            renderListView();
+        }
+        
+        function getDisplayCharacters() {
+            const hasFilter = filterState.name || filterState.rarity || 
+                filterState.hp.op || filterState.mp.op || filterState.attack.op || 
+                filterState.defense.op || filterState.agility.op ||
+                filterState.hp.value || filterState.mp.value || filterState.attack.value || 
+                filterState.defense.value || filterState.agility.value;
+            return hasFilter ? filteredCharacters : gameData.characters;
+        }
+        
+        let sortColumn = 'name';
+        let sortDirection = 'asc';
+        let currentPage = 1;
+        let pageSize = 25;
+        
+        // 稀有度名称
+        const rarityNames = ['', '普通', '稀有', '杰出', '史诗', '传说'];
+        
+        // 稀有度颜色
+        const rarityColors = ['', '#ffffff', '#4caf50', '#2196f3', '#9c27b0', '#ff9800'];
+        
+        // 最大属性值（用于计算百分比）
+        const maxStats = { hp: 0, mp: 0, attack: 0, defense: 0, agility: 0 };
+        const minStats = { hp: Infinity, mp: Infinity, attack: Infinity, defense: Infinity, agility: Infinity };
+        
+        // 动态计算最大和最小属性值
+        function calcMaxStats() {
+            if (!gameData || !gameData.characters) return;
+            gameData.characters.forEach(function(c) {
+                if (c.baseStats.hp > maxStats.hp) maxStats.hp = c.baseStats.hp;
+                if (c.baseStats.hp < minStats.hp) minStats.hp = c.baseStats.hp;
+                if (c.baseStats.mp > maxStats.mp) maxStats.mp = c.baseStats.mp;
+                if (c.baseStats.mp < minStats.mp) minStats.mp = c.baseStats.mp;
+                if (c.baseStats.attack > maxStats.attack) maxStats.attack = c.baseStats.attack;
+                if (c.baseStats.attack < minStats.attack) minStats.attack = c.baseStats.attack;
+                if (c.baseStats.defense > maxStats.defense) maxStats.defense = c.baseStats.defense;
+                if (c.baseStats.defense < minStats.defense) minStats.defense = c.baseStats.defense;
+                if (c.baseStats.agility > maxStats.agility) maxStats.agility = c.baseStats.agility;
+                if (c.baseStats.agility < minStats.agility) minStats.agility = c.baseStats.agility;
+            });
+            // 确保最小值不为无穷大
+            if (minStats.hp === Infinity) minStats.hp = 0;
+            if (minStats.mp === Infinity) minStats.mp = 0;
+            if (minStats.attack === Infinity) minStats.attack = 0;
+            if (minStats.defense === Infinity) minStats.defense = 0;
+            if (minStats.agility === Infinity) minStats.agility = 0;
+        }
+;
+        
+        // 获取属性颜色（基于动态范围）
+        function getStatColor(value, statName) {
+            const max = maxStats[statName];
+            const min = minStats[statName];
+            const range = max - min;
+            if (range === 0) return '#aaa';
+            const percent = (value - min) / range * 100;
+            if (percent >= 100) return '#ff0000';
+            if (percent >= 80) return '#ffd700';
+            if (percent >= 60) return '#9400d3';
+            if (percent >= 40) return '#4169e1';
+            if (percent >= 20) return '#00ff00';
+            return '#ffffff';
+        }
+        
+        // 获取图片URL
+        function getImageUrl(card) {
+            if (card.image) return card.image;
+            return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300"><rect fill="#0f3460" width="200" height="300"/><text fill="#fff" font-size="30" x="50%" y="50%" text-anchor="middle" dy=".3em">'+card.name+'</text></svg>');
+        }
+        
+        // 绘制雷达图
+        function drawRadar(card) {
+            var canvas = document.getElementById('radarCanvas');
+            var ctx = canvas.getContext('2d');
+            var w = canvas.width = canvas.offsetWidth;
+            var h = canvas.height = canvas.offsetHeight;
+            var cx = w / 2;
+            var cy = h / 2;
+            var r = Math.min(w, h) / 2 - 30;
+            var labels = ['HP', 'MP', '攻击', '防御', '敏捷'];
+            var stats = [
+                Math.round(card.baseStats.hp / maxStats.hp * 100),
+                Math.round(card.baseStats.mp / maxStats.mp * 100),
+                Math.round(card.baseStats.attack / maxStats.attack * 100),
+                Math.round(card.baseStats.defense / maxStats.defense * 100),
+                Math.round(card.baseStats.agility / maxStats.agility * 100)
+            ];
+            var maxVal = 100;
+            var angleStep = (Math.PI * 2) / 5;
+            
+            ctx.clearRect(0, 0, w, h);
+            
+            // 画背景圆
+            for (var i = 1; i <= 5; i++) {
+                ctx.beginPath();
+                ctx.arc(cx, cy, r * i / 5, 0, Math.PI * 2);
+                ctx.strokeStyle = '#333';
+                ctx.stroke();
+            }
+            
+            // 画轴线
+            for (var i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + Math.cos(i * angleStep - Math.PI/2) * r, cy + Math.sin(i * angleStep - Math.PI/2) * r);
+                ctx.strokeStyle = '#333';
+                ctx.stroke();
+                
+                // 标签
+                ctx.fillStyle = '#aaa';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(labels[i], cx + Math.cos(i * angleStep - Math.PI/2) * (r + 20), cy + Math.sin(i * angleStep - Math.PI/2) * (r + 20));
+            }
+            
+            // 画数据区域
+            ctx.beginPath();
+            for (var i = 0; i < 5; i++) {
+                var x = cx + Math.cos(i * angleStep - Math.PI/2) * (r * stats[i] / maxVal);
+                var y = cy + Math.sin(i * angleStep - Math.PI/2) * (r * stats[i] / maxVal);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(233, 69, 96, 0.3)';
+            ctx.fill();
+            ctx.strokeStyle = '#e94560';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // 画数据点
+            for (var i = 0; i < 5; i++) {
+                var x = cx + Math.cos(i * angleStep - Math.PI/2) * (r * stats[i] / maxVal);
+                var y = cy + Math.sin(i * angleStep - Math.PI/2) * (r * stats[i] / maxVal);
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#e94560';
+                ctx.fill();
+            }
+        }
+        
+        // 显示卡片详情弹窗
+        function showCardDetail(id) {
+            var card = gameData.characters.find(c => c.id === id);
+            if (!card) return;
+            
+            document.getElementById('detailImage').src = getImageUrl(card);
+            document.getElementById('detailName').textContent = card.name;
+            document.getElementById('detailName').className = 'popup-name card-name-' + card.rarity;
+            document.getElementById('detailRarity').innerHTML = '<span style="color:' + rarityColors[card.rarity] + '">' + '⭐'.repeat(card.rarity) + ' ' + rarityNames[card.rarity] + '</span>';
+            document.getElementById('detailDesc').textContent = card.description || '';
+            
+            var hpPercent = Math.round(card.baseStats.hp / maxStats.hp * 100);
+            var mpPercent = Math.round(card.baseStats.mp / maxStats.mp * 100);
+            var atkPercent = Math.round(card.baseStats.attack / maxStats.attack * 100);
+            var defPercent = Math.round(card.baseStats.defense / maxStats.defense * 100);
+            var agiPercent = Math.round(card.baseStats.agility / maxStats.agility * 100);
+            
+            document.getElementById('detailStats').innerHTML = 
+                '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.hp, 'hp')+'">'+card.baseStats.hp+'</span></div>' +
+                '<div class="stat-row"><span class="stat-label">MP</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.mp, 'mp')+'">'+card.baseStats.mp+'</span></div>' +
+                '<div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.attack, 'attack')+'">'+card.baseStats.attack+'</span></div>' +
+                '<div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.defense, 'defense')+'">'+card.baseStats.defense+'</span></div>' +
+                '<div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.agility, 'agility')+'">'+card.baseStats.agility+'</span></div>';
+            
+            document.getElementById('cardDetailPopup').classList.add('show');
+            
+            // 绘制雷达图
+            setTimeout(() => drawRadar(card), 100);
+        }
+        
+        // 关闭详情弹窗
+        function closeDetailPopup() {
+            document.getElementById('cardDetailPopup').classList.remove('show');
+        }
+        
+        async function loadData() {
+            // 获取卡池列表
+            try {
+                const listRes = await fetch('data/cards/');
+                const listHtml = await listRes.text();
+                const matches = listHtml.match(/([A-Za-z0-9_\u4e00-\u9faas]+)\.json/g);
+                if (matches) {
+                    poolList = matches.map(m => m.replace('.json', ''));
+                    const select = document.getElementById('poolSelect');
+                    if (select && poolList.length === 0) {
+                        select.innerHTML = '<option value="'+currentPool+'" selected>'+currentPool+'</option>';
+                    }
+                    if (select) {
+                        select.innerHTML = poolList.map(p => 
+                            '<option value="'+p+'" '+(p===currentPool?'selected':'')+'>'+p+'</option>'
+                        ).join('');
+                    }
+                }
+            } catch(e) { console.error('获取卡池列表失败:', e); }
+            try {
+                const res = await fetch('data/cards/' + currentPool + '.json');
+                gameData = await res.json();
+                document.getElementById('drawCost').value = gameData.settings.drawCost || 100;
+                document.getElementById('currencyName').value = gameData.settings.currencyName || '元宝';
+                renderCards(); renderListView(); calcMaxStats();
+            } catch(e) { console.error('加载失败:', e); }
+        }
+        
+        // 切换视图
+        function switchView(view) {
+            currentView = view;
+            document.getElementById('btnCardView').classList.toggle('active', view === 'card');
+            document.getElementById('btnListView').classList.toggle('active', view === 'list');
+            document.getElementById('cardView').classList.toggle('hidden', view !== 'card');
+            document.getElementById('listView').classList.toggle('hidden', view !== 'list');
+            if (view === 'list') renderListView();
+        }
+        
+        // 卡片视图
+        function renderCards() {
+            const list = document.getElementById('cardList');
+            const chars = getDisplayCharacters();
+            list.innerHTML = chars.map(c => `
+                <div class="card-item rarity-${c.rarity}" onclick="showCardDetail(${c.id})">
+                    <h3 class="card-name-${c.rarity}">${c.name}</h3>
+                    <p>${c.description || ''}</p>
+                    <p>基础: HP${c.baseStats.hp} 攻${c.baseStats.attack} 防${c.baseStats.defense} 敏${c.baseStats.agility}</p>
+                    <div class="actions" onclick="event.stopPropagation()">
+                        <button class="btn btn-primary btn-small" onclick="editCard(${c.id})">编辑</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteCard(${c.id})">删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 列表视图
+        function renderListView() {
+            const chars = getDisplayCharacters();
+            // 排序
+            const sorted = [...chars].sort((a, b) => {
+                let valA, valB;
+                if (sortColumn === 'name') {
+                    valA = a.name;
+                    valB = b.name;
+                } else if (sortColumn === 'rarity') {
+                    valA = a.rarity;
+                    valB = b.rarity;
+                } else {
+                    valA = a.baseStats[sortColumn] || 0;
+                    valB = b.baseStats[sortColumn] || 0;
+                }
+                if (typeof valA === 'string') {
+                    return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                }
+                return sortDirection === 'asc' ? valA - valB : valB - valA;
+            });
+            
+            // 分页
+            let displayData = sorted;
+            let totalPages = 1;
+            if (pageSize !== 'all') {
+                pageSize = parseInt(pageSize);
+                totalPages = Math.ceil(sorted.length / pageSize);
+                const start = (currentPage - 1) * pageSize;
+                displayData = sorted.slice(start, start + pageSize);
+            }
+            
+            // 渲染表格
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = displayData.map(c => `
+                <tr onclick="showCardDetail(${c.id})">
+                    <td class="card-name-${c.rarity}">${c.name}</td>
+                    <td style="color: ${rarityColors[c.rarity]}">${'⭐'.repeat(c.rarity)} ${rarityNames[c.rarity]}</td>
+                    <td style="color:${getStatColor(c.baseStats.hp, 'hp')}">${c.baseStats.hp}</td>
+                    <td style="color:${getStatColor(c.baseStats.mp, 'mp')}">${c.baseStats.mp}</td>
+                    <td style="color:${getStatColor(c.baseStats.attack, 'attack')}">${c.baseStats.attack}</td>
+                    <td style="color:${getStatColor(c.baseStats.defense, 'defense')}">${c.baseStats.defense}</td>
+                    <td style="color:${getStatColor(c.baseStats.agility, 'agility')}">${c.baseStats.agility}</td>
+                    <td class="actions-cell" onclick="event.stopPropagation()">
+                        <button class="btn btn-primary btn-small" onclick="editCard(${c.id})">编辑</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteCard(${c.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // 渲染分页
+            renderPagination(sorted.length, totalPages);
+            
+            // 更新排序图标
+            document.querySelectorAll('.data-table th').forEach(th => {
+                th.classList.remove('sorted-asc', 'sorted-desc');
+                if (th.getAttribute('onclick')?.includes(sortColumn)) {
+                    th.classList.add(sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
+                }
+            });
+        }
+        
+        // 渲染分页
+        function renderPagination(total, totalPages) {
+            const pagination = document.getElementById('pagination');
+            if (pageSize === 'all') {
+                pagination.innerHTML = `<span class="pagination-info">共 ${total} 条</span>`;
+                return;
+            }
+            
+            let html = `<span class="pagination-info">共 ${total} 条，第 ${currentPage}/${totalPages} 页</span>`;
+            html += '<div class="pagination-controls">';
+            html += `<button onclick="goPage(1)" ${currentPage === 1 ? 'disabled' : ''}>首页</button>`;
+            html += `<button onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>上一页</button>`;
+            
+            // 页码
+            const maxPages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxPages / 2));
+            let endPage = Math.min(totalPages, startPage + maxPages - 1);
+            if (endPage - startPage < maxPages - 1) startPage = Math.max(1, endPage - maxPages + 1);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button onclick="goPage(${i})" class="${i === currentPage ? 'active' : ''}">${i}</button>`;
+            }
+            
+            html += `<button onclick="goPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>下一页</button>`;
+            html += `<button onclick="goPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>末页</button>`;
+            html += '</div>';
+            
+            pagination.innerHTML = html;
+        }
+        
+        // 跳转页面
+        function goPage(page) {
+            currentPage = page;
+            renderListView();
+        }
+        
+        // 改变每页显示数
+        function changePageSize() {
+            pageSize = document.getElementById('pageSize').value;
+            currentPage = 1;
+            renderListView();
+        }
+        
+        // 排序
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            renderListView();
+        }
+        
+        function saveSettings() {
+            gameData.settings.drawCost = parseInt(document.getElementById('drawCost').value);
+            gameData.settings.currencyName = document.getElementById('currencyName').value;
+            downloadJson();
+            alert('设置已保存！请将 data/cards/' + currentPool + '.json 文件内容同步到服务器。');
+        }
+        
+        function showAddModal() {
+            document.getElementById('modalTitle').textContent = '添加新卡牌';
+            document.getElementById('cardForm').reset();
+            document.getElementById('cardId').value = '';
+            document.getElementById('cardModal').classList.add('show');
+        }
+        
+        function editCard(id) {
+            const c = gameData.characters.find(x => x.id === id);
+            if (!c) return;
+            document.getElementById('modalTitle').textContent = '编辑卡牌';
+            document.getElementById('cardId').value = c.id;
+            document.getElementById('cardName').value = c.name;
+            document.getElementById('cardRarity').value = c.rarity;
+            document.getElementById('cardImage').value = c.image || '';
+            document.getElementById('cardDesc').value = c.description || '';
+            document.getElementById('baseHp').value = c.baseStats.hp;
+            document.getElementById('baseMp').value = c.baseStats.mp;
+            document.getElementById('baseAttack').value = c.baseStats.attack;
+            document.getElementById('baseDefense').value = c.baseStats.defense;
+            document.getElementById('baseAgility').value = c.baseStats.agility;
+            document.getElementById('growthHp').value = c.growthStats.hp;
+            document.getElementById('growthMp').value = c.growthStats.mp;
+            document.getElementById('growthAttack').value = c.growthStats.attack;
+            document.getElementById('growthDefense').value = c.growthStats.defense;
+            document.getElementById('growthAgility').value = c.growthStats.agility;
+            document.getElementById('cardModal').classList.add('show');
+        }
+        
+        function deleteCard(id) {
+            if (!confirm('确定删除？')) return;
+            gameData.characters = gameData.characters.filter(c => c.id !== id);
+            downloadJson();
+            renderCards();
+            renderListView();
+        }
+        
+        function closeModal() {
+            document.getElementById('cardModal').classList.remove('show');
+        }
+        
+        document.getElementById('cardForm').onsubmit = function(e) {
+            e.preventDefault();
+            const id = document.getElementById('cardId').value;
+            const card = {
+                id: id ? parseInt(id) : Date.now(),
+                name: document.getElementById('cardName').value,
+                rarity: parseInt(document.getElementById('cardRarity').value),
+                image: document.getElementById('cardImage').value,
+                description: document.getElementById('cardDesc').value,
+                baseStats: {
+                    hp: parseInt(document.getElementById('baseHp').value),
+                    mp: parseInt(document.getElementById('baseMp').value),
+                    attack: parseInt(document.getElementById('baseAttack').value),
+                    defense: parseInt(document.getElementById('baseDefense').value),
+                    agility: parseInt(document.getElementById('baseAgility').value)
+                },
+                growthStats: {
+                    hp: parseInt(document.getElementById('growthHp').value),
+                    mp: parseInt(document.getElementById('growthMp').value),
+                    attack: parseInt(document.getElementById('growthAttack').value),
+                    defense: parseInt(document.getElementById('growthDefense').value),
+                    agility: parseInt(document.getElementById('growthAgility').value)
+                }
+            };
+            if (id) {
+                const i = gameData.characters.findIndex(x => x.id === parseInt(id));
+                if (i !== -1) gameData.characters[i] = card;
+            } else {
+                gameData.characters.push(card);
+            }
+            downloadJson();
+            closeModal();
+            renderCards();
+            renderListView();
+        };
+        
+        function downloadJson() {
+            const data = JSON.stringify(gameData, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = currentPool + '.json';
+            a.click();
+        }
+        
+        loadData();
+    </script>
+</body>
+</html>
