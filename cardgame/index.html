@@ -18,6 +18,18 @@ body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: linear-gra
 @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
 .result-card { display: none; grid-template-columns: 140px 1fr; gap: 15px; background: linear-gradient(145deg, #0f3460, #1a1a2e); border-radius: 15px; padding: 15px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); border: 2px solid rgba(233,69,96,0.3); text-align: left; margin-bottom: 15px; }
 .result-card.show { display: grid; }
+.result-card-10 { display: none; width: 95%; max-width: 800px; background: linear-gradient(145deg, #0f3460, #1a1a2e); border-radius: 15px; padding: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); border: 2px solid rgba(233,69,96,0.3); margin-bottom: 15px; }
+.result-card-10.show { display: block; }
+.result-card-10 h3 { color: #e94560; margin-bottom: 15px; text-align: center; }
+.grid-10 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+@media (max-width: 600px) { .grid-10 { grid-template-columns: repeat(2, 1fr); } }
+.grid-10 .card-item { background: #16213e; border-radius: 8px; padding: 8px; text-align: center; }
+.grid-10 .card-item.rarity-4 { background: linear-gradient(135deg, #2d1b4e, #4a2c7a); border: 1px solid #9c27b0; }
+.grid-10 .card-item.rarity-5 { background: linear-gradient(135deg, #4a2c00, #7a4a00); border: 1px solid #ffd700; }
+.grid-10 .card-item .thumb { width: 80px; height: 80px; margin: 0 auto 5px; border-radius: 5px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.grid-10 .card-item .thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.grid-10 .card-item h4 { font-size: 11px; margin: 3px 0; }
+.grid-10 .card-item .stars { font-size: 10px; margin: 2px 0; }
 .result-image { width: 100%; height: 180px; background: #000; border-radius: 10px; overflow: hidden; }
 .result-image img { width: 100%; height: 100%; object-fit: contain; }
 .result-info h2 { font-size: 22px; margin-bottom: 4px; }
@@ -31,7 +43,8 @@ body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: linear-gra
 .result-actions { text-align: center; margin-top: 15px; }
 .result-actions.hidden { display: none; }
 .hidden { display: none !important; }
-.draw-btn { background: linear-gradient(135deg, #e94560, #c73e54); color: white; border: none; padding: 10px 30px; font-size: 16px; border-radius: 20px; cursor: pointer; }
+.draw-btn { background: linear-gradient(135deg, #e94560, #c73e54); color: white; border: none; padding: 10px 30px; font-size: 16px; border-radius: 20px; cursor: pointer; min-width: 100px; }
+.draw-btn-10 { background: linear-gradient(135deg, #ffd700, #ffaa00); color: #000; }
 .cost-text { color: #ffd700; margin-top: 8px; font-size: 12px; }
 .my-cards { margin-top: 25px; }
 .my-cards h2 { color: #e94560; margin-bottom: 15px; border-bottom: 2px solid #0f3460; padding-bottom: 8px; }
@@ -117,9 +130,11 @@ body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: linear-gra
 <div class="top-draw-area">
 <div class="card-back" id="cardBack" onclick="drawCard()"></div>
 <div class="result-card" id="resultCard"></div>
+<div class="result-card-10" id="resultCard10"></div>
 <div class="result-actions" id="resultActions">
-<button class="draw-btn" onclick="drawCard()">抽卡</button>
-<p class="cost-text">点击按钮抽卡 (消耗 <span id="drawCost">100</span> 元宝)</p>
+<button class="draw-btn" onclick="drawCard()">单抽</button>
+<button class="draw-btn draw-btn-10" onclick="drawCard10()">10连</button>
+<p class="cost-text">单抽消耗 <span id="drawCost">100</span> 元宝 | 10连消耗 <span id="drawCost10">900</span> 元宝 (9折)</p>
 </div>
 </div>
 <div class="my-cards">
@@ -143,6 +158,11 @@ body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: linear-gra
                 <option value="3">⭐⭐⭐ 杰出</option>
                 <option value="4">⭐⭐⭐⭐ 史诗</option>
                 <option value="5">⭐⭐⭐⭐⭐ 传说</option>
+            </select>
+            <select id="filterOwned" onchange="applyFilter()" class="filter-owned hidden">
+                <option value="">全部</option>
+                <option value="owned">已拥有</option>
+                <option value="unowned">未拥有</option>
             </select>
             <button class="view-tab" onclick="resetFilter()" style="padding:6px 15px;font-size:12px;">重置</button>
         </div>
@@ -183,7 +203,7 @@ var myCards = {};
 var isDrawing = false;
 var currentPool = "NIKKE";
 var currentView = 'my';
-var filterState = { name: '', rarity: '' };
+var filterState = { name: '', rarity: '', owned: '' };
 var allCharacters = [];
 
 function changePool(pool) {
@@ -220,6 +240,51 @@ isDrawing = false;
 }, 2000);
 }
 
+function resetDraw() {
+var cardBack = document.getElementById('cardBack');
+var resultCard = document.getElementById('resultCard');
+var resultCard10 = document.getElementById('resultCard10');
+var resultActions = document.getElementById('resultActions');
+resultCard.classList.remove('show');
+resultCard10.classList.remove('show');
+var cost = gameData.settings.drawCost || 100;
+var cost10 = Math.floor(cost * 10 * 0.9);
+resultActions.innerHTML = '<button class="draw-btn" onclick="drawCard()">单抽</button><button class="draw-btn draw-btn-10" onclick="drawCard10()">10连</button><p class="cost-text">单抽消耗 <span id="drawCost">'+cost+'</span> 元宝 | 10连消耗 <span id="drawCost10">'+cost10+'</span> 元宝 (9折)</p>';
+resultActions.classList.remove('hidden');
+cardBack.style.display = 'flex';
+}
+
+function drawCard10() {
+if (isDrawing) return;
+var cost10 = Math.floor((gameData.settings.drawCost || 100) * 10 * 0.9);
+if (myGold < cost10) { alert('元宝不足！'); return; }
+isDrawing = true;
+myGold -= cost10;
+document.getElementById('goldAmount').textContent = myGold;
+var cardBack = document.getElementById('cardBack');
+var resultCard = document.getElementById('resultCard');
+var resultCard10 = document.getElementById('resultCard10');
+var resultActions = document.getElementById('resultActions');
+resultCard.classList.remove('show');
+resultCard10.classList.remove('show');
+resultActions.classList.add('hidden');
+cardBack.style.display = 'flex';
+cardBack.classList.add('drawing');
+setTimeout(function() {
+var cards = [];
+for (var i = 0; i < 10; i++) {
+cards.push(doDraw());
+}
+cardBack.classList.remove('drawing');
+cardBack.style.display = 'none';
+showResult10(cards);
+var cost10 = Math.floor((gameData.settings.drawCost || 100) * 10 * 0.9);
+resultActions.innerHTML = '<button class="draw-btn draw-btn-10" onclick="drawCard10()">再来十连</button><button class="draw-btn" onclick="resetDraw()">返回</button><p class="cost-text">10连消耗 <span id="drawCost10">'+cost10+'</span> 元宝 (9折)</p>';
+resultActions.classList.remove('hidden');
+isDrawing = false;
+}, 2000);
+}
+
 function doDraw() {
 var weights = gameData.rarityWeights;
 var total = Object.values(weights).reduce(function(a,b) { return a+b; }, 0);
@@ -247,7 +312,7 @@ myCards[card.id].count = (myCards[card.id].count || 0) + 1;
 var newTag = isNew ? '<span class="new-tag">新！</span>' : '';
 var rc = document.getElementById('resultCard');
 rc.innerHTML = '<div class="result-image"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div><div class="result-info"><h2 class="rarity-'+card.rarity+'">'+card.name+newTag+'</h2><div class="result-rarity rarity-'+card.rarity+'">'+'⭐'.repeat(card.rarity)+' '+names[card.rarity]+'</div><p class="result-desc">'+(card.description||'')+'</p><div class="result-stats-box"><h4>📊 基础属性</h4><div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.hp, 'hp')+'">'+card.baseStats.hp+'</span></div><div class="stat-row"><span class="stat-label">MP</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.mp, 'mp')+'">'+card.baseStats.mp+'</span></div><div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.attack, 'attack')+'">'+card.baseStats.attack+'</span></div><div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.defense, 'defense')+'">'+card.baseStats.defense+'</span></div><div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.agility, 'agility')+'">'+card.baseStats.agility+'</span></div></div></div>';
-document.getElementById('resultActions').innerHTML = '<button class="draw-btn" onclick="drawCard()">再抽一张</button><p class="cost-text">消耗 '+cost+' 元宝</p>';
+document.getElementById('resultActions').innerHTML = '<button class="draw-btn" onclick="drawCard()">再抽一张</button><button class="draw-btn" onclick="resetDraw()">返回</button><p class="cost-text">消耗 '+cost+' 元宝</p>';
 resultActions.classList.remove('hidden');
 rc.classList.add('show');
 renderMyCards();
@@ -295,6 +360,7 @@ function switchView(view) {
     document.getElementById('tabAlbum').classList.toggle('active', view === 'album');
     document.getElementById('myCards').classList.toggle('hidden', view !== 'my');
     document.getElementById('albumGrid').classList.toggle('hidden', view !== 'album');
+    document.getElementById('filterOwned').classList.toggle('hidden', view !== 'album');
     if (view === 'my') renderMyCards();
     else renderAlbum();
 }
@@ -302,6 +368,7 @@ function switchView(view) {
 function applyFilter() {
     filterState.name = document.getElementById('filterName').value.trim().toLowerCase();
     filterState.rarity = document.getElementById('filterRarity').value;
+    filterState.owned = document.getElementById('filterOwned').value;
     if (currentView === 'my') renderMyCards();
     else renderAlbum();
 }
@@ -309,7 +376,8 @@ function applyFilter() {
 function resetFilter() {
     document.getElementById('filterName').value = '';
     document.getElementById('filterRarity').value = '';
-    filterState = { name: '', rarity: '' };
+    document.getElementById('filterOwned').value = '';
+    filterState = { name: '', rarity: '', owned: '' };
     if (currentView === 'my') renderMyCards();
     else renderAlbum();
 }
@@ -321,8 +389,11 @@ function renderAlbum() {
     var rarityNames = ['', '普通', '稀有', '杰出', '史诗', '传说'];
     
     var filtered = allCards.filter(function(card) {
+        var owned = myCards[card.id];
         if (filterState.name && !card.name.toLowerCase().includes(filterState.name)) return false;
         if (filterState.rarity && card.rarity !== parseInt(filterState.rarity)) return false;
+        if (filterState.owned === 'owned' && !owned) return false;
+        if (filterState.owned === 'unowned' && owned) return false;
         return true;
     });
     
@@ -471,11 +542,48 @@ allCharacters = data.characters || [];
 calcMaxStats();
 document.getElementById('goldAmount').textContent = myGold;
 document.getElementById('drawCost').textContent = data.settings.drawCost || 100;
+document.getElementById('drawCost10').textContent = Math.floor((data.settings.drawCost || 100) * 10 * 0.9);
 renderMyCards();
 renderAlbum();
 }).catch(function(e) { console.error(e); });
 }
 loadData();
+
+function showResult10(cards) {
+var container = document.getElementById('resultCard10');
+var rarityColors = ['', '#ffffff', '#4caf50', '#2196f3', '#9c27b0', '#ff9800'];
+
+// Before updating, record which cards are newly obtained
+var wasNewBefore = {};
+cards.forEach(function(card) {
+if (!myCards[card.id] && !wasNewBefore[card.id]) {
+wasNewBefore[card.id] = true;
+}
+});
+
+// Update counts
+cards.forEach(function(card) {
+if (!myCards[card.id]) myCards[card.id] = JSON.parse(JSON.stringify(card));
+myCards[card.id].count = (myCards[card.id].count || 0) + 1;
+});
+
+// Display: only first occurrence of each new card shows "新！"
+var firstSeen = {};
+var html = '<h3>🎉 10连抽结果</h3><div class="grid-10">';
+cards.forEach(function(card) {
+var showNew = false;
+if (wasNewBefore[card.id] && !firstSeen[card.id]) {
+showNew = true;
+firstSeen[card.id] = true;
+}
+var newTag = showNew ? '<span class="new-tag">新！</span>' : '';
+html += '<div class="card-item rarity-'+card.rarity+'"><div class="thumb"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div><h4 class="card-name-'+card.rarity+'">'+card.name+'</h4><div class="stars" style="color:'+rarityColors[card.rarity]+'">'+'⭐'.repeat(card.rarity)+'</div>'+newTag+'</div>';
+});
+html += '</div>';
+container.innerHTML = html;
+container.classList.add('show');
+renderMyCards();
+}
 </script>
 </body>
 </html>
