@@ -150,6 +150,13 @@
         </div>
         <div class="panel">
             <h2>🃏 卡牌列表</h2>
+            <div style="display:flex;align-items:center;gap:15px;margin-bottom:15px;">
+                <label>显示内容：</label>
+                <select id="cardDisplayMode" onchange="renderCards()" style="padding:6px;background:#0f3460;color:#eee;border:1px solid #0f3460;border-radius:5px;">
+                    <option value="desc">描述</option>
+                    <option value="image">图片</option>
+                </select>
+            </div>
             <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
                 <label>卡池：</label>
                 <select id="poolSelect" onchange="changePool(this.value)" style="padding: 8px; background: #0f3460; color: #eee; border: 1px solid #0f3460; border-radius: 5px;">
@@ -659,17 +666,31 @@
         function renderCards() {
             const list = document.getElementById('cardList');
             const chars = getDisplayCharacters();
-            list.innerHTML = chars.map(c => `
-                <div class="card-item rarity-${c.rarity}" onclick="showCardDetail(${c.id})">
-                    <h3 class="card-name-${c.rarity}">${c.name}</h3>
-                    <p>${c.description || ''}</p>
-                    <p>基础: HP${c.baseStats.hp} 攻${c.baseStats.attack} 防${c.baseStats.defense} 敏${c.baseStats.agility}</p>
-                    <div class="actions" onclick="event.stopPropagation()">
-                        <button class="btn btn-primary btn-small" onclick="editCard(${c.id})">编辑</button>
-                        <button class="btn btn-danger btn-small" onclick="deleteCard(${c.id})">删除</button>
+            const displayMode = document.getElementById('cardDisplayMode').value;
+            if (displayMode === 'image') {
+                list.innerHTML = chars.map(c => `
+                    <div class="card-item rarity-${c.rarity}" onclick="showCardDetail(${c.id})">
+                        <img src="${c.image || ''}" alt="${c.name}" style="width:100%;height:150px;object-fit:contain;margin-bottom:10px;">
+                        <h3 class="card-name-${c.rarity}">${c.name}</h3>
+                        <div class="actions" onclick="event.stopPropagation()">
+                            <button class="btn btn-primary btn-small" onclick="editCard(${c.id})">编辑</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteCard(${c.id})">删除</button>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            } else {
+                list.innerHTML = chars.map(c => `
+                    <div class="card-item rarity-${c.rarity}" onclick="showCardDetail(${c.id})">
+                        <h3 class="card-name-${c.rarity}">${c.name}</h3>
+                        <p>${c.description || ''}</p>
+                        <p>基础: HP${c.baseStats.hp} 攻${c.baseStats.attack} 防${c.baseStats.defense} 敏${c.baseStats.agility}</p>
+                        <div class="actions" onclick="event.stopPropagation()">
+                            <button class="btn btn-primary btn-small" onclick="editCard(${c.id})">编辑</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteCard(${c.id})">删除</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
         }
         
         // 列表视图
@@ -879,6 +900,24 @@
             a.href = URL.createObjectURL(blob);
             a.download = currentPool + '.json';
             a.click();
+        }
+        
+        async function saveToServer() {
+            try {
+                const res = await fetch('/save-json', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: currentPool, content: gameData })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    alert('已保存到服务器！');
+                } else {
+                    alert('保存失败: ' + result.error);
+                }
+            } catch(e) {
+                alert('保存失败: ' + e.message);
+            }
         }
         
         loadData();

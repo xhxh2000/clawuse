@@ -16,13 +16,19 @@ body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: linear-gra
 .card-back::after { content: '🎴'; }
 .card-back.drawing { animation: shake 0.3s ease-in-out infinite; }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
-.result-card { display: none; grid-template-columns: 140px 1fr; gap: 15px; background: linear-gradient(145deg, #0f3460, #1a1a2e); border-radius: 15px; padding: 15px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); border: 2px solid rgba(233,69,96,0.3); text-align: left; margin-bottom: 15px; }
+.result-card { display: none; grid-template-columns: 140px 1fr; gap: 15px; background: #16213e; border-radius: 15px; padding: 15px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); border: 2px solid rgba(233,69,96,0.3); text-align: left; margin-bottom: 15px; }
 .result-card.show { display: grid; }
-.result-card-10 { display: none; width: 95%; max-width: 800px; background: linear-gradient(145deg, #0f3460, #1a1a2e); border-radius: 15px; padding: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); border: 2px solid rgba(233,69,96,0.3); margin-bottom: 15px; }
+.result-card-10 { display: none; width: 95%; max-width: 1000px; background: #16213e; border-radius: 15px; padding: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); border: 2px solid rgba(233,69,96,0.3); margin-bottom: 15px; }
 .result-card-10.show { display: block; }
 .result-card-10 h3 { color: #e94560; margin-bottom: 15px; text-align: center; }
-.grid-10 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-@media (max-width: 600px) { .grid-10 { grid-template-columns: repeat(2, 1fr); } }
+.grid-10 { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.grid-10 .grid-row { display: flex; justify-content: center; gap: 10px; width: 100%; }
+.grid-10 .card-item { width: calc(20% - 10px); min-width: 120px; background: #16213e; border-radius: 8px; padding: 8px; text-align: center; }
+@media (max-width: 600px) { 
+  .grid-10 { display: grid; grid-template-columns: repeat(2, 1fr); } 
+  .grid-10 .grid-row { display: contents; }
+  .grid-10 .card-item { width: auto; min-width: unset; }
+}
 .grid-10 .card-item { background: #16213e; border-radius: 8px; padding: 8px; text-align: center; }
 .grid-10 .card-item.rarity-4 { background: linear-gradient(135deg, #2d1b4e, #4a2c7a); border: 1px solid #9c27b0; }
 .grid-10 .card-item.rarity-5 { background: linear-gradient(135deg, #4a2c00, #7a4a00); border: 1px solid #ffd700; }
@@ -30,7 +36,7 @@ body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: linear-gra
 .grid-10 .card-item .thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
 .grid-10 .card-item h4 { font-size: 11px; margin: 3px 0; }
 .grid-10 .card-item .stars { font-size: 10px; margin: 2px 0; }
-.result-image { width: 100%; height: 180px; background: #000; border-radius: 10px; overflow: hidden; }
+.result-image { width: 100%; height: 180px; background: #16213e; border-radius: 10px; overflow: hidden; }
 .result-image img { width: 100%; height: 100%; object-fit: contain; }
 .result-info h2 { font-size: 22px; margin-bottom: 4px; }
 .result-rarity { font-size: 14px; letter-spacing: 2px; margin-bottom: 6px; }
@@ -61,7 +67,7 @@ body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: linear-gra
 .album-card:hover { transform: scale(1.05); }
 .album-card.locked { background: #333; cursor: default; }
 .album-card.locked:hover { transform: none; }
-.album-card .card-thumb { width: 80px; height: 80px; margin: 0 auto 8px; background: #16213e; border-radius: 5px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.album-card .card-thumb { width: 80px; height: 80px; margin: 0 auto 8px; background: #0f3460; border-radius: 5px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
 .album-card .card-thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
 .album-card h4 { font-size: 12px; margin: 5px 0; }
 .album-card .count { font-size: 11px; color: #aaa; }
@@ -69,7 +75,7 @@ body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: linear-gra
 .album-card.locked h4 { color: inherit; }
 .my-card { background: linear-gradient(145deg, #0f3460, #1a1a2e); border-radius: 10px; padding: 8px; text-align: center; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
 .my-card:hover { transform: translateY(-3px); border-color: #e94560; }
-.my-card .card-thumb { width: 100%; height: 100px; background: #000; border-radius: 6px; margin-bottom: 6px; overflow: hidden; }
+.my-card .card-thumb { width: 100%; height: 100px; background: #0f3460; border-radius: 6px; margin-bottom: 6px; overflow: hidden; }
 .my-card .card-thumb img { width: 100%; height: 100%; object-fit: contain; }
 .my-card h4 { font-size: 12px; margin-bottom: 4px; }
 .my-card .count { background: #e94560; color: white; padding: 2px 6px; border-radius: 8px; font-size: 10px; }
@@ -570,14 +576,22 @@ myCards[card.id].count = (myCards[card.id].count || 0) + 1;
 // Display: only first occurrence of each new card shows "新！"
 var firstSeen = {};
 var html = '<h3>🎉 10连抽结果</h3><div class="grid-10">';
-cards.forEach(function(card) {
-var showNew = false;
-if (wasNewBefore[card.id] && !firstSeen[card.id]) {
-showNew = true;
-firstSeen[card.id] = true;
-}
-var newTag = showNew ? '<span class="new-tag">新！</span>' : '';
-html += '<div class="card-item rarity-'+card.rarity+'"><div class="thumb"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div><h4 class="card-name-'+card.rarity+'">'+card.name+'</h4><div class="stars" style="color:'+rarityColors[card.rarity]+'">'+'⭐'.repeat(card.rarity)+'</div>'+newTag+'</div>';
+// 2-3-3-2 layout
+var layout = [2, 3, 3, 2];
+var idx = 0;
+layout.forEach(function(count, rowIdx) {
+  html += '<div class="grid-row">';
+  for (var i = 0; i < count && idx < cards.length; i++) {
+    var card = cards[idx++];
+    var showNew = false;
+    if (wasNewBefore[card.id] && !firstSeen[card.id]) {
+      showNew = true;
+      firstSeen[card.id] = true;
+    }
+    var newTag = showNew ? '<span class="new-tag">新！</span>' : '';
+    html += '<div class="card-item rarity-'+card.rarity+'"><div class="thumb"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div><h4 class="card-name-'+card.rarity+'">'+card.name+'</h4><div class="stars" style="color:'+rarityColors[card.rarity]+'">'+'⭐'.repeat(card.rarity)+'</div>'+newTag+'</div>';
+  }
+  html += '</div>';
 });
 html += '</div>';
 container.innerHTML = html;
