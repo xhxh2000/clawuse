@@ -425,27 +425,6 @@
       }
     },
     {
-      "id": 21,
-      "name": "佩珀",
-      "rarity": 3,
-      "image": "data/images/gamekee-download/佩珀.png",
-      "description": "妮姬中的飞行员风格角色，粉色头发，头戴飞行员帽子与护目镜。身着棕色飞行夹克，看起来是空中作战单位的驾驶员。",
-      "baseStats": {
-        "hp": 800,
-        "mp": 450,
-        "attack": 115,
-        "defense": 60,
-        "agility": 105
-      },
-      "growthStats": {
-        "hp": 80,
-        "mp": 45,
-        "attack": 11,
-        "defense": 6,
-        "agility": 10
-      }
-    },
-    {
       "id": 22,
       "name": "坎西",
       "rarity": 3,
@@ -1222,27 +1201,6 @@
       }
     },
     {
-      "id": 59,
-      "name": "丽塔",
-      "rarity": 4,
-      "image": "data/images/gamekee-download/丽塔.png",
-      "description": "妮姬中的女性角色，金色双马尾的可爱系少女。身着带有女仆风格的黑白战斗服装，活泼可爱。是一位敏捷型的近战角色。",
-      "baseStats": {
-        "hp": 880,
-        "mp": 450,
-        "attack": 135,
-        "defense": 65,
-        "agility": 125
-      },
-      "growthStats": {
-        "hp": 88,
-        "mp": 45,
-        "attack": 13,
-        "defense": 6,
-        "agility": 12
-      }
-    },
-    {
       "id": 60,
       "name": "可可",
       "rarity": 3,
@@ -1414,7 +1372,7 @@
       "id": 68,
       "name": "布兰儿",
       "rarity": 4,
-      "image": "data/images/gamekee-download/布兰儿.png",
+      "image": "data/images/gamekee-download/布兰儿 (1).png",
       "description": "妮姬中的女性角色，金色长发的美丽女性。身着带有机械风格的黑白战斗服装，胸口有能量核心装置。是一位高攻击力的射击型角色。",
       "baseStats": {
         "hp": 950,
@@ -1450,27 +1408,6 @@
         "attack": 16,
         "defense": 7,
         "agility": 11
-      }
-    },
-    {
-      "id": 70,
-      "name": "帕瓦",
-      "rarity": 4,
-      "image": "data/images/gamekee-download/帕瓦.png",
-      "description": "来自崩坏：星穹铁道的角色，白色蓬松卷发的可爱少女。身着带有独特设计的战斗服装，活泼元气。是一位高敏捷的近战型角色。",
-      "baseStats": {
-        "hp": 920,
-        "mp": 420,
-        "attack": 145,
-        "defense": 65,
-        "agility": 130
-      },
-      "growthStats": {
-        "hp": 92,
-        "mp": 42,
-        "attack": 14,
-        "defense": 6,
-        "agility": 13
       }
     },
     {
@@ -1519,7 +1456,7 @@
       "id": 73,
       "name": "拉毗",
       "rarity": 4,
-      "image": "data/images/gamekee-download/拉毗.png",
+      "image": "data/images/gamekee-download/拉毗 (2).png",
       "description": "妮姬中的女性角色，银白色长发的优雅女性。身着带有可爱风格的白粉配色战斗服装。是一位近战型角色。",
       "baseStats": {
         "hp": 950,
@@ -1624,7 +1561,7 @@
       "id": 78,
       "name": "诺伊斯",
       "rarity": 3,
-      "image": "data/images/gamekee-download/诺伊斯.png",
+      "image": "data/images/gamekee-download/诺伊斯 (2).png",
       "description": "妮姬中的女性角色，蓝色短发的军人风格。身着带有军装元素的黑白配色战斗服装。是一位远程射击型角色。",
       "baseStats": {
         "hp": 900,
@@ -1660,27 +1597,6 @@
         "attack": 11,
         "defense": 6,
         "agility": 10
-      }
-    },
-    {
-      "id": 80,
-      "name": "谢芙蒂",
-      "rarity": 3,
-      "image": "data/images/gamekee-download/谢芙蒂.png",
-      "description": "妮姬中的机甲单位，小型战斗机甲。蓝色与白色配色的可爱型机甲。具有一定的战斗能力。",
-      "baseStats": {
-        "hp": 1100,
-        "mp": 200,
-        "attack": 120,
-        "defense": 85,
-        "agility": 90
-      },
-      "growthStats": {
-        "hp": 110,
-        "mp": 20,
-        "attack": 12,
-        "defense": 8,
-        "agility": 9
       }
     },
     {
@@ -1729,7 +1645,7 @@
       "id": 83,
       "name": "贝斯蒂",
       "rarity": 4,
-      "image": "data/images/gamekee-download/贝斯蒂.png",
+      "image": "data/images/gamekee-download/贝斯蒂 (1).png",
       "description": "妮姬中的女性角色，金色长发的优雅女性。身着带有奢华风格的黑金配色战斗服装。是一位远程射击型角色。",
       "baseStats": {
         "hp": 920,
@@ -1855,7 +1771,7 @@
       "id": 89,
       "name": "玛奇玛",
       "rarity": 5,
-      "image": "data/images/gamekee-download/玛奇玛.png",
+      "image": "data/images/gamekee-download/玛奇玛 (1).png",
       "description": "来自链锯人的角色，粉色长发的优雅女性。身着黑色大衣，气质高贵。是一位强大的契约者，具有精神控制能力。顶级的辅助与战斗角色。",
       "baseStats": {
         "hp": 1100,
@@ -1981,7 +1897,7 @@
       "id": 95,
       "name": "安克",
       "rarity": 4,
-      "image": "data/images/gamekee-download/安克.png",
+      "image": "data/images/gamekee-download/安克 (1).png",
       "description": "妮姬中的大型机甲单位，具有女性外形的重型战斗机甲。蓝白色配色的厚重装甲，拥有强大的火力和防御力。高防御的机甲角色。",
       "baseStats": {
         "hp": 1700,
@@ -2062,27 +1978,6 @@
       }
     },
     {
-      "id": 99,
-      "name": "尤尔夏",
-      "rarity": 3,
-      "image": "data/images/gamekee-download/尤尔夏.png",
-      "description": "妮姬中的女性角色，蓝色短发的清爽少女。身着蓝白配色的战斗服装。是一位中距离战斗型角色。",
-      "baseStats": {
-        "hp": 870,
-        "mp": 440,
-        "attack": 125,
-        "defense": 65,
-        "agility": 110
-      },
-      "growthStats": {
-        "hp": 87,
-        "mp": 44,
-        "attack": 12,
-        "defense": 6,
-        "agility": 11
-      }
-    },
-    {
       "id": 100,
       "name": "尼夫",
       "rarity": 3,
@@ -2101,27 +1996,6 @@
         "attack": 10,
         "defense": 6,
         "agility": 10
-      }
-    },
-    {
-      "id": 101,
-      "name": "尼希利斯塔",
-      "rarity": 3,
-      "image": "data/images/gamekee-download/尼希利斯塔.png",
-      "description": "妮姬中的女性角色，银白色长发的优雅女性。身着白蓝配色的战斗服装。是一位辅助型角色。",
-      "baseStats": {
-        "hp": 920,
-        "mp": 520,
-        "attack": 100,
-        "defense": 70,
-        "agility": 95
-      },
-      "growthStats": {
-        "hp": 92,
-        "mp": 52,
-        "attack": 10,
-        "defense": 7,
-        "agility": 9
       }
     },
     {
@@ -2314,27 +2188,6 @@
       }
     },
     {
-      "id": 111,
-      "name": "莱伊",
-      "rarity": 3,
-      "image": "data/images/gamekee-download/莱伊.png",
-      "description": "妮姬中的男性角色，金色短发的英俊男性。身着黑色战斗服装。是一位高攻击力的近战型角色。",
-      "baseStats": {
-        "hp": 980,
-        "mp": 350,
-        "attack": 140,
-        "defense": 75,
-        "agility": 115
-      },
-      "growthStats": {
-        "hp": 98,
-        "mp": 35,
-        "attack": 14,
-        "defense": 7,
-        "agility": 11
-      }
-    },
-    {
       "id": 112,
       "name": "莱昂纳",
       "rarity": 4,
@@ -2359,7 +2212,7 @@
       "id": 113,
       "name": "蒂亚",
       "rarity": 4,
-      "image": "data/images/gamekee-download/蒂亚.png",
+      "image": "data/images/gamekee-download/蒂亚 (1).png",
       "description": "妮姬中的女性角色，银白色长发的优雅女性。身着带有机械风格的黑白配色战斗服装。是一位高攻击力的射击型角色。",
       "baseStats": {
         "hp": 960,
@@ -2401,7 +2254,7 @@
       "id": 115,
       "name": "诺亚尔",
       "rarity": 3,
-      "image": "data/images/gamekee-download/诺亚尔.png",
+      "image": "data/images/gamekee-download/诺亚尔 (1).png",
       "description": "妮姬中的男性角色，银白色短发的冷酷男性。身着黑色战斗服装。是一位高攻击力的近战型角色。",
       "baseStats": {
         "hp": 950,
@@ -2416,27 +2269,6 @@
         "attack": 14,
         "defense": 7,
         "agility": 11
-      }
-    },
-    {
-      "id": 116,
-      "name": "诺薇儿",
-      "rarity": 3,
-      "image": "data/images/gamekee-download/诺薇儿.png",
-      "description": "妮姬中的女性角色，粉色长发的可爱少女。身着粉白配色的战斗服装。是一位辅助型角色。",
-      "baseStats": {
-        "hp": 880,
-        "mp": 520,
-        "attack": 105,
-        "defense": 62,
-        "agility": 102
-      },
-      "growthStats": {
-        "hp": 88,
-        "mp": 52,
-        "attack": 10,
-        "defense": 6,
-        "agility": 10
       }
     },
     {
@@ -2506,7 +2338,7 @@
       "id": 120,
       "name": "马斯特",
       "rarity": 5,
-      "image": "data/images/gamekee-download/马斯特.png",
+      "image": "data/images/gamekee-download/马斯特：浪漫的女仆.png",
       "description": "妮姬中的顶级机甲单位，具有女性外形的重型战斗机甲。蓝白色配色的厚重装甲，拥有强大的火力和防御力。顶级的重装战斗角色。",
       "baseStats": {
         "hp": 1800,
@@ -2674,7 +2506,7 @@
       "id": 128,
       "name": "沃纶姆",
       "rarity": 3,
-      "image": "data/images/gamekee-download/沃纶姆.png",
+      "image": "data/images/gamekee-download/沃纶姆 (1).png",
       "description": "妮姬中的女性角色，蓝色短发的清爽少女。身着蓝白配色的战斗服装。是一位远程射击型角色。",
       "baseStats": {
         "hp": 900,
@@ -2716,7 +2548,7 @@
       "id": 130,
       "name": "米尔克",
       "rarity": 3,
-      "image": "data/images/gamekee-download/米尔克.png",
+      "image": "data/images/gamekee-download/米尔克 (1).png",
       "description": "妮姬中的女性角色，粉色长发的可爱少女。身着粉白配色的兔耳风格战斗服装。是一位敏捷型角色。",
       "baseStats": {
         "hp": 870,
@@ -2821,7 +2653,7 @@
       "id": 135,
       "name": "梅登",
       "rarity": 4,
-      "image": "data/images/gamekee-download/梅登.png",
+      "image": "data/images/gamekee-download/梅登 (1).png",
       "description": "妮姬中的女性角色，银白色长发的优雅女性。身着带有冰霜风格的白蓝配色战斗服装。是一位远程射击型角色。",
       "baseStats": {
         "hp": 950,
@@ -2863,7 +2695,7 @@
       "id": 137,
       "name": "樱花",
       "rarity": 4,
-      "image": "data/images/gamekee-download/樱花.png",
+      "image": "data/images/gamekee-download/樱花：夏日绽放.png",
       "description": "妮姬中的女性角色，粉色长发的可爱少女。身着粉白配色的樱花风格战斗服装。是一位敏捷型近战角色。",
       "baseStats": {
         "hp": 940,
@@ -3052,7 +2884,7 @@
       "id": 146,
       "name": "罗珊娜",
       "rarity": 4,
-      "image": "data/images/gamekee-download/罗珊娜.png",
+      "image": "data/images/gamekee-download/罗珊娜 (1).png",
       "description": "妮姬中的女性角色，蓝色长发的优雅女性。身着带有机械风格的黑蓝配色战斗服装。是一位远程射击型角色。",
       "baseStats": {
         "hp": 960,
