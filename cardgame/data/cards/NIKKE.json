@@ -23,7 +23,12 @@
         "attack": 15,
         "defense": 8,
         "agility": 12
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "NPC"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 2,
@@ -44,7 +49,12 @@
         "attack": 13,
         "defense": 5,
         "agility": 8
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "NPC"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 3,
@@ -65,7 +75,12 @@
         "attack": 10,
         "defense": 15,
         "agility": 6
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "NPC"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 4,
@@ -86,7 +101,12 @@
         "attack": 14,
         "defense": 6,
         "agility": 18
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "NPC"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 5,
@@ -107,7 +127,12 @@
         "attack": 8,
         "defense": 7,
         "agility": 7
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "NPC"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 6,
@@ -128,7 +153,12 @@
         "attack": 12,
         "defense": 10,
         "agility": 7
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "NPC"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 7,
@@ -149,7 +179,12 @@
         "attack": 13,
         "defense": 6,
         "agility": 14
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "NPC"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 8,
@@ -170,7 +205,12 @@
         "attack": 7,
         "defense": 5,
         "agility": 9
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "NPC"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 9,
@@ -191,7 +231,13 @@
         "attack": 20,
         "defense": 6,
         "agility": 16
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "第二空降小队",
+        "空降小队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 10,
@@ -212,7 +258,12 @@
         "attack": 18,
         "defense": 10,
         "agility": 13
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "寄叶部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 11,
@@ -233,7 +284,12 @@
         "attack": 17,
         "defense": 9,
         "agility": 12
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "寄叶部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 12,
@@ -254,7 +310,12 @@
         "attack": 14,
         "defense": 8,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "危险席部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 13,
@@ -275,7 +336,14 @@
         "attack": 13,
         "defense": 7,
         "agility": 10
-      }
+      },
+      "tags": [
+        "外来者部队",
+        "NIKKE",
+        "步入天堂",
+        "方舟"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 14,
@@ -296,7 +364,12 @@
         "attack": 15,
         "defense": 7,
         "agility": 12
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "危险席部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 15,
@@ -317,7 +390,13 @@
         "attack": 17,
         "defense": 9,
         "agility": 13
-      }
+      },
+      "tags": [
+        "第七空降小队",
+        "NIKKE",
+        "空降小队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 16,
@@ -338,7 +417,13 @@
         "attack": 12,
         "defense": 7,
         "agility": 9
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "朝圣者",
+        "继承者部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 17,
@@ -359,7 +444,12 @@
         "attack": 14,
         "defense": 8,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "食用油部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 18,
@@ -380,7 +470,14 @@
         "attack": 13,
         "defense": 6,
         "agility": 11
-      }
+      },
+      "tags": [
+        "外来者部队",
+        "NIKKE",
+        "中央情报管理室",
+        "方舟"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 19,
@@ -401,7 +498,15 @@
         "attack": 12,
         "defense": 5,
         "agility": 12
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "方舟",
+        "ACPU部队",
+        "特种部队",
+        "B.S.T"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 20,
@@ -422,7 +527,13 @@
         "attack": 15,
         "defense": 7,
         "agility": 13
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "方舟",
+        "倒带部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 22,
@@ -443,7 +554,13 @@
         "attack": 12,
         "defense": 5,
         "agility": 10
-      }
+      },
+      "tags": [
+        "真善美部队",
+        "NIKKE",
+        "米西利斯"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 23,
@@ -464,7 +581,13 @@
         "attack": 16,
         "defense": 8,
         "agility": 12
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "ACPU部队",
+        "A.C.P.U."
+      ],
+      "draw_weight": 100
     },
     {
       "id": 24,
@@ -485,7 +608,13 @@
         "attack": 15,
         "defense": 7,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "耀眼珍珠部队",
+        "M.M.R.部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 25,
@@ -506,7 +635,13 @@
         "attack": 14,
         "defense": 12,
         "agility": 8
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "朝圣者",
+        "继承者部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 26,
@@ -527,7 +662,12 @@
         "attack": 14,
         "defense": 7,
         "agility": 12
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "女神部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 27,
@@ -548,7 +688,12 @@
         "attack": 9,
         "defense": 10,
         "agility": 7
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "和平"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 28,
@@ -569,7 +714,12 @@
         "attack": 15,
         "defense": 6,
         "agility": 14
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "侦察者部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 29,
@@ -590,7 +740,12 @@
         "attack": 11,
         "defense": 5,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "专属女仆部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 30,
@@ -611,7 +766,14 @@
         "attack": 13,
         "defense": 7,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "米西利斯",
+        "墨提斯部队",
+        "方舟"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 31,
@@ -632,7 +794,13 @@
         "attack": 17,
         "defense": 9,
         "agility": 12
-      }
+      },
+      "tags": [
+        "E.R.E.",
+        "NIKKE",
+        "NERV"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 32,
@@ -653,7 +821,12 @@
         "attack": 10,
         "defense": 8,
         "agility": 9
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "三角部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 33,
@@ -674,7 +847,12 @@
         "attack": 11,
         "defense": 6,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "咖啡厅甜心部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 34,
@@ -695,7 +873,12 @@
         "attack": 12,
         "defense": 6,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "达兰特部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 35,
@@ -716,7 +899,12 @@
         "attack": 14,
         "defense": 8,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "继承者部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 36,
@@ -736,7 +924,12 @@
         "mp": 38,
         "attack": 12,
         "defense": 5
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "非凡工具部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 37,
@@ -757,7 +950,12 @@
         "attack": 11,
         "defense": 7,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "女神部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 38,
@@ -778,7 +976,12 @@
         "attack": 10,
         "defense": 6,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "无极限部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 39,
@@ -799,7 +1002,13 @@
         "attack": 15,
         "defense": 8,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "开拓者部队",
+        "朝圣者"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 40,
@@ -820,7 +1029,12 @@
         "attack": 19,
         "defense": 7,
         "agility": 14
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "NERV"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 41,
@@ -841,7 +1055,12 @@
         "attack": 17,
         "defense": 14,
         "agility": 5
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "异端者"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 42,
@@ -862,7 +1081,13 @@
         "attack": 10,
         "defense": 5,
         "agility": 9
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "ACPU部队",
+        "A.C.P.U."
+      ],
+      "draw_weight": 100
     },
     {
       "id": 43,
@@ -883,7 +1108,12 @@
         "attack": 8,
         "defense": 6,
         "agility": 9
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "小加农炮部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 44,
@@ -904,7 +1134,12 @@
         "attack": 14,
         "defense": 7,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "警备卫士部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 45,
@@ -925,7 +1160,12 @@
         "attack": 12,
         "defense": 6,
         "agility": 11
-      }
+      },
+      "tags": [
+        "超地平线部队",
+        "NIKKE"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 46,
@@ -946,7 +1186,13 @@
         "attack": 15,
         "defense": 7,
         "agility": 12
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "无限轨道部队",
+        "方舟"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 47,
@@ -967,7 +1213,12 @@
         "attack": 16,
         "defense": 7,
         "agility": 13
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "开拓者部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 48,
@@ -988,7 +1239,13 @@
         "attack": 13,
         "defense": 8,
         "agility": 10
-      }
+      },
+      "tags": [
+        "E.R.E.",
+        "NIKKE",
+        "NERV"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 49,
@@ -1009,7 +1266,14 @@
         "attack": 12,
         "defense": 7,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "米西利斯",
+        "米西利斯最强",
+        "方舟"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 50,
@@ -1030,7 +1294,11 @@
         "attack": 13,
         "defense": 6,
         "agility": 13
-      }
+      },
+      "tags": [
+        "NIKKE"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 51,
@@ -1051,7 +1319,13 @@
         "attack": 11,
         "defense": 5,
         "agility": 12
-      }
+      },
+      "tags": [
+        "特种部队",
+        "NIKKE",
+        "极乐净土"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 52,
@@ -1072,7 +1346,12 @@
         "attack": 14,
         "defense": 7,
         "agility": 13
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "无限轨道部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 53,
@@ -1093,7 +1372,12 @@
         "attack": 15,
         "defense": 7,
         "agility": 12
-      }
+      },
+      "tags": [
+        "特种部队",
+        "NIKKE"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 54,
@@ -1114,7 +1398,11 @@
         "attack": 11,
         "defense": 7,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 55,
@@ -1135,7 +1423,12 @@
         "attack": 12,
         "defense": 6,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "反击部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 56,
@@ -1156,7 +1449,13 @@
         "attack": 16,
         "defense": 9,
         "agility": 9
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "方舟图书馆热销如潮部队",
+        "方舟"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 57,
@@ -1177,7 +1476,12 @@
         "attack": 14,
         "defense": 8,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "首席女歌手部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 58,
@@ -1198,7 +1502,12 @@
         "attack": 17,
         "defense": 8,
         "agility": 12
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "专属女仆部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 60,
@@ -1219,7 +1528,12 @@
         "attack": 10,
         "defense": 5,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "专属女仆部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 61,
@@ -1240,7 +1554,15 @@
         "attack": 12,
         "defense": 5,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "方舟",
+        "ACPU部队",
+        "特种部队",
+        "B.S.T"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 62,
@@ -1261,7 +1583,12 @@
         "attack": 15,
         "defense": 13,
         "agility": 5
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "克重部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 63,
@@ -1282,7 +1609,12 @@
         "attack": 12,
         "defense": 6,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "警备卫士部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 64,
@@ -1303,7 +1635,12 @@
         "attack": 12,
         "defense": 6,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "大师之手部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 65,
@@ -1324,7 +1661,12 @@
         "attack": 11,
         "defense": 5,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "反击部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 66,
@@ -1345,7 +1687,13 @@
         "attack": 15,
         "defense": 8,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "方舟",
+        "快乐动物园部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 67,
@@ -1366,7 +1714,13 @@
         "attack": 10,
         "defense": 7,
         "agility": 9
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "无限轨道部队",
+        "方舟"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 68,
@@ -1387,7 +1741,12 @@
         "attack": 15,
         "defense": 7,
         "agility": 12
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "777部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 69,
@@ -1408,7 +1767,12 @@
         "attack": 16,
         "defense": 7,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "食用油部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 71,
@@ -1429,7 +1793,12 @@
         "attack": 13,
         "defense": 6,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "墨提斯部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 72,
@@ -1450,7 +1819,12 @@
         "attack": 9,
         "defense": 5,
         "agility": 13
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "无极限部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 73,
@@ -1471,7 +1845,12 @@
         "attack": 14,
         "defense": 7,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "反击部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 74,
@@ -1492,7 +1871,14 @@
         "attack": 12,
         "defense": 6,
         "agility": 12
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "ACPU部队",
+        "A.C.P.U.",
+        "方舟"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 75,
@@ -1513,7 +1899,13 @@
         "attack": 15,
         "defense": 6,
         "agility": 14
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "莉可丽丝",
+        "咖啡厅甜心部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 76,
@@ -1534,7 +1926,14 @@
         "attack": 10,
         "defense": 7,
         "agility": 10
-      }
+      },
+      "tags": [
+        "宙斯盾部队",
+        "NIKKE",
+        "海军部队",
+        "方舟"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 77,
@@ -1555,7 +1954,12 @@
         "attack": 10,
         "defense": 6,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "方舟"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 78,
@@ -1576,7 +1980,12 @@
         "attack": 13,
         "defense": 7,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "首席女歌手部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 79,
@@ -1597,7 +2006,13 @@
         "attack": 11,
         "defense": 6,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "朝圣者",
+        "继承者部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 81,
@@ -1618,7 +2033,14 @@
         "attack": 13,
         "defense": 6,
         "agility": 11
-      }
+      },
+      "tags": [
+        "外来者部队",
+        "NIKKE",
+        "中央情报管理室",
+        "方舟"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 82,
@@ -1639,7 +2061,13 @@
         "attack": 12,
         "defense": 6,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "方舟",
+        "倒带部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 83,
@@ -1660,7 +2088,12 @@
         "attack": 15,
         "defense": 7,
         "agility": 11
-      }
+      },
+      "tags": [
+        "特种部队",
+        "NIKKE"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 84,
@@ -1681,7 +2114,12 @@
         "attack": 9,
         "defense": 5,
         "agility": 12
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "小加农炮部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 85,
@@ -1702,7 +2140,13 @@
         "attack": 16,
         "defense": 7,
         "agility": 12
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "朝圣者",
+        "白骑士部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 86,
@@ -1723,7 +2167,13 @@
         "attack": 9,
         "defense": 6,
         "agility": 9
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "第五空降小队",
+        "空降小队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 87,
@@ -1744,7 +2194,13 @@
         "attack": 13,
         "defense": 7,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "方舟",
+        "植物园部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 88,
@@ -1765,7 +2221,12 @@
         "attack": 15,
         "defense": 7,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "电力冲击部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 89,
@@ -1786,7 +2247,12 @@
         "attack": 14,
         "defense": 9,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "公安对魔特异四课"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 90,
@@ -1807,7 +2273,14 @@
         "attack": 10,
         "defense": 6,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "米西利斯",
+        "M.M.R.部队",
+        "方舟"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 91,
@@ -1828,7 +2301,12 @@
         "attack": 15,
         "defense": 8,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "M.M.R.部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 92,
@@ -1849,7 +2327,12 @@
         "attack": 13,
         "defense": 11,
         "agility": 5
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "电力冲击部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 93,
@@ -1870,7 +2353,12 @@
         "attack": 14,
         "defense": 7,
         "agility": 11
-      }
+      },
+      "tags": [
+        "真善美部队",
+        "NIKKE"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 94,
@@ -1891,7 +2379,12 @@
         "attack": 12,
         "defense": 6,
         "agility": 12
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "开拓者部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 95,
@@ -1912,7 +2405,13 @@
         "attack": 14,
         "defense": 13,
         "agility": 5
-      }
+      },
+      "tags": [
+        "宙斯盾部队",
+        "NIKKE",
+        "海军部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 96,
@@ -1933,7 +2432,12 @@
         "attack": 12,
         "defense": 6,
         "agility": 11
-      }
+      },
+      "tags": [
+        "外界部队",
+        "NIKKE"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 97,
@@ -1954,7 +2458,12 @@
         "attack": 13,
         "defense": 7,
         "agility": 10
-      }
+      },
+      "tags": [
+        "生命补药部队",
+        "NIKKE"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 98,
@@ -1975,7 +2484,13 @@
         "attack": 11,
         "defense": 7,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "远古故事部队",
+        "女神部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 100,
@@ -1996,7 +2511,13 @@
         "attack": 10,
         "defense": 6,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "无极限部队",
+        "方舟"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 102,
@@ -2017,7 +2538,12 @@
         "attack": 13,
         "defense": 7,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "咖啡厅甜心部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 103,
@@ -2038,7 +2564,12 @@
         "attack": 12,
         "defense": 6,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "协议部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 104,
@@ -2059,7 +2590,12 @@
         "attack": 12,
         "defense": 6,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "三角部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 105,
@@ -2080,7 +2616,12 @@
         "attack": 10,
         "defense": 6,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "M.M.R.部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 106,
@@ -2101,7 +2642,12 @@
         "attack": 13,
         "defense": 6,
         "agility": 11
-      }
+      },
+      "tags": [
+        "生命补药部队",
+        "NIKKE"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 107,
@@ -2122,7 +2668,13 @@
         "attack": 11,
         "defense": 7,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "方舟",
+        "植物园部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 108,
@@ -2143,7 +2695,12 @@
         "attack": 13,
         "defense": 7,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "M.M.R.部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 109,
@@ -2164,7 +2721,12 @@
         "attack": 15,
         "defense": 7,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "异端者"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 110,
@@ -2185,7 +2747,13 @@
         "attack": 10,
         "defense": 6,
         "agility": 10
-      }
+      },
+      "tags": [
+        "孵化器部队",
+        "NIKKE",
+        "米西利斯"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 112,
@@ -2206,7 +2774,13 @@
         "attack": 16,
         "defense": 8,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "方舟",
+        "快乐动物园部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 113,
@@ -2227,7 +2801,12 @@
         "attack": 15,
         "defense": 7,
         "agility": 12
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "耀眼珍珠部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 114,
@@ -2248,7 +2827,12 @@
         "attack": 15,
         "defense": 7,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "方舟"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 115,
@@ -2269,7 +2853,12 @@
         "attack": 14,
         "defense": 7,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "777部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 117,
@@ -2290,7 +2879,12 @@
         "attack": 15,
         "defense": 7,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "777部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 118,
@@ -2311,7 +2905,12 @@
         "attack": 10,
         "defense": 7,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "达兰特部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 119,
@@ -2332,7 +2931,13 @@
         "attack": 12,
         "defense": 6,
         "agility": 12
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "方舟",
+        "快乐动物园部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 120,
@@ -2353,7 +2958,13 @@
         "attack": 16,
         "defense": 14,
         "agility": 5
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "海军部队",
+        "方舟"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 121,
@@ -2374,7 +2985,12 @@
         "attack": 15,
         "defense": 7,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "无极限部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 122,
@@ -2395,7 +3011,12 @@
         "attack": 10,
         "defense": 6,
         "agility": 10
-      }
+      },
+      "tags": [
+        "生命补药部队",
+        "NIKKE"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 123,
@@ -2416,7 +3037,13 @@
         "attack": 15,
         "defense": 8,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "米西利斯",
+        "墨提斯部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 124,
@@ -2437,7 +3064,13 @@
         "attack": 19,
         "defense": 7,
         "agility": 15
-      }
+      },
+      "tags": [
+        "E.R.E.",
+        "NIKKE",
+        "NERV"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 125,
@@ -2458,7 +3091,12 @@
         "attack": 14,
         "defense": 7,
         "agility": 12
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "专属女仆部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 126,
@@ -2479,7 +3117,12 @@
         "attack": 14,
         "defense": 7,
         "agility": 12
-      }
+      },
+      "tags": [
+        "WILLE",
+        "NIKKE"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 127,
@@ -2500,7 +3143,12 @@
         "attack": 15,
         "defense": 7,
         "agility": 12
-      }
+      },
+      "tags": [
+        "外来者部队",
+        "NIKKE"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 128,
@@ -2521,7 +3169,12 @@
         "attack": 13,
         "defense": 6,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "首席女歌手部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 129,
@@ -2542,7 +3195,13 @@
         "attack": 10,
         "defense": 6,
         "agility": 10
-      }
+      },
+      "tags": [
+        "真善美部队",
+        "NIKKE",
+        "米西利斯"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 130,
@@ -2563,7 +3222,12 @@
         "attack": 12,
         "defense": 6,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "咖啡厅甜心部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 131,
@@ -2584,7 +3248,12 @@
         "attack": 14,
         "defense": 12,
         "agility": 5
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "达兰特部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 132,
@@ -2605,7 +3274,13 @@
         "attack": 13,
         "defense": 7,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "远古故事部队",
+        "女神部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 133,
@@ -2626,7 +3301,11 @@
         "attack": 13,
         "defense": 12,
         "agility": 5
-      }
+      },
+      "tags": [
+        "NIKKE"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 134,
@@ -2647,7 +3326,13 @@
         "attack": 16,
         "defense": 7,
         "agility": 14
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "莉可丽丝",
+        "咖啡厅甜心部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 135,
@@ -2668,7 +3353,12 @@
         "attack": 15,
         "defense": 7,
         "agility": 11
-      }
+      },
+      "tags": [
+        "外界部队",
+        "NIKKE"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 136,
@@ -2689,7 +3379,12 @@
         "attack": 10,
         "defense": 6,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "六翼天使部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 137,
@@ -2710,7 +3405,13 @@
         "attack": 14,
         "defense": 7,
         "agility": 12
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "黑道女王部队",
+        "清明会"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 138,
@@ -2731,7 +3432,12 @@
         "attack": 11,
         "defense": 6,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "M.M.R.部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 139,
@@ -2752,7 +3458,12 @@
         "attack": 15,
         "defense": 7,
         "agility": 13
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "专属女仆部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 140,
@@ -2773,7 +3484,12 @@
         "attack": 13,
         "defense": 8,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "爱蜜莉雅阵营"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 141,
@@ -2794,7 +3510,13 @@
         "attack": 10,
         "defense": 6,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "黑道女王部队",
+        "方舟"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 142,
@@ -2815,7 +3537,13 @@
         "attack": 14,
         "defense": 9,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "朝圣者",
+        "白骑士部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 143,
@@ -2836,7 +3564,13 @@
         "attack": 13,
         "defense": 7,
         "agility": 11
-      }
+      },
+      "tags": [
+        "阴影部队",
+        "NIKKE",
+        "专属女仆部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 144,
@@ -2857,7 +3591,12 @@
         "attack": 15,
         "defense": 7,
         "agility": 11
-      }
+      },
+      "tags": [
+        "NIKKE",
+        "侦察者部队"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 145,
@@ -2878,7 +3617,11 @@
         "attack": 10,
         "defense": 6,
         "agility": 10
-      }
+      },
+      "tags": [
+        "NIKKE"
+      ],
+      "draw_weight": 100
     },
     {
       "id": 146,
@@ -2899,7 +3642,13 @@
         "attack": 15,
         "defense": 7,
         "agility": 11
-      }
+      },
+      "tags": [
+        "赫多尼亚",
+        "NIKKE",
+        "黑道女王部队"
+      ],
+      "draw_weight": 100
     }
   ],
   "rarityWeights": {

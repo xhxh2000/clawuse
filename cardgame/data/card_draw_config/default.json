@@ -1,0 +1,6 @@
+{
+  "card_pool": ["NIKKE"],
+  "tag": ["ALL"],
+  "rarity_weight": [50, 30, 15, 4, 1],
+  "tag_weight": []
+}
