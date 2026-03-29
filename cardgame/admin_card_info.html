@@ -152,7 +152,7 @@
                     <button class="btn btn-primary" onclick="showAddModal()">+ 添加新卡牌</button>
                 </div>
             </div>
-            <div id="displayModeContainer" style="display:none;">
+            <div id="displayModeContainer">
                 <label>显示内容：</label>
                 <select id="cardDisplayMode" onchange="renderCards()" style="padding:6px;background:#0f3460;color:#eee;border:1px solid #0f3460;border-radius:5px;">
                     <option value="desc">描述</option>
@@ -799,6 +799,7 @@ let rarityConfig = [];
             document.getElementById('btnListView').classList.toggle('active', view === 'list');
             document.getElementById('cardView').classList.toggle('hidden', view !== 'card');
             document.getElementById('listView').classList.toggle('hidden', view !== 'list');
+            document.getElementById('displayModeContainer').classList.toggle('hidden', view !== 'card');
             if (view === 'list') renderListView();
         }
         
