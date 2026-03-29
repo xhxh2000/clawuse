@@ -8,7 +8,7 @@
       "id": 1,
       "name": "剑圣",
       "rarity": 5,
-      "image": "data/images/Blade%20(1).jpg",
+      "image": "data/images/zongsechengai2/Blade%20(1).jpg",
       "description": "无敌剑圣",
       "baseStats": {
         "hp": 1000,
@@ -164,7 +164,7 @@
       "id": 7,
       "name": "弓手",
       "rarity": 2,
-      "image": "data/images/High%20Elf%20Archer.jpg",
+      "image": "data/images/zongsechengai2/High%20Elf%20Archer.jpg",
       "description": "百步穿杨的神箭手",
       "baseStats": {
         "hp": 800,
@@ -190,7 +190,7 @@
       "id": 8,
       "name": "学者",
       "rarity": 1,
-      "image": "data/images/Arines.jpg",
+      "image": "data/images/zongsechengai2/Arines.jpg",
       "description": "博学多才的智者",
       "baseStats": {
         "hp": 600,
