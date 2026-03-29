@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抽卡管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+        .header { background: #16213e; padding: 20px; border-bottom: 2px solid #0f3460; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .header h1 { color: #e94560; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .panel { background: #16213e; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+        .panel h2 { color: #e94560; margin-bottom: 15px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #aaa; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #0f3460; background: #1a1a2e; color: #eee; border-radius: 5px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px; }
+        .btn-primary { background: #e94560; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        .stat-item { background: #0f3460; padding: 15px; border-radius: 5px; text-align: center; }
+        .stat-item label { display: block; color: #aaa; margin-bottom: 5px; }
+        .stat-item input { text-align: center; }
+        .config-info { background: #0f3460; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .config-info p { margin: 5px 0; }
+        
+        .tag-weight-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px; background: #0f3460; border-radius: 5px; }
+        .tag-weight-item select, .tag-weight-item input { padding: 5px; background: #1a1a2e; color: #eee; border: 1px solid #0f3460; border-radius: 3px; }
+        .tag-weight-item select { width: 60px; }
+        .tag-weight-item input[type="number"] { width: 70px; }
+        .tag-weight-item .tag-name { flex: 1; }
+        .tag-weight-item .remove-btn { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+        
+        .rarity-weight-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px; background: #0f3460; border-radius: 5px; }
+        .rarity-weight-item input { padding: 5px; background: #1a1a2e; color: #eee; border: 1px solid #0f3460; border-radius: 3px; }
+        .rarity-weight-item input[type="number"] { width: 80px; }
+        .rarity-weight-item .rarity-name { flex: 1; }
+        .rarity-weight-item .remove-btn { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
+        .modal.show { display: flex; justify-content: center; padding: 20px; }
+        .modal-content { background: #16213e; border-radius: 10px; padding: 20px; }
+        
+        .prob-item { display: flex; align-items: center; padding: 10px; margin-bottom: 10px; background: #0f3460; border-radius: 5px; }
+        .prob-item .card-name { flex: 1; }
+        .prob-item .card-rarity { color: #aaa; margin-right: 10px; }
+        .prob-item .card-tags { color: #888; font-size: 12px; margin-right: 10px; }
+        .prob-item .card-weight { color: #aaa; margin-right: 10px; }
+        .prob-item .card-prob { font-weight: bold; color: #4caf50; }
+        .prob-item.zero-prob { opacity: 0.5; }
+        .prob-item.zero-prob .card-prob { color: #666; }
+        
+        @media screen and (max-width: 600px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎰 抽卡管理</h1>
+    </div>
+    <div class="container">
+        <div class="panel">
+            <h2>⚙️ 配置文件</h2>
+            <div class="form-group">
+                <label>选择配置文件：</label>
+                <select id="configFile" onchange="loadConfig(this.value)">
+                    <option value="">加载中...</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <h2>🎯 卡池列表</h2>
+            <div style="display:flex;gap:10px;margin-bottom:10px;">
+                <select id="availablePools" style="flex:1;padding:8px;background:#1a1a2e;color:#eee;border:1px solid #0f3460;border-radius:5px;">
+                    <option value="">加载中...</option>
+                </select>
+                <button onclick="addPool()" style="background:#e94560;color:white;border:none;padding:8px 15px;border-radius:5px;cursor:pointer;">添加</button>
+            </div>
+            <div id="poolList" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+        </div>
+        
+        <div class="panel">
+            <h2>📊 稀有度权重</h2>
+            <div id="rarityWeightList"></div>
+            <button class="btn btn-primary" style="margin-top:10px;" onclick="addRarityWeight()">+ 添加稀有度</button>
+        </div>
+        
+        <div class="panel">
+            <h2>🏷️ 卡池标签</h2>
+            <div style="display:flex;gap:10px;margin-bottom:10px;">
+                <input type="text" id="newPoolTag" placeholder="输入标签名称" style="flex:1;padding:8px;background:#1a1a2e;color:#eee;border:1px solid #0f3460;border-radius:5px;">
+                <button onclick="addPoolTag()" style="background:#e94560;color:white;border:none;padding:8px 15px;border-radius:5px;cursor:pointer;">添加</button>
+            </div>
+            <div id="poolTagList" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+            <p style="color:#666;font-size:12px;margin-top:10px;">留空表示不过滤，所有卡牌都可被抽中</p>
+        </div>
+        
+        <div class="panel">
+            <h2>⚖️ 标签权重</h2>
+            <div id="tagWeightList"></div>
+            <button class="btn btn-primary" style="margin-top:10px;" onclick="addTagWeight()">+ 添加标签权重</button>
+        </div>
+        
+        <button class="btn btn-success" onclick="saveConfig()">保存配置</button>
+        <button class="btn btn-primary" onclick="previewProbability()">概率预览</button>
+    </div>
+    
+    <!-- 概率预览弹窗 -->
+    <div class="modal" id="probabilityPopup">
+        <div class="modal-content" style="max-width:900px;max-height:90vh;display:flex;flex-direction:column;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:15px;border-bottom:1px solid #0f3460;flex-shrink:0;">
+                <h2 style="color:#e94560;margin:0;">📊 概率预览</h2>
+                <button onclick="closeProbabilityPopup()" style="background:#e94560;color:white;border:none;padding:10px 20px;border-radius:5px;cursor:pointer;">关闭</button>
+            </div>
+            <div id="probabilityList" style="overflow-y:auto;flex:1;margin-top:15px;"></div>
+        </div>
+    </div>
+    
+    <script>
+        let currentConfig = {};
+        
+        // 加载配置文件列表
+        async function loadConfigList() {
+            try {
+                const res = await fetch('data/cards/');
+                const html = await res.text();
+                // 解析文件名
+                const matches = html.match(/([A-Za-z0-9_\u4e00-\u9faas]+)\.json/g);
+                const pools = matches ? matches.map(m => m.replace('.json', '')) : [];
+                
+                // 更新配置文件下拉框
+                const configSelect = document.getElementById('configFile');
+                configSelect.innerHTML = '<option value="draw_default.json">draw_default</option>';
+                
+                // 更新卡池下拉框
+                const poolSelect = document.getElementById('availablePools');
+                if (poolSelect) {
+                    poolSelect.innerHTML = pools.map(p => '<option value="'+p+'">'+p+'</option>').join('');
+                }
+                
+                loadConfig('draw_default.json');
+            } catch(e) {
+                console.error('加载配置文件列表失败:', e);
+            }
+        }
+        
+        // 渲染卡池列表
+        function renderPoolList() {
+            const container = document.getElementById('poolList');
+            const pools = currentConfig.card_pool || [];
+            
+            if (pools.length === 0) {
+                container.innerHTML = '<span style="color:#666;">暂无卡池</span>';
+                return;
+            }
+            
+            container.innerHTML = pools.map((p, idx) => 
+                '<span style="background:#0f3460;padding:5px 10px;border-radius:15px;display:flex;align-items:center;gap:5px;">' +
+                p + '<span onclick="removePool('+idx+')" style="cursor:pointer;color:#e94560;">×</span></span>'
+            ).join('');
+        }
+        
+        // 添加卡池
+        function addPool() {
+            const select = document.getElementById('availablePools');
+            const pool = select.value;
+            if (!pool) return;
+            if (!currentConfig.card_pool) currentConfig.card_pool = [];
+            if (currentConfig.card_pool.includes(pool)) {
+                alert('该卡池已添加');
+                return;
+            }
+            currentConfig.card_pool.push(pool);
+            renderPoolList();
+        }
+        
+        // 删除卡池
+        function removePool(idx) {
+            if ((currentConfig.card_pool || []).length <= 1) {
+                alert('至少需要保留一个卡池');
+                return;
+            }
+            currentConfig.card_pool.splice(idx, 1);
+            renderPoolList();
+        }
+        
+        // 加载配置文件
+        async function loadConfig(filename) {
+            try {
+                const res = await fetch('data/card_draw_config/' + filename);
+                currentConfig = await res.json();
+                
+                // 渲染标签权重
+                renderTagWeights();
+                
+                // 渲染稀有度权重
+                renderRarityWeights();
+                
+                // 渲染卡池标签
+                renderPoolTags();
+                
+                // 渲染卡池列表
+                renderPoolList();
+            } catch(e) {
+                console.error('加载配置失败:', e);
+                alert('加载配置失败: ' + e.message);
+            }
+        }
+        
+        // 渲染标签权重列表
+        function renderTagWeights() {
+            const container = document.getElementById('tagWeightList');
+            const tagWeights = currentConfig.tag_weight || [];
+            
+            if (tagWeights.length === 0) {
+                container.innerHTML = '<p style="color:#aaa;">暂无标签权重配置</p>';
+                return;
+            }
+            
+            container.innerHTML = tagWeights.map((tw, idx) => {
+                const tagName = Object.keys(tw)[0] || '';
+                const value = tw[tagName] || 0;
+                const sign = value >= 0 ? '+' : '-';
+                const absValue = Math.abs(value);
+                
+                return '<div class="tag-weight-item" data-idx="'+idx+'">' +
+                    '<span class="tag-name">'+tagName+'</span>' +
+                    '<select class="sign-select" onchange="updateTagWeight('+idx+', this.value, this.nextElementSibling.value)">' +
+                        '<option value="+" '+(sign === '+' ? 'selected' : '')+'>+</option>' +
+                        '<option value="-" '+(sign === '-' ? 'selected' : '')+'>-</option>' +
+                    '</select>' +
+                    '<input type="number" class="abs-value" value="'+absValue+'" min="0" onchange="updateTagWeight('+idx+', this.previousElementSibling.value, this.value)">' +
+                    '<button class="remove-btn" onclick="removeTagWeight('+idx+')">删除</button>' +
+                '</div>';
+            }).join('');
+        }
+        
+        // 更新标签权重
+        function updateTagWeight(idx, sign, absValue) {
+            if (!currentConfig.tag_weight) return;
+            const tagName = Object.keys(currentConfig.tag_weight[idx])[0];
+            const val = parseInt(absValue) || 0;
+            currentConfig.tag_weight[idx] = {};
+            currentConfig.tag_weight[idx][tagName] = sign === '+' ? val : -val;
+        }
+        
+        // 添加标签权重
+        function addTagWeight() {
+            const tagName = prompt('请输入标签名称：');
+            if (!tagName) return;
+            
+            if (!currentConfig.tag_weight) currentConfig.tag_weight = [];
+            currentConfig.tag_weight.push({[tagName.trim()]: 10});
+            renderTagWeights();
+        }
+        
+        // 删除标签权重
+        function removeTagWeight(idx) {
+            if (!confirm('确定删除该标签权重？')) return;
+            currentConfig.tag_weight.splice(idx, 1);
+            renderTagWeights();
+        }
+        
+        // 渲染卡池标签列表
+        function renderPoolTags() {
+            const container = document.getElementById('poolTagList');
+            const tags = currentConfig.tag || [];
+            
+            if (tags.length === 0) {
+                container.innerHTML = '<span style="color:#666;">暂无标签</span>';
+                return;
+            }
+            
+            container.innerHTML = tags.map((t, idx) => 
+                '<span style="background:#0f3460;padding:5px 10px;border-radius:15px;display:flex;align-items:center;gap:5px;">' +
+                t + '<span onclick="removePoolTag('+idx+')" style="cursor:pointer;color:#e94560;">×</span></span>'
+            ).join('');
+        }
+        
+        // 添加卡池标签
+        function addPoolTag() {
+            const input = document.getElementById('newPoolTag');
+            const tag = input.value.trim();
+            if (!tag) return;
+            if (!currentConfig.tag) currentConfig.tag = [];
+            if (currentConfig.tag.includes(tag)) {
+                alert('标签已存在');
+                return;
+            }
+            currentConfig.tag.push(tag);
+            input.value = '';
+            renderPoolTags();
+        }
+        
+        // 删除卡池标签
+        function removePoolTag(idx) {
+            currentConfig.tag.splice(idx, 1);
+            renderPoolTags();
+        }
+        
+        // 渲染稀有度权重列表
+        function renderRarityWeights() {
+            const container = document.getElementById('rarityWeightList');
+            const rarityWeights = currentConfig.rarity_weight || [];
+            
+            if (rarityWeights.length === 0) {
+                container.innerHTML = '<p style="color:#aaa;">暂无稀有度权重配置</p>';
+                return;
+            }
+            
+            container.innerHTML = rarityWeights.map((w, idx) => {
+                return '<div class="rarity-weight-item" data-idx="'+idx+'">' +
+                    '<span class="rarity-name">'+ (idx + 1) + '⭐ 稀有度</span>' +
+                    '<input type="number" value="'+w+'" min="0" onchange="updateRarityWeight('+idx+', this.value)">' +
+                    '<button class="remove-btn" onclick="removeRarityWeight('+idx+')">删除</button>' +
+                '</div>';
+            }).join('');
+        }
+        
+        // 更新稀有度权重
+        function updateRarityWeight(idx, value) {
+            if (!currentConfig.rarity_weight) return;
+            currentConfig.rarity_weight[idx] = parseInt(value) || 0;
+        }
+        
+        // 添加稀有度权重
+        function addRarityWeight() {
+            if (!currentConfig.rarity_weight) currentConfig.rarity_weight = [];
+            currentConfig.rarity_weight.push(1);
+            renderRarityWeights();
+        }
+        
+        // 删除稀有度权重
+        function removeRarityWeight(idx) {
+            if (!confirm('确定删除该稀有度？')) return;
+            currentConfig.rarity_weight.splice(idx, 1);
+            renderRarityWeights();
+        }
+        
+        // 关闭概率预览弹窗
+        function closeProbabilityPopup() {
+            document.getElementById('probabilityPopup').classList.remove('show');
+        }
+        
+        // 预览概率
+        async function previewProbability() {
+            const poolNames = currentConfig.card_pool || ['NIKKE'];
+            const selectedTags = currentConfig.tag || []; // 空数组表示不过滤
+            const rarityWeights = currentConfig.rarity_weight || [50, 30, 15, 4, 1];
+            const tagWeightMap = {};
+            (currentConfig.tag_weight || []).forEach(tw => {
+                const key = Object.keys(tw)[0];
+                const val = tw[key];
+                tagWeightMap[key] = val;
+            });
+            
+            // 加载所有卡池数据
+            let allCards = [];
+            for (const poolName of poolNames) {
+                try {
+                    const res = await fetch('data/cards/' + poolName + '.json');
+                    const data = await res.json();
+                    allCards = allCards.concat(data.characters || []);
+                } catch(e) {
+                    console.error('加载卡池失败:', poolName, e);
+                }
+            }
+            
+            // 第一步：卡池标签过滤
+            let filteredCards = allCards.filter(card => {
+                const cardTags = card.tags || [];
+                return selectedTags.length === 0 || cardTags.some(t => selectedTags.includes(t));
+            });
+            
+            // 第二步：统计过滤后剩下的稀有度
+            const remainingRarities = new Set();
+            filteredCards.forEach(card => {
+                const rarity = card.rarity || 1;
+                if (rarity >= 1 && rarity <= 5) {
+                    remainingRarities.add(rarity);
+                }
+            });
+            
+            // 第三步：计算有效稀有度权重总和
+            let totalRarityWeight = 0;
+            remainingRarities.forEach(r => {
+                totalRarityWeight += rarityWeights[r - 1] || 0;
+            });
+            
+            // 第四步：计算每张卡的最终权重（只考虑有效稀有度）
+            let results = [];
+            let totalWeightByRarity = {};
+            
+            for (let r = 1; r <= 5; r++) {
+                totalWeightByRarity[r] = 0;
+            }
+            
+            filteredCards.forEach(card => {
+                const rarity = card.rarity || 1;
+                if (!remainingRarities.has(rarity)) {
+                    // 该稀有度不在有效范围内
+                    card._finalWeight = 0;
+                    card._isEffective = false;
+                    return;
+                }
+                
+                const baseWeight = card.draw_weight || 100;
+                
+                // 计算标签权重调整
+                let tagAdjustment = 0;
+                const cardTags = card.tags || [];
+                cardTags.forEach(t => {
+                    if (tagWeightMap[t] !== undefined) {
+                        tagAdjustment += tagWeightMap[t];
+                    }
+                });
+                
+                const finalWeight = baseWeight + tagAdjustment;
+                card._finalWeight = finalWeight;
+                card._hasTagWeight = tagAdjustment !== 0;
+                card._isEffective = true;
+                
+                if (finalWeight > 0) {
+                    totalWeightByRarity[rarity] += finalWeight;
+                }
+            });
+            
+            // 第五步：计算最终概率
+            filteredCards.forEach(card => {
+                const rarity = card.rarity || 1;
+                const finalWeight = card._finalWeight || 0;
+                const totalWeight = totalWeightByRarity[rarity] || 1;
+                
+                // 稀有度原始基础概率（不因过滤而改变）
+                const totalRarityWeight = rarityWeights.reduce((a, b) => a + b, 0);
+                const rarityBaseProb = (rarityWeights[rarity - 1] || 0) / totalRarityWeight;
+                
+                // 该卡在该稀有度内的权重占比
+                const weightRatio = totalWeight > 0 ? (finalWeight / totalWeight) : 0;
+                
+                // 最终概率 = 稀有度基础概率 × 权重占比
+                const prob = rarityBaseProb * weightRatio * 100;
+                
+                const isZero = finalWeight <= 0;
+                
+                results.push({
+                    name: card.name,
+                    rarity: rarity,
+                    tags: (card.tags || []).join(', '),
+                    weight: finalWeight,
+                    hasTagWeight: card._hasTagWeight,
+                    probability: prob,
+                    isZero: isZero
+                });
+            });
+            
+            // 未被标签选中的卡，概率为0
+            allCards.forEach(card => {
+                const cardTags = card.tags || [];
+                const isFiltered = selectedTags.length > 0 && !cardTags.some(t => selectedTags.includes(t));
+                if (isFiltered) {
+                    results.push({
+                        name: card.name,
+                        rarity: card.rarity || 1,
+                        tags: (card.tags || []).join(', '),
+                        weight: 0,
+                        hasTagWeight: false,
+                        probability: 0,
+                        isZero: true
+                    });
+                }
+            });
+            
+            // 按概率降序排序
+            results.sort((a, b) => b.probability - a.probability);
+            
+            // 渲染结果
+            const container = document.getElementById('probabilityList');
+            if (results.length === 0) {
+                container.innerHTML = '<p style="color:#aaa;">暂无数据</p>';
+            } else {
+                const rarityColors = ['', '#ffffff', '#4caf50', '#2196f3', '#9c27b0', '#ff9800'];
+                container.innerHTML = results.map(r => {
+                    const rColor = r.rarity >= 5 ? '#ff9800' : rarityColors[r.rarity];
+                    return '<div class="prob-item ' + (r.isZero ? 'zero-prob' : '') + '">' +
+                        '<span class="card-name" style="color:' + rColor + '">' + r.name + '</span>' +
+                        '<span class="card-rarity">' + '⭐'.repeat(r.rarity) + '</span>' +
+                        '<span class="card-tags">' + (r.tags || '-') + '</span>' +
+                        '<span class="card-weight">权重:' + r.weight + '</span>' +
+                        '<span class="card-prob">' + r.probability.toFixed(2) + '%</span>' +
+                    '</div>';
+                }).join('');
+            }
+            
+            document.getElementById('probabilityPopup').classList.add('show');
+        }
+        
+        // 保存配置
+        function saveConfig() {
+            // card_pool 已在 renderPoolList 中实时更新，无需额外处理
+            
+            // 下载JSON文件
+            const data = JSON.stringify(currentConfig, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = document.getElementById('configFile').value;
+            a.click();
+            
+            alert('配置已保存！请将文件上传到服务器。');
+        }
+        
+        // 初始化
+        loadConfigList();
+    </script>
+    <div style="text-align:center;margin:20px 0;">
+        <a href="index.html" style="color:#aaa;text-decoration:none;padding:10px 20px;">🏠 返回主页</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统配置</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+        .header { background: #16213e; padding: 20px; border-bottom: 2px solid #0f3460; }
+        .header h1 { color: #e94560; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .panel { background: #16213e; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+        .panel h2 { color: #e94560; margin-bottom: 15px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #aaa; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #0f3460; background: #1a1a2e; color: #eee; border-radius: 5px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px; }
+        .btn-primary { background: #e94560; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #0f3460; }
+        th { background: #0f3460; }
+        .color-preview { display: inline-block; width: 20px; height: 20px; border-radius: 3px; vertical-align: middle; margin-right: 5px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚙️ 系统配置</h1>
+    </div>
+    <div class="container">
+        <div class="panel">
+            <h2>🎨 稀有度配置</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>稀有度</th>
+                        <th>名称</th>
+                        <th>颜色</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="rarityTable"></tbody>
+            </table>
+            <button class="btn btn-primary" style="margin-top:15px;" onclick="addRarity()">+ 添加稀有度</button>
+            <button class="btn btn-danger" style="margin-top:15px;" onclick="deleteHighestRarity()">删除最高稀有度</button>
+        </div>
+        <button class="btn btn-success" onclick="saveConfig()">保存配置</button>
+    </div>
+    <div style="text-align:center;margin:20px 0;">
+        <a href="index.html" style="color:#aaa;text-decoration:none;padding:10px 20px;">🏠 返回主页</a>
+    </div>
+    
+    <script>
+        let rarityConfig = [];
+        
+        async function loadConfig() {
+            try {
+                const res = await fetch('data/sys_config/rarity_config.json');
+                rarityConfig = await res.json();
+                renderTable();
+            } catch(e) {
+                console.error('加载配置失败:', e);
+                alert('加载配置失败');
+            }
+        }
+        
+        function renderTable() {
+            const tbody = document.getElementById('rarityTable');
+            tbody.innerHTML = rarityConfig.map((r, idx) => 
+                '<tr>' +
+                    '<td><input type="number" value="'+r.rarity+'" onchange="updateRarity('+idx+', \'rarity\', this.value)" style="width:60px;"></td>' +
+                    '<td><input type="text" value="'+r.name+'" onchange="updateRarity('+idx+', \'name\', this.value)"></td>' +
+                    '<td><input type="color" value="'+r.color+'" onchange="updateRarity('+idx+', \'color\', this.value)" style="width:50px;height:30px;"> ' + r.color + '</td>' +
+                '</tr>'
+            ).join('');
+        }
+        
+        // 删除最高稀有度
+        function deleteHighestRarity() {
+            if (rarityConfig.length <= 1) {
+                alert('至少需要保留一个稀有度');
+                return;
+            }
+            
+            // 找到最高稀有度
+            var maxRarityObj = rarityConfig.reduce(function(prev, curr) {
+                return (curr.rarity > prev.rarity) ? curr : prev;
+            });
+            
+            // 检查该稀有度下是否有卡牌
+            fetch('data/cards/NIKKE.json').then(function(res) { return res.json(); }).then(function(data) {
+                var hasCards = data.characters.some(function(c) { return c.rarity === maxRarityObj.rarity; });
+                if (hasCards) {
+                    alert('该稀有度（' + maxRarityObj.name + '）下已有卡牌，无法删除');
+                    return;
+                }
+                
+                if (!confirm('确定删除最高稀有度 ' + maxRarityObj.name + '（' + maxRarityObj.rarity + '⭐）？')) return;
+                
+                // 删除
+                rarityConfig = rarityConfig.filter(function(r) { return r.rarity !== maxRarityObj.rarity; });
+                renderTable();
+            }).catch(function(e) {
+                console.error('检查卡牌失败:', e);
+                alert('检查卡牌失败，无法删除');
+            });
+        }
+        
+        function updateRarity(idx, field, value) {
+            rarityConfig[idx][field] = field === 'rarity' ? parseInt(value) : value;
+        }
+        
+        function addRarity() {
+            const maxRarity = Math.max(...rarityConfig.map(r => r.rarity), 0);
+            rarityConfig.push({
+                rarity: maxRarity + 1,
+                name: '新稀有度',
+                color: '#888888'
+            });
+            renderTable();
+        }
+        
+        
+        function saveConfig() {
+            const data = JSON.stringify(rarityConfig, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'rarity_config.json';
+            a.click();
+            alert('配置已保存！请将文件上传到服务器。');
+        }
+        
+        loadConfig();
+    </script>
+</body>
+</html>
