@@ -32,6 +32,7 @@ body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: linear-gra
 .grid-10 .card-item { background: #16213e; border-radius: 8px; padding: 8px; text-align: center; }
 .grid-10 .card-item.rarity-4 { background: linear-gradient(135deg, #2d1b4e, #4a2c7a); border: 1px solid #9c27b0; }
 .grid-10 .card-item.rarity-5 { background: linear-gradient(135deg, #4a2c00, #7a4a00); border: 1px solid #ffd700; }
+.grid-10 .card-item.rarity-6 { background: linear-gradient(135deg, #4a0000, #7a0000); border: 1px solid #f32b2b; }
 .grid-10 .card-item .thumb { width: 80px; height: 80px; margin: 0 auto 5px; border-radius: 5px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
 .grid-10 .card-item .thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
 .grid-10 .card-item h4 { font-size: 11px; margin: 3px 0; }
@@ -86,11 +87,13 @@ body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: linear-gra
 .rarity-3 { color: #4169e1; }
 .rarity-4 { color: #9400d3; }
 .rarity-5 { color: #ffd700; }
+.rarity-6 { color: #f32b2b; }
 .card-name-1 { color: #ffffff; }
 .card-name-2 { color: #4caf50; }
 .card-name-3 { color: #2196f3; }
 .card-name-4 { color: #9c27b0; }
 .card-name-5 { color: #ff9800; font-weight: bold; }
+.card-name-6 { color: #f32b2b; font-weight: bold; }
 .card-popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto; justify-content: center; padding: 20px; }
 .card-popup.show { display: flex; }
 .popup-card { width: 95%; max-width: 750px; border-radius: 10px; padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); border: 2px solid rgba(233,69,96,0.4); position: relative; max-height: 90vh; overflow-y: auto; }
@@ -319,8 +322,8 @@ function doDraw() {
         return selectedTags.length === 0 || cardTags.some(function(t) { return selectedTags.includes(t); });
     });
     
-    // 2. 计算稀有度基础概率（基于权重数组动态长度）
-    var rarityCount = rarityWeights.length || 1;
+    // 动态从配置读取稀有度数量（使用权重数组长度作为真实来源）
+    var rarityCount = Math.max(rarityWeights.length || 1, rarityConfig.length || 1);
     var totalRarityWeight = rarityWeights.reduce(function(a, b) { return a + b; }, 0);
     
     // 3. 确定稀有度
@@ -429,22 +432,36 @@ if (percent >= 20) return '#00ff00';
 return '#ffffff';
 }
 
-// 获取稀有度名称
+// 获取稀有度名称 - 优先从 rarityConfig 动态读取，否则使用 fallback
 function getRarityName(rarity) {
-    if (!rarityConfig || rarityConfig.length === 0) {
-        return ['', '普通', '稀有', '杰出', '史诗', '传说'][rarity] || '未知';
+    // 优先从动态配置获取
+    if (rarityConfig && rarityConfig.length > 0) {
+        var config = rarityConfig.find(function(c) { return c.rarity === rarity; });
+        if (config) return config.name;
     }
-    var config = rarityConfig.find(function(c) { return c.rarity === rarity; });
-    return config ? config.name : '未知';
+    // Fallback: 构建动态 fallback 数组（支持任意稀有度数量）
+    var fallbackNames = ['', '普通', '稀有', '杰出', '史诗', '传说', '远古'];
+    // 动态扩展 fallback 数组以支持更多稀有度
+    var extendedFallnames = ['', '普通', '稀有', '杰出', '史诗', '传说', '远古', '神话', '至尊', '王者', '天使', '恶魔'];
+    if (rarity >= 1 && rarity < extendedFallnames.length) {
+        return extendedFallnames[rarity];
+    }
+    return '稀有度' + rarity;
 }
 
-// 获取稀有度颜色
+// 获取稀有度颜色 - 优先从 rarityConfig 动态读取，否则使用 fallback
 function getRarityColor(rarity) {
-    if (!rarityConfig || rarityConfig.length === 0) {
-        return ['', '#ffffff', '#4caf50', '#2196f3', '#9c27b0', '#ff9800'][rarity] || '#fff';
+    // 优先从动态配置获取
+    if (rarityConfig && rarityConfig.length > 0) {
+        var config = rarityConfig.find(function(c) { return c.rarity === rarity; });
+        if (config) return config.color;
     }
-    var config = rarityConfig.find(function(c) { return c.rarity === rarity; });
-    return config ? config.color : '#fff';
+    // Fallback: 动态颜色数组
+    var fallbackColors = ['', '#ffffff', '#4caf50', '#2196f3', '#9c27b0', '#ff9800', '#f32b2b', '#00ffff', '#ff00ff', '#ffa500', '#fffacd', '#ff6347'];
+    if (rarity >= 1 && rarity < fallbackColors.length) {
+        return fallbackColors[rarity];
+    }
+    return '#fff';
 }
 
 // 动态填充稀有度筛选下拉框
@@ -456,11 +473,10 @@ function populateRarityFilter() {
     select.innerHTML = '<option value="">全部稀有度</option>';
     
     // 动态添加稀有度选项
-    var stars = ['', '⭐', '⭐⭐', '⭐⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐⭐⭐', '⭐⭐⭐⭐⭐⭐'];
     rarityConfig.forEach(function(cfg) {
         var option = document.createElement('option');
         option.value = cfg.rarity;
-        var starStr = stars[cfg.rarity] || '⭐'.repeat(cfg.rarity);
+        var starStr = '⭐'.repeat(cfg.rarity);
         option.textContent = starStr + ' ' + cfg.name;
         select.appendChild(option);
     });
@@ -487,10 +503,11 @@ function updateAlbumProgress(allCards) {
     // 从 rarity_config.json 获取稀有度名称和颜色
     var rarityNames = [];
     var rarityColors = [];
+    var maxRarity = rarityConfig.length;
     
     if (rarityConfig && rarityConfig.length > 0) {
         rarityConfig.forEach(function(cfg) {
-            if (cfg.rarity >= 1 && cfg.rarity <= 5) {
+            if (cfg.rarity >= 1 && cfg.rarity <= maxRarity) {
                 rarityNames[cfg.rarity] = cfg.name;
                 rarityColors[cfg.rarity] = cfg.color;
             }
@@ -499,8 +516,8 @@ function updateAlbumProgress(allCards) {
     
     // Fallback if config not loaded yet
     if (rarityNames.length === 0) {
-        rarityNames = ['', '普通', '稀有', '杰出', '史诗', '传说'];
-        rarityColors = ['', '#ffffff', '#4caf50', '#2196f3', '#9c27b0', '#ff9800'];
+        rarityNames = ['', '普通', '稀有', '杰出', '史诗', '传说', '远古'];
+        rarityColors = ['', '#ffffff', '#4caf50', '#2196f3', '#9c27b0', '#ff9800', '#f32b2b'];
     }
     
     // 生成淡化的背景色
@@ -619,7 +636,7 @@ function renderAlbum() {
     
     if (rarityConfig && rarityConfig.length > 0) {
         rarityConfig.forEach(function(cfg) {
-            if (cfg.rarity >= 1 && cfg.rarity <= 5) {
+            if (cfg.rarity >= 1) {
                 rarityNames[cfg.rarity] = cfg.name;
                 rarityColors[cfg.rarity] = cfg.color;
             }
@@ -628,8 +645,8 @@ function renderAlbum() {
     
     // Fallback if config not loaded yet
     if (rarityNames.length === 0) {
-        rarityNames = ['', '普通', '稀有', '杰出', '史诗', '传说'];
-        rarityColors = ['', '#ffffff', '#4caf50', '#2196f3', '#9c27b0', '#ff9800'];
+        rarityNames = ['', '普通', '稀有', '杰出', '史诗', '传说', '远古'];
+        rarityColors = ['', '#ffffff', '#4caf50', '#2196f3', '#9c27b0', '#ff9800', '#f32b2b'];
     }
     
     // 生成淡化的背景色
@@ -681,7 +698,6 @@ function renderAlbum() {
 function showCardPopup(id) {
 var card = myCards[id];
 if (!card) return;
-var names = ['', '普通', '稀有', '杰出', '史诗', '传说'];
 var rarityColor = getRarityColor(card.rarity);
 var rarityName = getRarityName(card.rarity);
 document.getElementById('popupImage').src = getImageUrl(card);
@@ -836,7 +852,30 @@ loadData();
 
 function showResult10(cards) {
 var container = document.getElementById('resultCard10');
-var rarityColors = ['', '#ffffff', '#4caf50', '#2196f3', '#9c27b0', '#ff9800'];
+var rarityColors = getRarityColorsFromConfig();
+var rarityNames = getRarityNamesFromConfig();
+
+function getRarityColorsFromConfig() {
+    if (rarityConfig && rarityConfig.length > 0) {
+        var colors = [''];
+        rarityConfig.forEach(function(cfg) {
+            colors[cfg.rarity] = cfg.color;
+        });
+        return colors;
+    }
+    return ['', '#ffffff', '#4caf50', '#2196f3', '#9c27b0', '#ff9800', '#f32b2b'];
+}
+
+function getRarityNamesFromConfig() {
+    if (rarityConfig && rarityConfig.length > 0) {
+        var names = [''];
+        rarityConfig.forEach(function(cfg) {
+            names[cfg.rarity] = cfg.name;
+        });
+        return names;
+    }
+    return ['', '普通', '稀有', '杰出', '史诗', '传说', '远古'];
+}
 
 // Before updating, record which cards are newly obtained
 var wasNewBefore = {};

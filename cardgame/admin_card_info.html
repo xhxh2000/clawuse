@@ -490,10 +490,28 @@ let rarityConfig = [];
         let currentPage = 1;
         let pageSize = 25;
         
-        // 稀有度名称
+        // 稀有度名称 - 从配置动态获取
+        function getRarityName(rarity) {
+            if (rarityConfig && rarityConfig.length > 0) {
+                const cfg = rarityConfig.find(function(x) { return x.rarity === rarity; });
+                if (cfg) return cfg.name;
+            }
+            return getRarityName(rarity);
+        }
+        
+        // 稀有度颜色 - 从配置动态获取
+        function getRarityColor(rarity) {
+            if (rarityConfig && rarityConfig.length > 0) {
+                const cfg = rarityConfig.find(function(x) { return x.rarity === rarity; });
+                if (cfg) return cfg.color;
+            }
+            return rarityColors[rarity] || '#fff';
+        }
+        
+        // 稀有度名称（备用默认值）
         const rarityNames = ['', '普通', '稀有', '杰出', '史诗', '传说'];
         
-        // 稀有度颜色
+        // 稀有度颜色（备用默认值）
         const rarityColors = ['', '#ffffff', '#4caf50', '#2196f3', '#9c27b0', '#ff9800'];
         
         // 最大属性值（用于计算百分比）
@@ -604,7 +622,7 @@ let rarityConfig = [];
                     if (cfg) { color = cfg.color; name = cfg.rarity + '⭐ ' + cfg.name; }
                 } else {
                     color = rarityColors[r] || '#666';
-                    name = r + '⭐ ' + (rarityNames[r] || '未知');
+                    name = r + '⭐ ' + getRarityName(r);
                 }
                 return '<div style="display:flex;align-items:center;gap:5px;margin:3px 0;"><span style="width:12px;height:12px;background:'+color+';display:inline-block;"></span> ' + name + ': ' + count + '张 (' + pct + '%)</div>';
             }).join('');
@@ -710,12 +728,8 @@ let rarityConfig = [];
             document.getElementById('detailImage').src = getImageUrl(card);
             document.getElementById('detailName').textContent = card.name;
             document.getElementById('detailName').className = 'popup-name card-name-' + card.rarity;
-            var rarityName = '未知';
-            var rarityColor = rarityColors[card.rarity];
-            if (rarityConfig && rarityConfig.length > 0) {
-                var cfg = rarityConfig.find(function(r) { return r.rarity === card.rarity; });
-                if (cfg) { rarityName = cfg.name; rarityColor = cfg.color; }
-            } else { rarityName = rarityNames[card.rarity]; }
+            var rarityName = getRarityName(card.rarity);
+            var rarityColor = getRarityColor(card.rarity);
             document.getElementById('detailRarity').innerHTML = '<span style="color:' + rarityColor + '">' + '⭐'.repeat(card.rarity) + ' ' + rarityName + '</span>';
             document.getElementById('detailDesc').textContent = card.description || '';
             
@@ -821,19 +835,11 @@ let rarityConfig = [];
             }
             const displayMode = document.getElementById('cardDisplayMode').value;
             
-            function getRarityStyle(r) {
-                if (rarityConfig && rarityConfig.length > 0) {
-                    var cfg = rarityConfig.find(function(x) { return x.rarity === r; });
-                    if (cfg) return 'color:' + cfg.color;
-                }
-                return 'color:' + (rarityColors[r] || '#fff');
-            }
-            
             if (displayMode === 'image') {
                 list.innerHTML = chars.map(c => `
                     <div class="card-item rarity-${c.rarity}" onclick="showCardDetail(${c.id})">
                         <img src="${c.image || ''}" alt="${c.name}" style="width:100%;height:150px;object-fit:contain;margin-bottom:10px;">
-                        <h3 style="${getRarityStyle(c.rarity)}">${c.name}</h3>
+                        <h3 style="color:${getRarityColor(c.rarity)}">${c.name}</h3>
                         <div class="actions" onclick="event.stopPropagation()">
                             <button class="btn btn-primary btn-small" onclick="editCard(${c.id})">编辑</button>
                             <button class="btn btn-danger btn-small" onclick="deleteCard(${c.id})">删除</button>
@@ -843,7 +849,7 @@ let rarityConfig = [];
             } else {
                 list.innerHTML = chars.map(c => `
                     <div class="card-item rarity-${c.rarity}" onclick="showCardDetail(${c.id})">
-                        <h3 style="${getRarityStyle(c.rarity)}">${c.name}</h3>
+                        <h3 style="color:${getRarityColor(c.rarity)}">${c.name}</h3>
                         <p>${c.description || ''}</p>
                         <p>基础: HP${c.baseStats.hp} MP${c.baseStats.mp} 攻${c.baseStats.attack} 防${c.baseStats.defense} 敏${c.baseStats.agility}</p>
                         <p style="color:#aaa;font-size:12px;">权重: ${c.draw_weight || 100}</p>
@@ -882,14 +888,6 @@ let rarityConfig = [];
                 return sortDirection === 'asc' ? valA - valB : valB - valA;
             });
             
-            function getRarityStyle(r) {
-                if (rarityConfig && rarityConfig.length > 0) {
-                    var cfg = rarityConfig.find(function(x) { return x.rarity === r; });
-                    if (cfg) return cfg.color;
-                }
-                return rarityColors[r] || '#fff';
-            }
-            
             // 分页
             let displayData = sorted;
             let totalPages = 1;
@@ -903,12 +901,8 @@ let rarityConfig = [];
             // 渲染表格
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = displayData.map(c => {
-                var rColor = getRarityStyle(c.rarity);
-                var rName = rarityNames[c.rarity];
-                if (rarityConfig && rarityConfig.length > 0) {
-                    var cfg = rarityConfig.find(function(x) { return x.rarity === c.rarity; });
-                    if (cfg) rName = cfg.name;
-                }
+                var rColor = getRarityColor(c.rarity);
+                var rName = getRarityName(c.rarity);
                 return '<tr onclick="showCardDetail('+c.id+')">' +
                     '<td style="color:'+rColor+'">'+c.name+'</td>' +
                     '<td style="color:'+rColor+'">'+'⭐'.repeat(c.rarity)+' '+rName+'</td>' +
