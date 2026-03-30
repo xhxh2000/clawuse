@@ -10,15 +10,59 @@
         .links { display: flex; flex-direction: column; gap: 15px; }
         .links a { padding: 15px 30px; background: #0f3460; color: #eee; text-decoration: none; border-radius: 10px; font-size: 18px; text-align: center; transition: background 0.3s; }
         .links a:hover { background: #e94560; }
+        .user-info { position: fixed; top: 15px; right: 15px; text-align: right; }
+        .user-info span { display: block; color: #aaa; font-size: 14px; }
+        .user-info .username { color: #e94560; font-size: 16px; }
     </style>
 </head>
 <body>
+    <div class="user-info" id="userInfo"></div>
     <h1>🎮 卡牌游戏</h1>
     <div class="links">
-        <a href="draw_card.html">🎰 抽卡</a>
-        <a href="admin_card_info.html">⚙️ 卡牌管理</a>
-        <a href="admin_card_draw.html">🎯 抽卡管理</a>
-        <a href="admin_sys.html">🔧 系统配置</a>
+        <a href="draw_card.html" class="user-link">🎰 抽卡</a>
+        <a href="admin_card_info.html" class="admin-link">⚙️ 卡牌管理</a>
+        <a href="admin_card_draw.html" class="admin-link">🎯 抽卡管理</a>
+        <a href="login.html" id="loginLink">🔑 登录</a>
+        <a href="#" id="logoutLink" onclick="logout()">🚪 登出</a>
+        <a href="admin_users.html" class="admin-link">👥 用户管理</a>
+        <a href="admin_config.html" class="admin-link">🔧 🎯 抽卡配置</a>
     </div>
+
+    <script>
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+        
+        // 检查登录状态
+        const userId = localStorage.getItem('user_id');
+        const username = localStorage.getItem('username');
+        const role = localStorage.getItem('role');
+        
+        if (userId && username) {
+            // 已登录，显示用户信息和登出
+            document.getElementById('userInfo').innerHTML = 
+                '<span class="username">' + username + '</span>' +
+                '<span>元宝: ' + (localStorage.getItem('gold') || 0) + '</span>';
+            
+            document.getElementById('loginLink').style.display = 'none';
+            document.getElementById('logoutLink').style.display = 'inline';
+            
+            // 根据角色显示/隐藏链接
+            if (role === 'admin') {
+                // 管理员显示所有
+                document.querySelectorAll('.admin-link').forEach(el => el.style.display = 'inline');
+            } else {
+                // 普通用户隐藏管理链接
+                document.querySelectorAll('.admin-link').forEach(el => el.style.display = 'none');
+            }
+        } else {
+            // 未登录，只显示登录链接
+            document.getElementById('loginLink').style.display = 'inline';
+            document.getElementById('logoutLink').style.display = 'none';
+            document.querySelectorAll('.admin-link').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.user-link').forEach(el => el.style.display = 'none');
+        }
+    </script>
 </body>
 </html>

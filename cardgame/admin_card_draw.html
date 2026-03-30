@@ -148,26 +148,16 @@
         }
         async function loadConfigList() {
             try {
-                const res = await fetch('data/cards/');
-                const html = await res.text();
-                // 解析文件名
-                const matches = html.match(/([A-Za-z0-9_\u4e00-\u9faas]+)\.json/g);
-                const pools = matches ? matches.map(m => m.replace('.json', '')) : [];
-                
-                // 更新配置文件下拉框
-                const configSelect = document.getElementById('configFile');
-                configSelect.innerHTML = '<option value="draw_default.json">draw_default</option>';
-                
-                // 更新卡池下拉框
-                const poolSelect = document.getElementById('availablePools');
-                if (poolSelect) {
-                    poolSelect.innerHTML = pools.map(p => '<option value="'+p+'">'+p+'</option>').join('');
+                const res = await fetch("config_api.php", {method: "POST", body: new URLSearchParams("action=list")});
+                const r = await res.json();
+                if (r.code === 200) {
+                    const configSelect = document.getElementById("configFile");
+                    configSelect.innerHTML = r.configs.map(c => '<option value="'+c.config_name+'">'+c.config_name+'</option>').join("");
+                    const poolSelect = document.getElementById("availablePools");
+                    if (poolSelect) poolSelect.innerHTML = r.pools.map(p => '<option value="'+p+'">'+p+'</option>').join("");
+                    loadConfig("default");
                 }
-                
-                loadConfig('draw_default.json');
-            } catch(e) {
-                console.error('加载配置文件列表失败:', e);
-            }
+            } catch(e) { console.error(e); }
         }
         
         // 渲染卡池列表
@@ -213,8 +203,8 @@
         // 加载配置文件
         async function loadConfig(filename) {
             try {
-                const res = await fetch('data/card_draw_config/' + filename);
-                currentConfig = await res.json();
+                const fd = new FormData(); fd.append('action', 'get'); fd.append('config_name', filename); const res = await fetch('config_api.php', {method: 'POST', body: fd});
+                const r = await res.json(); currentConfig = r.code === 200 ? r.config : r;
                 
                 // 渲染标签权重
                 renderTagWeights();
