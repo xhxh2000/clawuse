@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理 - 卡牌游戏</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+        .header { background: #16213e; padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f3460; }
+        .header h1 { color: #e94560; }
+        .user-info span { color: #aaa; margin-left: 20px; }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        .toolbar { margin-bottom: 20px; display: flex; gap: 10px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
+        .btn-primary { background: #e94560; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        table { width: 100%; border-collapse: collapse; background: #16213e; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #0f3460; }
+        th { background: #0f3460; color: #aaa; }
+        tr:hover { background: #0f3460; }
+        
+        .status-1 { color: #28a745; }
+        .status-0 { color: #dc3545; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; }
+        .modal.show { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: #16213e; padding: 30px; border-radius: 15px; width: 90%; max-width: 500px; }
+        .modal-content h2 { color: #e94560; margin-bottom: 20px; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #aaa; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; background: #1a1a2e; color: #eee; border: 1px solid #0f3460; border-radius: 5px; }
+        
+        .gold-input { display: flex; gap: 10px; }
+        .gold-input input { flex: 1; }
+        .gold-input button { padding: 10px 15px; }
+        
+        .error { color: #dc3545; margin-top: 5px; }
+        .success { color: #28a745; margin-top: 5px; }
+        
+        .loading { text-align: center; padding: 50px; color: #aaa; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>👥 用户管理</h1>
+        <div>
+            <a href="index.html" style="color:#aaa;text-decoration:none;margin-right:20px;">🏠 返回主页</a>
+            <span class="user-info" id="userInfo"></span>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="toolbar">
+            <button class="btn btn-primary" onclick="loadUsers()">🔄 刷新</button>
+        </div>
+        
+        <div id="loading" class="loading">加载中...</div>
+        
+        <table id="userTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>用户名</th>
+                    <th>角色</th>
+                    <th>会员等级</th>
+                    <th>元宝</th>
+                    <th>经验</th>
+                    <th>状态</th>
+                    <th>注册时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="userList"></tbody>
+        </table>
+    </div>
+    
+    <!-- 编辑弹窗 -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <h2>编辑用户</h2>
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="editUsername" readonly style="opacity:0.6;">
+            </div>
+            <div class="form-group">
+                <label>元宝调整</label>
+                <div class="gold-input">
+                    <input type="number" id="editGoldChange" placeholder="正数增加，负数减少">
+                    <button class="btn btn-success" onclick="updateGold()">确认</button>
+                </div>
+                <div id="goldResult"></div>
+            </div>
+            <div class="form-group">
+                <label>货币调整</label>
+                <select id="editCurrencyType" onchange="loadWalletAmount()">
+                </select>
+                <div class="gold-input">
+                    <input type="number" id="editCurrencyChange" placeholder="正数增加，负数减少">
+                    <button class="btn btn-success" onclick="updateCurrency()">确认</button>
+                </div>
+                <div id="currencyResult"></div>
+            </div>
+            <div class="form-group">
+                <label>角色</label>
+                <select id="editRole">
+                    <option value="user">普通用户</option>
+                    <option value="admin">管理员</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>会员等级</label>
+                <select id="editLevel"></select>
+            </div>
+            <div class="form-group">
+                <label>状态</label>
+                <select id="editStatus">
+                    <option value="1">正常</option>
+                    <option value="0">禁用</option>
+                </select>
+            </div>
+            <div class="toolbar">
+                <button class="btn btn-success" onclick="saveUser()">💾 保存</button>
+                <button class="btn btn-danger" onclick="deleteUser()">🗑️ 删除用户</button>
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let memberLevels = [];
+        let currentUserId = null;
+        
+        // 检查登录
+        const userId = localStorage.getItem('user_id');
+        const username = localStorage.getItem('username');
+        const role = localStorage.getItem('role');
+        
+        if (!userId || role !== 'admin') {
+            alert('无权限访问');
+            window.location.href = 'login.html';
+        }
+        
+        document.getElementById('userInfo').textContent = username;
+        
+        // 加载用户列表
+        async function loadUsers() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('userTable').style.display = 'none';
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'list');
+                
+                const response = await fetch('user_api.php', { method: 'POST', body: formData });
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    memberLevels = result.member_levels;
+                    renderUsers(result.users);
+                    renderLevelSelect();
+                } else {
+                    alert(result.msg);
+                }
+            } catch (e) {
+                alert('加载失败: ' + e.message);
+            }
+            
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        function renderLevelSelect() {
+            const select = document.getElementById('editLevel');
+            select.innerHTML = memberLevels.map(m => 
+                '<option value="' + m.level + '">' + m.level + ' - ' + m.name + '</option>'
+            ).join('');
+        }
+        
+        function renderUsers(users) {
+            const tbody = document.getElementById('userList');
+            tbody.innerHTML = users.map(u => `
+                <tr>
+                    <td>${u.id}</td>
+                    <td>${u.username}</td>
+                    <td>${u.role === 'admin' ? '👑 管理员' : '👤 用户'}</td>
+                    <td>${getLevelName(u.level)}</td>
+                    <td>${u.gold}</td>
+                    <td>${u.exp}</td>
+                    <td class="status-${u.status}">${u.status === 1 ? '✅ 正常' : '❌ 禁用'}</td>
+                    <td>${u.created_at}</td>
+                    <td>
+                        <button class="btn btn-primary" onclick="editUser(${u.id})">编辑</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            document.getElementById('userTable').style.display = 'table';
+        }
+        
+        function getLevelName(level) {
+            const m = memberLevels.find(x => x.level === level);
+            return m ? m.name : 'Lv.' + level;
+        }
+        
+        // 编辑用户
+        async function editUser(userId) {
+            currentUserId = userId;
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'get');
+                formData.append('user_id', userId);
+                
+                const response = await fetch('user_api.php', { method: 'POST', body: formData });
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    const u = result.user;
+                    document.getElementById('editUsername').value = u.username;
+                    document.getElementById('editRole').value = u.role;
+                    document.getElementById('editLevel').value = u.level;
+                    document.getElementById('editStatus').value = u.status;
+                    document.getElementById('editGoldChange').value = '';
+                    document.getElementById('goldResult').textContent = '当前: ' + u.gold + '元宝';
+                    document.getElementById('editCurrencyChange').value = '';
+                    document.getElementById('currencyResult').textContent = '';
+                    loadCurrencyOptions();
+                    
+                    document.getElementById('editModal').classList.add('show');
+                } else {
+                    alert(result.msg);
+                }
+            } catch (e) {
+                alert('加载失败: ' + e.message);
+            }
+        }
+        
+        // 更新元宝
+        async function updateGold() {
+            const change = parseInt(document.getElementById('editGoldChange').value) || 0;
+            if (change === 0) return;
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'update_gold');
+                formData.append('user_id', currentUserId);
+                formData.append('change', change);
+                
+                const response = await fetch('user_api.php', { method: 'POST', body: formData });
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    document.getElementById('goldResult').innerHTML = '<span class="success">成功！当前: ' + result.gold + '元宝</span>';
+                } else {
+                    document.getElementById('goldResult').innerHTML = '<span class="error">' + result.msg + '</span>';
+                }
+            } catch (e) {
+                document.getElementById('goldResult').innerHTML = '<span class="error">错误: ' + e.message + '</span>';
+            }
+        }
+        
+        let currencyList = [];
+        async function loadCurrencyOptions() {
+            try {
+                const res = await fetch('game_api.php?action=get_currencies');
+                const d = await res.json();
+                if (d.code === 200 && d.currencies) {
+                    currencyList = d.currencies;
+                    const select = document.getElementById('editCurrencyType');
+                    select.innerHTML = currencyList.map(c => 
+                        '<option value="'+c.id+'">'+c.name+'</option>'
+                    ).join('');
+                    loadWalletAmount();
+                }
+            } catch(e) { console.error('加载货币列表失败:', e); }
+        }
+        
+        async function loadWalletAmount() {
+            const currencyId = document.getElementById('editCurrencyType').value;
+            try {
+                const res = await fetch('game_api.php?action=get_wallet&user_id=' + currentUserId + '&currency_id=' + currencyId);
+                const d = await res.json();
+                if (d.code === 200) {
+                    document.getElementById('currencyResult').textContent = '当前: ' + (d.amount || 0);
+                }
+            } catch(e) { document.getElementById('currencyResult').textContent = '加载失败'; }
+        }
+        
+        async function updateCurrency() {
+            const currencyId = document.getElementById('editCurrencyType').value;
+            const change = parseInt(document.getElementById('editCurrencyChange').value) || 0;
+            if (change === 0) return;
+            
+            try {
+                const fd = new FormData();
+                fd.append('user_id', currentUserId);
+                fd.append('currency_id', currencyId);
+                fd.append('amount', change);
+                
+                const res = await fetch('game_api.php?action=adjust_wallet', { method: 'POST', body: fd });
+                const r = await res.json();
+                
+                if (r.code === 200) {
+                    document.getElementById('currencyResult').innerHTML = '<span class="success">成功！当前: ' + r.new_amount + '</span>';
+                    loadWalletAmount();
+                } else {
+                    document.getElementById('currencyResult').innerHTML = '<span class="error">' + r.msg + '</span>';
+                }
+            } catch (e) {
+                document.getElementById('currencyResult').innerHTML = '<span class="error">错误: ' + e.message + '</span>';
+            }
+        }
+        
+        // 保存用户
+        async function saveUser() {
+            const role = document.getElementById('editRole').value;
+            const level = parseInt(document.getElementById('editLevel').value);
+            const status = parseInt(document.getElementById('editStatus').value);
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'update_user');
+                formData.append('user_id', currentUserId);
+                formData.append('role', role);
+                formData.append('level', level);
+                formData.append('status', status);
+                
+                const response = await fetch('user_api.php', { method: 'POST', body: formData });
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    alert('保存成功');
+                    closeModal();
+                    loadUsers();
+                } else {
+                    alert(result.msg);
+                }
+            } catch (e) {
+                alert('保存失败: ' + e.message);
+            }
+        }
+        
+        // 删除用户
+        async function deleteUser() {
+            if (!confirm('确定删除此用户？此操作不可恢复！')) return;
+            if (parseInt(currentUserId) === parseInt(userId)) {
+                alert('不能删除自己');
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'delete');
+                formData.append('user_id', currentUserId);
+                formData.append('current_user', username);
+                
+                const response = await fetch('user_api.php', { method: 'POST', body: formData });
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    alert('删除成功');
+                    closeModal();
+                    loadUsers();
+                } else {
+                    alert(result.msg);
+                }
+            } catch (e) {
+                alert('删除失败: ' + e.message);
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('editModal').classList.remove('show');
+            currentUserId = null;
+        }
+        
+        // 初始化
+        loadUsers();
+    </script>
+</body>
+</html>
