@@ -1,6 +1,5 @@
 # 备份文件
-*-.html
-*_*.html
+*-backup*.html
 
 # 临时文件
 *.tmp

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抽卡配置管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+        .header { background: #16213e; padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f3460; }
+        .header h1 { color: #e94560; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .toolbar { margin-bottom: 20px; display: flex; gap: 10px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
+        .btn-primary { background: #e94560; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        table { width: 100%; border-collapse: collapse; background: #16213e; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #0f3460; }
+        th { background: #0f3460; color: #aaa; }
+        tr:hover { background: #0f3460; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; }
+        .modal.show { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: #16213e; padding: 30px; border-radius: 15px; width: 90%; max-width: 600px; }
+        .modal-content h2 { color: #e94560; margin-bottom: 20px; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #aaa; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; background: #1a1a2e; color: #eee; border: 1px solid #0f3460; border-radius: 5px; }
+        
+        .pool-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px; }
+        .pool-tag { padding: 5px 12px; background: #0f3460; border-radius: 15px; cursor: pointer; font-size: 13px; }
+        .pool-tag.selected { background: #e94560; }
+        
+        .result { padding: 10px; margin-top: 10px; border-radius: 5px; display: none; }
+        .result.success { background: rgba(40,167,69,0.2); color: #7fff7f; }
+        .result.error { background: rgba(220,53,69,0.2); color: #ff6b7a; }
+        
+        .loading { text-align: center; padding: 50px; color: #aaa; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 抽卡配置管理</h1>
+        <a href="index.html" style="color:#aaa;text-decoration:none;">🏠 返回主页</a>
+    </div>
+    
+    <div class="container">
+        <div class="toolbar">
+            <button class="btn btn-primary" onclick="loadConfigs()">🔄 刷新</button>
+            <button class="btn btn-success" onclick="showAddModal()">➕ 新增配置</button>
+        </div>
+        
+        <div id="loading" class="loading">加载中...</div>
+        
+        <table id="configTable">
+            <thead>
+                <tr>
+                    <th>配置名称</th>
+                    <th>卡池</th>
+                    <th>抽卡消耗</th>
+                    <th>稀有度权重</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="configList"></tbody>
+        </table>
+    </div>
+    
+    <!-- 编辑弹窗 -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">编辑配置</h2>
+            <input type="hidden" id="editConfigName">
+            
+            <div class="form-group">
+                <label>配置名称</label>
+                <input type="text" id="configName" disabled>
+            </div>
+            
+            <div class="form-group">
+                <label>卡池（可多选）</label>
+                <div class="pool-list" id="poolList"></div>
+            </div>
+            
+            <div class="form-group">
+                <label>稀有度权重（逗号分隔，如：5,10,50,40,0.5,1）</label>
+                <input type="text" id="rarityWeight" placeholder="5,10,50,40,0.5,1">
+            </div>
+            
+            <div class="form-group">
+                <label>标签权重（JSON格式，如[{"tag1":10},{"tag2":5}]）</label>
+                <input type="text" id="tagWeight" placeholder="[]">
+            </div>
+            
+            <div class="form-group">
+                <label>抽卡消耗（元宝）</label>
+                <input type="number" id="drawCost" value="100">
+            </div>
+            
+            <div id="saveResult" class="result"></div>
+            
+            <div class="toolbar">
+                <button class="btn btn-success" onclick="saveConfig()">💾 保存</button>
+                <button class="btn btn-danger" onclick="deleteConfig()">🗑️ 删除</button>
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allPools = [];
+        
+        // 检查登录
+        const userId = localStorage.getItem('user_id');
+        const role = localStorage.getItem('role');
+        if (!userId || role !== 'admin') {
+            alert('无权限访问');
+            window.location.href = 'login.html';
+        }
+        
+        // 加载配置列表
+        async function loadConfigs() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('configTable').style.display = 'none';
+            
+            try {
+                const fd = new FormData();
+                fd.append('action', 'list');
+                
+                const res = await fetch('config_api.php', { method: 'POST', body: fd });
+                const r = await res.json();
+                
+                if (r.code === 200) {
+                    allPools = r.pools || [];
+                    renderConfigs(r.configs);
+                } else {
+                    alert(r.msg);
+                }
+            } catch(e) {
+                alert('加载失败: ' + e.message);
+            }
+            
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        function renderConfigs(configs) {
+            const tbody = document.getElementById('configList');
+            tbody.innerHTML = configs.map(c => `
+                <tr>
+                    <td>${c.config_name}</td>
+                    <td>${Array.isArray(c.card_pool) ? c.card_pool.join(', ') : c.card_pool}</td>
+                    <td>${c.draw_cost} 元宝</td>
+                    <td>${Array.isArray(c.rarity_weight) ? c.rarity_weight.join(', ') : c.rarity_weight}</td>
+                    <td>${Array.isArray(c.tag_weight) ? JSON.stringify(c.tag_weight) : c.tag_weight}</td>
+                    <td>
+                        <button class="btn btn-primary" onclick="editConfig('${c.config_name}')">编辑</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            document.getElementById('configTable').style.display = 'table';
+        }
+        
+        // 显示新增弹窗
+        function showAddModal() {
+            document.getElementById('modalTitle').textContent = '新增配置';
+            document.getElementById('editConfigName').value = '';
+            document.getElementById('configName').value = '';
+            document.getElementById('configName').disabled = false;
+            document.getElementById('rarityWeight').value = '5,10,50,40,0.5,1';
+            document.getElementById('drawCost').value = '100';
+            renderPoolList([]);
+            document.getElementById('saveResult').style.display = 'none';
+            document.getElementById('editModal').classList.add('show');
+        }
+        
+        // 编辑配置
+        async function editConfig(name) {
+            document.getElementById('modalTitle').textContent = '编辑配置';
+            document.getElementById('editConfigName').value = name;
+            document.getElementById('configName').value = name;
+            document.getElementById('configName').disabled = name === 'default';
+            
+            try {
+                const fd = new FormData();
+                fd.append('action', 'get');
+                fd.append('config_name', name);
+                
+                const res = await fetch('config_api.php', { method: 'POST', body: fd });
+                const r = await res.json();
+                
+                if (r.code === 200) {
+                    const c = r.config;
+                    document.getElementById('rarityWeight').value = Array.isArray(c.rarity_weight) ? c.rarity_weight.join(',') : c.rarity_weight;
+                    document.getElementById('drawCost').value = c.draw_cost || 100;
+                    renderPoolList(c.card_pool || []);
+                }
+            } catch(e) {
+                alert('加载失败: ' + e.message);
+            }
+            
+            document.getElementById('saveResult').style.display = 'none';
+            document.getElementById('editModal').classList.add('show');
+        }
+        
+        // 渲染卡池选择
+        function renderPoolList(selected) {
+            const el = document.getElementById('poolList');
+            if (!allPools.length) {
+                el.innerHTML = '<span style="color:#666">无可用卡池</span>';
+                return;
+            }
+            
+            selected = selected || [];
+            el.innerHTML = allPools.map(p => `
+                <span class="pool-tag ${selected.includes(p) ? 'selected' : ''}" 
+                      onclick="togglePool(this)">${p}</span>
+            `).join('');
+        }
+        
+        function togglePool(el) {
+            el.classList.toggle('selected');
+        }
+        
+        // 获取选中的卡池
+        function getSelectedPools() {
+            const selected = [];
+            document.querySelectorAll('.pool-tag.selected').forEach(el => {
+                selected.push(el.textContent);
+            });
+            return selected;
+        }
+        
+        // 保存配置
+        async function saveConfig() {
+            const name = document.getElementById('configName').value.trim();
+            const isNew = !document.getElementById('editConfigName').value;
+            
+            if (!name) {
+                showResult('配置名称不能为空', true);
+                return;
+            }
+            
+            // 检查重名
+            if (isNew) {
+                try {
+                    const checkFd = new FormData();
+                    checkFd.append('action', 'get');
+                    checkFd.append('config_name', name);
+                    const checkRes = await fetch('config_api.php', { method: 'POST', body: checkFd });
+                    const checkR = await checkRes.json();
+                    if (checkR.code === 200) {
+                        showResult('配置名称已存在', true);
+                        return;
+                    }
+                } catch(e) {}
+            }
+            
+            const pools = getSelectedPools();
+            const rarityWeight = document.getElementById('rarityWeight').value;
+            const drawCost = document.getElementById('drawCost').value;
+            
+            try {
+                const fd = new FormData();
+                fd.append('action', 'save');
+                fd.append('config_name', name);
+                fd.append('card_pool', JSON.stringify(pools));
+                fd.append('rarity_weight', JSON.stringify(rarityWeight.split(',').map(n => parseFloat(n) || 0)));
+                fd.append('draw_cost', drawCost);
+                
+                const res = await fetch('config_api.php', { method: 'POST', body: fd });
+                const r = await res.json();
+                
+                if (r.code === 200) {
+                    showResult('保存成功', false);
+                    setTimeout(() => {
+                        closeModal();
+                        loadConfigs();
+                    }, 1000);
+                } else {
+                    showResult(r.msg, true);
+                }
+            } catch(e) {
+                showResult('保存失败: ' + e.message, true);
+            }
+        }
+        
+        // 删除配置
+        async function deleteConfig() {
+            const name = document.getElementById('configName').value;
+            
+            if (name === 'default') {
+                showResult('默认配置不能删除', true);
+                return;
+            }
+            
+            if (!confirm('确定删除配置 "' + name + '"？此操作不可恢复！')) {
+                return;
+            }
+            
+            try {
+                const fd = new FormData();
+                fd.append('action', 'delete');
+                fd.append('config_name', name);
+                
+                const res = await fetch('config_api.php', { method: 'POST', body: fd });
+                const r = await res.json();
+                
+                if (r.code === 200) {
+                    closeModal();
+                    loadConfigs();
+                } else {
+                    showResult(r.msg, true);
+                }
+            } catch(e) {
+                showResult('删除失败: ' + e.message, true);
+            }
+        }
+        
+        function showResult(msg, isError) {
+            const el = document.getElementById('saveResult');
+            el.textContent = msg;
+            el.className = 'result ' + (isError ? 'error' : 'success');
+            el.style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+        
+        // 初始化
+        loadConfigs();
+    </script>
+</body>
+</html>
