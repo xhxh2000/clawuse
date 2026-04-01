@@ -1,14 +1,5 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<script>
-        // 检查登录
-        const userId = localStorage.getItem("user_id");
-        const userName = localStorage.getItem("username");
-        if (!userId) {
-            alert("请先登录！");
-            window.location.href = "login.html";
-        }
-    </script>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -221,7 +212,7 @@ body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: linear-gra
 var gameData = null;
 var drawConfig = { rarity_weight: [], tag: [], tag_weight: [] };
 var rarityConfig = [];
-var myGold = parseInt(localStorage.getItem('gold')) || 1000;
+var myGold = 1000;
 var myCards = {};
 var isDrawing = false;
 var currentPool = "NIKKE";
@@ -247,15 +238,6 @@ if (myGold < cost) { alert('元宝不足！'); return; }
 isDrawing = true;
 myGold -= cost;
 document.getElementById('goldAmount').textContent = myGold;
-localStorage.setItem('gold', myGold);
-// 保存到数据库
-try {
-    const fd = new FormData();
-    fd.append('action', 'update_gold');
-    fd.append('user_id', userId);
-    fd.append('change', myGold - 1000);
-    fetch('auth.php', {method: 'POST', body: fd});
-} catch(e) {}
 var cardBack = document.getElementById('cardBack');
 var resultCard = document.getElementById('resultCard');
 var resultActions = document.getElementById('resultActions');
@@ -270,15 +252,6 @@ cardBack.style.display = 'none';
 showResult(card);
 updateAlbumProgress(allCharacters);
 if (currentView === 'album') renderAlbum();
-// 保存卡牌到数据库
-try {
-    const fd = new FormData();
-    fd.append('action', 'save_card');
-    fd.append('user_id', userId);
-    fd.append('card_id', card.id);
-    fd.append('cost', cost);
-    fetch('draw_api.php', {method: 'POST', body: fd});
-} catch(e) {}
 isDrawing = false;
 }, 2000);
 }
@@ -304,15 +277,6 @@ if (myGold < cost10) { alert('元宝不足！'); return; }
 isDrawing = true;
 myGold -= cost10;
 document.getElementById('goldAmount').textContent = myGold;
-localStorage.setItem('gold', myGold);
-// 保存到数据库
-try {
-    const fd = new FormData();
-    fd.append('action', 'update_gold');
-    fd.append('user_id', userId);
-    fd.append('change', myGold - 1000);
-    fetch('auth.php', {method: 'POST', body: fd});
-} catch(e) {}
 var cardBack = document.getElementById('cardBack');
 var resultCard = document.getElementById('resultCard');
 var resultCard10 = document.getElementById('resultCard10');
@@ -332,17 +296,6 @@ cardBack.style.display = 'none';
 showResult10(cards);
 updateAlbumProgress(allCharacters);
 renderAlbum();
-// 保存卡牌到数据库
-cards.forEach(function(card) {
-    try {
-        const fd = new FormData();
-        fd.append('action', 'save_card');
-        fd.append('user_id', userId);
-        fd.append('card_id', card.id);
-        fd.append('cost', cost10 / 10);
-        fetch('draw_api.php', {method: 'POST', body: fd});
-    } catch(e) {}
-});
 var cost10 = Math.floor((gameData.settings.drawCost || 100) * 10 * 0.9);
 resultActions.innerHTML = '<button class="draw-btn draw-btn-10" onclick="drawCard10()">再来十连</button><button class="draw-btn" onclick="resetDraw()">返回</button><p class="cost-text">十连消耗 <span id="drawCost10">'+cost10+'</span> 元宝 (9折)</p>';
 resultActions.classList.remove('hidden');
@@ -498,7 +451,7 @@ function getRarityName(rarity) {
 
 // 获取稀有度颜色 - 优先从 rarityConfig 动态读取，否则使用 fallback
 function getRarityColor(rarity) {
-    // 优先从动态配置获取
+    // 优先从动态配置获���
     if (rarityConfig && rarityConfig.length > 0) {
         var config = rarityConfig.find(function(c) { return c.rarity === rarity; });
         if (config) return config.color;
@@ -865,39 +818,34 @@ if (minStats.agility === Infinity) minStats.agility = 0;
 }
 
 function loadData() {
-    // 从数据库加载所有数据
-    fetch('game_api.php', {
-        method: 'POST',
-        body: new URLSearchParams('action=get_all')
-    }).then(function(res) { return res.json(); }).then(function(result) {
-        if (result.code === 200) {
-            // 设置稀有度配置
-            rarityConfig = result.rarity || [];
-            populateRarityFilter();
-            
-            // 设置游戏数据
-            gameData = {
-                settings: result.settings || {drawCost: 100, currencyName: '元宝'},
-                characters: result.characters || []
-            };
-            allCharacters = gameData.characters || [];
-            
-            // 设置抽卡配置
-            drawConfig = result.config || {};
-            
-            // 更新UI
-            calcMaxStats();
-            document.getElementById('goldAmount').textContent = myGold;
-            document.getElementById('drawCost').textContent = gameData.settings.drawCost || 100;
-            document.getElementById('drawCost10').textContent = Math.floor((gameData.settings.drawCost || 100) * 10 * 0.9);
-            renderMyCards();
-            renderAlbum();
-            console.log('数据加载完成 from DB');
-        }
+    // 加载稀有度配置
+    fetch('data/sys_config/rarity_config.json').then(function(res) { return res.json(); }).then(function(config) {
+        rarityConfig = config;
+        populateRarityFilter();
     }).catch(function(e) {
-        console.error('加载数据失败:', e);
-        // 备用：从JSON加载
-        return loadData_backup();
+        console.error('加载稀有度配置失败:', e);
+        rarityConfig = [];
+    });
+    
+    // 加载卡池数据
+    fetch('data/cards/' + currentPool + '.json').then(function(res) { return res.json(); }).then(function(data) {
+        gameData = data;
+        allCharacters = data.characters || [];
+        calcMaxStats();
+        document.getElementById('goldAmount').textContent = myGold;
+        document.getElementById('drawCost').textContent = data.settings.drawCost || 100;
+        document.getElementById('drawCost10').textContent = Math.floor((data.settings.drawCost || 100) * 10 * 0.9);
+        renderMyCards();
+        renderAlbum();
+        
+        // 加载抽卡配置
+        return fetch('data/card_draw_config/draw_default.json');
+    }).then(function(res) { return res.json(); }).then(function(config) {
+        console.log('抽卡配置加载:', config);
+        drawConfig = config;
+    }).catch(function(e) { 
+        console.error(e); 
+        drawConfig = { rarity_weight: [], tag: [], tag_weight: [] };
     });
 }
 loadData();
@@ -972,35 +920,5 @@ renderMyCards();
     <div style="text-align:center;margin:20px 0;">
         <a href="index.html" style="color:#aaa;text-decoration:none;padding:10px 20px;">🏠 返回主页</a>
     </div>
-    <script>
-        // 检查登录
-        const userId = localStorage.getItem('user_id');
-        const username = localStorage.getItem('username');
-        if (!userId) {
-            alert('请先登录！');
-            window.location.href = 'login.html';
-        }
-        // 显示用户名
-        if (username) {
-            var headerHtml = document.querySelector('.header').innerHTML;
-            document.querySelector('.header').innerHTML = headerHtml + '<span style="color:#aaa;font-size:14px;">' + username + '</span>';
-        }
-    </script>
-    <script>
-        // 离开页面时同步元宝到数据库
-        window.addEventListener('beforeunload', async function() {
-            const userId = localStorage.getItem('user_id');
-            const gold = localStorage.getItem('gold');
-            if (userId </body></body> gold) {
-                try {
-                    const formData = new FormData();
-                    formData.append('action', 'update_gold');
-                    formData.append('user_id', userId);
-                    formData.append('change', gold - 1000); // 更新到绝对值
-                    navigator.sendBeacon('auth.php', new URLSearchParams(formData));
-                } catch(e) {}
-            }
-        });
-    </script>
 </body>
 </html>

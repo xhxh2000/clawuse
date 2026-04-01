@@ -70,6 +70,21 @@
                 </select>
             </div>
         </div>
+
+        <div class="panel">
+            <h2>💰 抽卡消耗</h2>
+            <div style="display:flex;gap:20px;align-items:center;">
+                <div style="flex:1;">
+                    <label style="color:#888;display:block;margin-bottom:5px;">单抽消耗：</label>
+                    <input type="number" id="dcCost" style="width:100%;padding:8px;background:#1a1a2e;color:#ffd700;border:1px solid #0f3460;border-radius:5px;font-size:18px;" value="100" onchange="currentConfig.draw_cost = this.value">
+                </div>
+                <div style="flex:1;">
+                    <label style="color:#888;display:block;margin-bottom:5px;">货币类型：</label>
+                    <select id="dcCurrency" style="width:100%;padding:8px;background:#1a1a2e;color:#ffd700;border:1px solid #0f3460;border-radius:5px;font-size:18px;" onchange="currentConfig.currency_id = this.value">
+                    </select>
+                </div>
+            </div>
+        </div>
         
         <div class="panel">
             <h2>🎯 卡池列表</h2>
@@ -205,6 +220,19 @@
             try {
                 const fd = new FormData(); fd.append('action', 'get'); fd.append('config_name', filename); const res = await fetch('config_api.php', {method: 'POST', body: fd});
                 const r = await res.json(); currentConfig = r.code === 200 ? r.config : r;
+                
+                // 显示抽卡消耗
+                document.getElementById('dcCost').value = currentConfig.draw_cost || 100;
+                const currSelect = document.getElementById('dcCurrency');
+                if (currSelect.options.length === 0) {
+                    const cRes = await fetch('config_api.php?action=list');
+                    const cData = await cRes.json();
+                    const currencies = cData.currencies || [];
+                    currSelect.innerHTML = currencies.map(c => 
+                        `<option value="${c.id}">${c.name}</option>`
+                    ).join('');
+                }
+                currSelect.value = currentConfig.currency_id || 2;
                 
                 // 渲染标签权重
                 renderTagWeights();
@@ -520,19 +548,35 @@
             document.getElementById('probabilityPopup').classList.add('show');
         }
         
-        // 保存配置
-        function saveConfig() {
-            // card_pool 已在 renderPoolList 中实时更新，无需额外处理
-            
-            // 下载JSON文件
-            const data = JSON.stringify(currentConfig, null, 2);
-            const blob = new Blob([data], { type: 'application/json' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = document.getElementById('configFile').value;
-            a.click();
-            
-            alert('配置已保存！请将文件上传到服务器。');
+        // 保存配置 - 写入数据库
+        async function saveConfig() {
+            try {
+                // 同步UI数据到currentConfig
+                currentConfig.draw_cost = document.getElementById('dcCost').value;
+                currentConfig.currency_id = document.getElementById('dcCurrency').value;
+                
+                const fd = new FormData();
+                fd.append('action', 'save');
+                fd.append('config_name', currentConfig.config_name);
+                fd.append('card_pool', JSON.stringify(currentConfig.card_pool || []));
+                fd.append('rarity_weight', JSON.stringify(currentConfig.rarity_weight || []));
+                fd.append('tag', JSON.stringify(currentConfig.tag || []));
+                fd.append('tag_weight', JSON.stringify(currentConfig.tag_weight || []));
+                fd.append('draw_cost', currentConfig.draw_cost || 100);
+                fd.append('currency_id', currentConfig.currency_id || 2);
+                
+                const res = await fetch('config_api.php', {method: 'POST', body: fd});
+                const r = await res.json();
+                
+                if (r.code === 200) {
+                    alert('保存成功！');
+                    loadConfig(currentConfig.config_name);
+                } else {
+                    alert('保存失败: ' + r.msg);
+                }
+            } catch(e) {
+                alert('保存失败: ' + e.message);
+            }
         }
         
         // 初始化

@@ -24,7 +24,15 @@ if($action=='list') {
         $configs[] = $row;
     }
     
-    // 从数据库 cards.pool_name 获取唯一卡池
+    // 货币列表
+    $stmt = $db->prepare('SELECT * FROM currency');
+    $result = $stmt->execute();
+    $currencies = [];
+    while($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        $currencies[] = $row;
+    }
+    
+    // 卡池列表
     $stmt = $db->prepare('SELECT DISTINCT pool_name FROM cards WHERE pool_name != "" ORDER BY pool_name');
     $result = $stmt->execute();
     $pools = [];
@@ -32,7 +40,7 @@ if($action=='list') {
         $pools[] = $row[0];
     }
     
-    out(200,'ok',['configs'=>$configs,'pools'=>$pools]);
+    out(200,'ok',['configs'=>$configs,'currencies'=>$currencies,'pools'=>$pools]);
 }
 
 elseif($action=='get') {
@@ -64,11 +72,12 @@ elseif($action=='save') {
     $stmt = $db->prepare('SELECT id FROM draw_config WHERE config_name = :n');
     $stmt->bindValue(':n',$name);
     $exists = $stmt->execute()->fetchArray();
+    $cid = intval($_POST['currency_id'] ?? 2);
     
     if($exists) {
-        $stmt = $db->prepare('UPDATE draw_config SET card_pool=:cp,rarity_weight=:rw,tag=:tag,tag_weight=:tw,draw_cost=:dc WHERE config_name=:n');
+        $stmt = $db->prepare('UPDATE draw_config SET card_pool=:cp,rarity_weight=:rw,tag=:tag,tag_weight=:tw,draw_cost=:dc,currency_id=:cid WHERE config_name=:n');
     } else {
-        $stmt = $db->prepare('INSERT INTO draw_config (config_name,card_pool,rarity_weight,tag,tag_weight,draw_cost) VALUES (:n,:cp,:rw,:tag,:tw,:dc)');
+        $stmt = $db->prepare('INSERT INTO draw_config (config_name,card_pool,rarity_weight,tag,tag_weight,draw_cost,currency_id) VALUES (:n,:cp,:rw,:tag,:tw,:dc,:cid)');
     }
     $stmt->bindValue(':n',$name);
     $stmt->bindValue(':cp',$cp);
@@ -76,6 +85,7 @@ elseif($action=='save') {
     $stmt->bindValue(':tag',$tag);
     $stmt->bindValue(':tw',$tw);
     $stmt->bindValue(':dc',$dc);
+    $stmt->bindValue(':cid',$cid);
     $stmt->execute();
     out(200,'保存成功');
 }

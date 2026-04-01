@@ -128,20 +128,6 @@
     </div>
     <div class="container">
         <div class="panel">
-            <h2>⚙️ 基础设置</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div class="form-group">
-                    <label>单抽消耗元宝</label>
-                    <input type="number" id="drawCost" value="100">
-                </div>
-                <div class="form-group">
-                    <label>货币名称</label>
-                    <input type="text" id="currencyName" value="元宝">
-                </div>
-            </div>
-            <button class="btn btn-success" onclick="saveSettings()">保存设置</button>
-        </div>
-        <div class="panel">
             <h2>🃏 卡牌列表</h2>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
                 <div style="display:flex;align-items:center;gap:10px;">
@@ -320,6 +306,10 @@
                     <label>抽卡权重</label>
                     <input type="number" id="cardDrawWeight" value="100">
                 </div>
+                <div class="form-group">
+                    <label>卡池</label>
+                    <input type="text" id="cardPoolName" placeholder="例如: NIKKE">
+                </div>
                 <h3>基础属性</h3>
                 <div class="stats-grid">
                     <div class="form-group"><label>HP</label><input type="number" id="baseHp" value="0"></div>
@@ -398,7 +388,7 @@ let rarityConfig = [];
         };
         
         function changePool(pool) {
-            currentPool = pool;
+            currentPool = pool === 'ALL' ? '' : pool;
             resetFilter();
             loadData();
         }
@@ -496,7 +486,7 @@ let rarityConfig = [];
                 const cfg = rarityConfig.find(function(x) { return x.rarity === rarity; });
                 if (cfg) return cfg.name;
             }
-            return getRarityName(rarity);
+            return rarity + '星';
         }
         
         // 稀有度颜色 - 从配置动态获取
@@ -779,19 +769,15 @@ let rarityConfig = [];
         }
         
         async function loadData() {
-            // 获取卡池列表
+            // 获取卡池列表（从数据库）
             try {
-                const listRes = await fetch('data/cards/');
-                const listHtml = await listRes.text();
-                const matches = listHtml.match(/([A-Za-z0-9_\u4e00-\u9faas]+)\.json/g);
-                if (matches) {
-                    poolList = matches.map(m => m.replace('.json', ''));
+                const res = await fetch('game_api.php?action=get_pools');
+                const d = await res.json();
+                if (d.code === 200 && d.pools) {
+                    poolList = d.pools;
                     const select = document.getElementById('poolSelect');
-                    if (select && poolList.length === 0) {
-                        select.innerHTML = '<option value="'+currentPool+'" selected>'+currentPool+'</option>';
-                    }
                     if (select) {
-                        select.innerHTML = poolList.map(p => 
+                        select.innerHTML = '<option value="ALL">ALL</option>' + poolList.map(p => 
                             '<option value="'+p+'" '+(p===currentPool?'selected':'')+'>'+p+'</option>'
                         ).join('');
                     }
@@ -799,16 +785,30 @@ let rarityConfig = [];
             } catch(e) { console.error('获取卡池列表失败:', e); }
             // 加载稀有度配置
             try {
-                const rarityRes = await fetch('data/sys_config/rarity_config.json');
-                rarityConfig = await rarityRes.json();
+                const rarityRes = await fetch('game_api.php?action=get_rarity');
+                const r = await rarityRes.json();
+                if (r.code === 200) rarityConfig = r.rarity || [];
                 renderRaritySelect();
                 renderFilterRaritySelect();
             } catch(e) { console.error('加载稀有度配置失败:', e); rarityConfig = []; }
+            // 从数据库加载卡片
             try {
-                const res = await fetch('data/cards/' + currentPool + '.json');
-                gameData = await res.json();
-                document.getElementById('drawCost').value = gameData.settings.drawCost || 100;
-                document.getElementById('currencyName').value = gameData.settings.currencyName || '元宝';
+                console.log('Loading cards for pool:', currentPool);
+                const res = await fetch('game_api.php?action=get_cards&pool=' + currentPool);
+                console.log('Response:', res);
+                const d = await res.json();
+                console.log('Data:', d);
+                if (d.code === 200 && d.characters) {
+                    gameData.characters = d.characters.map(c => ({
+                        ...c,
+                        baseStats: typeof c.base_stats === 'string' ? JSON.parse(c.base_stats) : c.base_stats,
+                        growthStats: typeof c.growth_stats === 'string' ? JSON.parse(c.growth_stats) : c.growth_stats,
+                        tags: typeof c.tags === 'string' ? JSON.parse(c.tags) : c.tags
+                    }));
+                    console.log('gameData.characters:', gameData.characters.length);
+                } else {
+                    gameData.characters = [];
+                }
                 renderCards(); renderListView(); calcMaxStats(); switchView('list'); drawRarityPieChart();
             } catch(e) { console.error('加载失败:', e); }
         }
@@ -986,13 +986,6 @@ let rarityConfig = [];
             renderListView();
         }
         
-        function saveSettings() {
-            gameData.settings.drawCost = parseInt(document.getElementById('drawCost').value);
-            gameData.settings.currencyName = document.getElementById('currencyName').value;
-            downloadJson();
-            alert('设置已保存！请将 data/cards/' + currentPool + '.json 文件内容同步到服务器。');
-        }
-        
         function showAddModal() {
             document.getElementById('modalTitle').textContent = '添加新卡牌';
             document.getElementById('cardForm').reset();
@@ -1011,6 +1004,7 @@ let rarityConfig = [];
             document.getElementById('cardDesc').value = c.description || '';
             document.getElementById('cardTags').value = (c.tags || []).join(', ');
             document.getElementById('cardDrawWeight').value = c.draw_weight || 100;
+            document.getElementById('cardPoolName').value = c.pool_name || currentPool;
             document.getElementById('baseHp').value = c.baseStats.hp;
             document.getElementById('baseMp').value = c.baseStats.mp;
             document.getElementById('baseAttack').value = c.baseStats.attack;
@@ -1040,45 +1034,50 @@ let rarityConfig = [];
             document.getElementById('cardModal').classList.remove('show');
         }
         
-        document.getElementById('cardForm').onsubmit = function(e) {
+        document.getElementById('cardForm').onsubmit = async function(e) {
             e.preventDefault();
             const id = document.getElementById('cardId').value;
-            const card = {
-                id: id ? parseInt(id) : Date.now(),
-                name: document.getElementById('cardName').value,
-                rarity: parseInt(document.getElementById('cardRarity').value),
-                image: document.getElementById('cardImage').value,
-                description: document.getElementById('cardDesc').value,
-                tags: document.getElementById('cardTags').value.split(',').map(t => t.trim()).filter(t => t),
-                draw_weight: parseInt(document.getElementById('cardDrawWeight').value) || 100,
-                baseStats: {
+            
+            try {
+                const fd = new FormData();
+                if (id) fd.append('id', id);
+                fd.append('name', document.getElementById('cardName').value);
+                fd.append('rarity', document.getElementById('cardRarity').value);
+                fd.append('image', document.getElementById('cardImage').value);
+                fd.append('description', document.getElementById('cardDesc').value);
+                fd.append('base_stats', JSON.stringify({
                     hp: parseInt(document.getElementById('baseHp').value),
                     mp: parseInt(document.getElementById('baseMp').value),
                     attack: parseInt(document.getElementById('baseAttack').value),
                     defense: parseInt(document.getElementById('baseDefense').value),
                     agility: parseInt(document.getElementById('baseAgility').value)
-                },
-                growthStats: {
+                }));
+                fd.append('growth_stats', JSON.stringify({
                     hp: parseInt(document.getElementById('growthHp').value),
                     mp: parseInt(document.getElementById('growthMp').value),
                     attack: parseInt(document.getElementById('growthAttack').value),
                     defense: parseInt(document.getElementById('growthDefense').value),
                     agility: parseInt(document.getElementById('growthAgility').value)
+                }));
+                fd.append('tags', JSON.stringify(document.getElementById('cardTags').value.split(',').map(t => t.trim()).filter(t => t)));
+                fd.append('draw_weight', document.getElementById('cardDrawWeight').value || 100);
+                fd.append('pool_name', document.getElementById('cardPoolName').value || currentPool);
+                
+                const res = await fetch('game_api.php?action=save_card', { method: 'POST', body: fd });
+                const r = await res.json();
+                if (r.code === 200) {
+                    alert('保存成功！');
+                    loadData();
+                    closeModal();
+                } else {
+                    alert('保存失败: ' + r.msg);
                 }
-            };
-            if (id) {
-                const i = gameData.characters.findIndex(x => x.id === parseInt(id));
-                if (i !== -1) gameData.characters[i] = card;
-            } else {
-                gameData.characters.push(card);
-            }
-            downloadJson();
-            closeModal();
+            } catch(e) { alert('保存失败: ' + e.message); }
             renderCards();
             renderListView();
             drawRarityPieChart();
             
-        };
+        }
         
         function downloadJson() {
             const data = JSON.stringify(gameData, null, 2);

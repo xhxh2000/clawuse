@@ -1,12 +1,6 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
-}
 
 $db = new SQLite3(__DIR__ . '/data/game.sqlite');
 $db->busyTimeout(5000);
@@ -22,54 +16,33 @@ function getParam($key, $default = '') {
 
 $action = getParam('action', '');
 
-if (!$action) {
-    response(400, '缺少action参数');
-}
-
-// 注册
 if ($action === 'register') {
     $username = trim(getParam('username', ''));
     $password = getParam('password', '');
     
-    if (!$username || !$password) {
+    if (empty($username) || empty($password)) {
         response(400, '用户名和密码不能为空');
-    }
-    if (strlen($username) < 2 || strlen($username) > 20) {
-        response(400, '用户名2-20字符');
     }
     if (strlen($password) < 6) {
         response(400, '密码至少6位');
-    }
-    
-    $stmt = $db->prepare('SELECT id FROM users WHERE username = :username');
-    $stmt->bindValue(':username', $username);
-    $result = $stmt->execute();
-    if ($result->fetchArray()) {
-        response(400, '用户名已存在');
     }
     
     $passwordHash = hash('sha256', $password);
     $stmt = $db->prepare('INSERT INTO users (username, password, gold, role, level, exp, status) VALUES (:username, :password, 1000, "user", 1, 0, 1)');
     $stmt->bindValue(':username', $username);
     $stmt->bindValue(':password', $passwordHash);
-    $stmt->execute();
-    
-    $userId = $db->lastInsertRowID();
-    
-    response(200, '注册成功', [
-        'user_id' => $userId,
-        'username' => $username,
-        'gold' => 1000,
-        'level' => 1
-    ]);
+    try {
+        $stmt->execute();
+        response(200, '注册成功', ['user_id' => $db->lastInsertRowID(), 'username' => $username, 'gold' => 1000]);
+    } catch (Exception $e) {
+        response(400, '用户名已存在');
+    }
 }
-
-// 登录
 elseif ($action === 'login') {
     $username = trim(getParam('username', ''));
     $password = getParam('password', '');
     
-    if (!$username || !$password) {
+    if (empty($username) || empty($password)) {
         response(400, '用户名和密码不能为空');
     }
     
@@ -91,7 +64,6 @@ elseif ($action === 'login') {
         response(403, '账号已被禁用');
     }
     
-    // 获取会员等级
     $stmt = $db->prepare('SELECT * FROM member_level WHERE level = :level');
     $stmt->bindValue(':level', $user['level']);
     $result = $stmt->execute();
@@ -107,8 +79,24 @@ elseif ($action === 'login') {
         'member' => $member
     ]);
 }
-
-// 更新金币
+elseif ($action === 'get_gold') {
+    $userId = intval(getParam('user_id', 0));
+    
+    if ($userId <= 0) {
+        response(400, 'user_id required');
+    }
+    
+    $stmt = $db->prepare('SELECT gold FROM users WHERE id = :id');
+    $stmt->bindValue(':id', $userId);
+    $result = $stmt->execute();
+    $row = $result->fetchArray();
+    
+    if ($row) {
+        response(200, 'ok', ['gold' => $row['gold']]);
+    } else {
+        response(400, '用户不存在');
+    }
+}
 elseif ($action === 'update_gold') {
     $userId = intval(getParam('user_id', 0));
     $change = intval(getParam('change', 0));
@@ -120,11 +108,7 @@ elseif ($action === 'update_gold') {
     $stmt = $db->prepare('SELECT gold FROM users WHERE id = :id');
     $stmt->bindValue(':id', $userId);
     $result = $stmt->execute();
-    $row = $result->fetchArray(SQLITE3_ASSOC);
-    
-    if (!$row) {
-        response(400, '用户不存在');
-    }
+    $row = $result->fetchArray();
     
     $newGold = $row['gold'] + $change;
     if ($newGold < 0) {
@@ -138,7 +122,40 @@ elseif ($action === 'update_gold') {
     
     response(200, '更新成功', ['gold' => $newGold]);
 }
-
+elseif ($action === 'check') {
+    // 检查登录状态 - 从 localStorage 获取 user_id，或者从 cookie 获取
+    $userId = intval($_GET['user_id'] ?? ($_COOKIE['user_id'] ?? 0));
+    
+    if (!$userId) {
+        response(200, 'ok', ['user' => null]);
+    }
+    
+    $stmt = $db->prepare('SELECT id, username, gold, role, level, exp FROM users WHERE id = :id');
+    $stmt->bindValue(':id', $userId);
+    $result = $stmt->execute();
+    $user = $result->fetchArray(SQLITE3_ASSOC);
+    
+    if ($user) {
+        response(200, 'ok', ['user' => $user]);
+    } else {
+        response(200, 'ok', ['user' => null]);
+    }
+}
+elseif ($action === 'check_login') {
+    $userId = intval(getParam('user_id', 0));
+    if (!$userId) response(400, 'user_id required');
+    
+    $stmt = $db->prepare('SELECT id, username, gold, role, level, exp FROM users WHERE id = :id');
+    $stmt->bindValue(':id', $userId);
+    $result = $stmt->execute();
+    $user = $result->fetchArray(SQLITE3_ASSOC);
+    
+    if ($user) {
+        response(200, 'ok', ['user' => $user]);
+    } else {
+        response(401, '未登录');
+    }
+}
 else {
     response(400, '未知操作');
 }
