@@ -25,14 +25,14 @@
         .config-info { background: #0f3460; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
         .config-info p { margin: 5px 0; }
         
-        .tag-weight-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px; background: #0f3460; border-radius: 5px; }
+        .tag-weight-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px; background: transparent; border-radius: 5px; }
         .tag-weight-item select, .tag-weight-item input { padding: 5px; background: #1a1a2e; color: #eee; border: 1px solid #0f3460; border-radius: 3px; }
         .tag-weight-item select { width: 60px; }
         .tag-weight-item input[type="number"] { width: 70px; }
         .tag-weight-item .tag-name { flex: 1; }
         .tag-weight-item .remove-btn { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
         
-        .rarity-weight-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px; background: #0f3460; border-radius: 5px; }
+        .rarity-weight-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 10px; background: transparent; border-radius: 5px; }
         .rarity-weight-item input { padding: 5px; background: #1a1a2e; color: #eee; border: 1px solid #0f3460; border-radius: 3px; }
         .rarity-weight-item input[type="number"] { width: 80px; }
         .rarity-weight-item .rarity-name { flex: 1; }
@@ -40,9 +40,9 @@
         
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
         .modal.show { display: flex; justify-content: center; padding: 20px; }
-        .modal-content { background: #16213e; border-radius: 10px; padding: 20px; }
+        .modal-content { background: transparent; border-radius: 10px; padding: 20px; }
         
-        .prob-item { display: flex; align-items: center; padding: 10px; margin-bottom: 10px; background: #0f3460; border-radius: 5px; }
+        .prob-item { display: flex; align-items: center; padding: 10px; margin-bottom: 10px; background: transparent; border-radius: 5px; }
         .prob-item .card-name { flex: 1; }
         .prob-item .card-rarity { color: #aaa; margin-right: 10px; }
         .prob-item .card-tags { color: #888; font-size: 12px; margin-right: 10px; }
@@ -540,7 +540,7 @@
                         '<span class="card-rarity">' + '⭐'.repeat(r.rarity) + ' ' + getRarityName(r.rarity) + '</span>' +
                         '<span class="card-tags">' + (r.tags || '-') + '</span>' +
                         '<span class="card-weight">权重:' + r.weight + '</span>' +
-                        '<span class="card-prob">' + r.probability.toFixed(2) + '%</span>' +
+                        '<span class="card-prob">' + (r.probability < 0 ? 0 : r.probability).toFixed(2) + '%</span>' +
                     '</div>';
                 }).join('');
             }
