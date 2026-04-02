@@ -35,7 +35,7 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif; pad
 .album-card.rarity-6 { background: #0f3460; border: 1px solid #f44336; }
 /* 稀有度图片底色 - 静态CSS作为默认值 */
 .album-card .card-thumb { background: #0f3460; }
-.album-card.rarity-1 .card-thumb { background: #16213e; }
+.album-card.rarity-1 .card-thumb { background: transparent; }
 .album-card.rarity-2 .card-thumb { background: #0f3460; }
 .album-card.rarity-3 .card-thumb { background: #0f3460; }
 .album-card.rarity-4 .card-thumb { background: #0f3460; }
@@ -57,25 +57,25 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif; pad
   .album-card img { width: 100%; height: auto; }
   .popup-content { padding: 15px; }
   .popup-container { flex-direction: column; }
-  .popup-content .popup-image { flex: 0 0 250px; max-height: 350px; overflow: hidden; display: flex; background: #16213e; align-items: center; justify-content: center; }
-  .popup-content .popup-image img { max-width: 150px; max-height: 150px; }
+  .popup-content .popup-image { flex: 0 0 280px; max-height: 400px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: transparent; }
+  .popup-content .popup-image img { max-width: 100%; max-height: 400px; width: auto; height: auto; object-fit: contain; border-radius: 10px; cursor: pointer; }
   .popup-info { min-width: unset; }
   .popup-name { font-size: 18px; }
   .popup-rarity { font-size: 14px; }
   .stats-grid-2 { grid-template-columns: repeat(3, 1fr); gap: 5px; }
-  .stats-grid-2 .stat-row { padding: 6px; }
+  .stats-grid-2 .stat-row { padding: 6px; background: transparent; }
 }
   .stats-grid-2 .stat-label { font-size: 10px; }
   .stats-grid-2 .stat-value { font-size: 14px; }
   .popup-radar canvas { width: 200px; height: 200px; margin: 10px auto; }
 }
 .album-card .card-thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto; justify-content: center; padding: 20px; }
+.popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; overflow-y: auto; justify-content: center; padding: 20px; }
 .popup.show { display: flex; }
-.popup-content { width: 95%; max-width: 750px; border-radius: 10px; padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); border: 2px solid rgba(233,69,96,0.4); position: relative; max-height: 90vh; overflow-y: auto; background: rgba(26, 26, 46, 0.9); }
+.popup-content { width: 95%; max-width: 750px; border-radius: 15px; padding: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); border: 2px solid rgba(233,69,96,0.3); position: relative; max-height: 90vh; overflow-y: auto; background: transparent; }
 .popup-close { position: absolute; top: 15px; right: 15px; background: #e94560; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; }
-.popup-content .popup-image { flex: 0 0 250px; max-height: 350px; overflow: hidden; display: flex; background: #16213e; align-items: center; justify-content: center; }
-.popup-content .popup-image img { max-width: 100%; max-height: 300px; width: auto; height: auto; border-radius: 10px; object-fit: contain; cursor: pointer; }
+.popup-content .popup-image { flex: 0 0 280px; height: 400px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: transparent; border-radius: 10px; }
+.popup-content .popup-image img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border-radius: 10px; cursor: pointer; }
 .popup-info { flex: 1; min-width: 280px; display: flex; flex-direction: column; }
 .popup-name { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
 .popup-rarity { font-size: 18px; margin-bottom: 10px; }
@@ -83,7 +83,7 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif; pad
 .popup-stats { margin-top: 20px; }
 .popup-stats h4 { color: #e94560; margin-bottom: 10px; }
 .stats-grid-2 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; text-align: center; min-width: 0; }
-.stats-grid-2 .stat-row { background: #0f3460; padding: 8px; border-radius: 5px; min-width: 0; }
+.stats-grid-2 .stat-row { background: transparent; padding: 8px; border-radius: 5px; min-width: 0; }
 .stats-grid-2 .stat-label { display: block; color: #aaa; font-size: 11px; margin-bottom: 4px; word-break: break-all; }
 .stats-grid-2 .stat-value { display: block; font-weight: bold; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .popup-radar { margin-top: 20px; }
