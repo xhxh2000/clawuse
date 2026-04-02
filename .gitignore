@@ -1,0 +1,7 @@
+# 备份文件
+*backup*.html
+*.bak
+
+# 临时文件
+*.tmp
+*.log

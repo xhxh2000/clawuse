@@ -89,8 +89,8 @@
         /* 卡片详情弹窗 */
         #cardDetailPopup { max-width: 800px; }
         .popup-container { display: flex; gap: 20px; flex-wrap: wrap; }
-        .popup-image { flex: 0 0 250px; }
-        .popup-image img { width: 100%; border-radius: 10px; }
+        .popup-image { flex: 0 0 250px; max-height: 350px; overflow: hidden; border-radius: 10px; background: #16213e; display: flex; align-items: center; justify-content: center; }
+        .popup-image img { max-width: 100%; max-height: 350px; width: auto; height: auto; object-fit: contain; border-radius: 10px; }
         .popup-info { flex: 1; min-width: 280px; }
         .popup-name { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
         .popup-rarity { font-size: 18px; margin-bottom: 10px; }
@@ -101,6 +101,7 @@
         .stat-row { background: #0f3460; padding: 10px; border-radius: 5px; }
         .stat-label { display: block; color: #aaa; font-size: 12px; margin-bottom: 5px; }
         .stat-value { display: block; font-size: 18px; font-weight: bold; }
+        .stat-value.growth { color: #ffd700 !important; font-size: 16px; }
         .popup-radar { margin-top: 20px; }
         .popup-radar canvas { width: 100%; max-width: 300px; height: 300px; margin: 0 auto; display: block; }
         .close-popup { position: absolute; top: 20px; right: 20px; background: #e94560; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
@@ -340,7 +341,7 @@
             <button class="close-popup" onclick="closeDetailPopup()">关闭</button>
             <div class="popup-container">
                 <div class="popup-image">
-                    <img id="detailImage" src="" alt="" style="cursor:pointer;" onclick="showFullImage(this.src)">
+                    <img id="detailImage" src="" alt="" style="cursor:pointer;max-width:100%;max-height:350px;width:auto;height:auto;object-fit:contain;border-radius:8px;" onclick="showFullImage(this.src)">
                 </div>
                 <div class="popup-info">
                     <div id="detailName" class="popup-name"></div>
@@ -351,6 +352,10 @@
                     <div class="popup-stats">
                         <h4>📊 基础属性</h4>
                         <div id="detailStats" class="stats-grid-2"></div>
+                    </div>
+                    <div class="popup-stats">
+                        <h4>📈 成长数据</h4>
+                        <div id="detailGrowth" class="stats-grid-2"></div>
                     </div>
                     <div class="popup-radar">
                         <canvas id="radarCanvas"></canvas>
@@ -633,6 +638,19 @@ let rarityConfig = [];
             return '#ffffff';
         }
         
+        // 获取成长属性颜色（基于固定范围）
+        function getGrowthColor(value, statName, maxStatsg) {
+            const max = maxStatsg[statName];
+            if (max === 0) return '#aaa';
+            const percent = value / max * 100;
+            if (percent >= 100) return '#ff0000';
+            if (percent >= 80) return '#ffd700';
+            if (percent >= 60) return '#9400d3';
+            if (percent >= 40) return '#4169e1';
+            if (percent >= 20) return '#00ff00';
+            return '#ffffff';
+        }
+        
         // 获取图片URL
         function getImageUrl(card) {
             if (card.image) return card.image;
@@ -745,6 +763,17 @@ let rarityConfig = [];
                 '<div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.attack, 'attack')+'">'+card.baseStats.attack+'</span></div>' +
                 '<div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.defense, 'defense')+'">'+card.baseStats.defense+'</span></div>' +
                 '<div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.agility, 'agility')+'">'+card.baseStats.agility+'</span></div>';
+            
+            // 成长数据
+            const growth = card.growthStats || {hp:0,mp:0,attack:0,defense:0,agility:0};
+            // 获取成长数据的最大范围用于颜色计算
+            const maxGrowthStats = { hp: 100, mp: 50, attack: 20, defense: 10, agility: 15 };
+            document.getElementById('detailGrowth').innerHTML = 
+                '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getGrowthColor(growth.hp, 'hp', maxGrowthStats)+'">'+growth.hp+'</span></div>' +
+                '<div class="stat-row"><span class="stat-label">MP</span><span class="stat-value" style="color:'+getGrowthColor(growth.mp, 'mp', maxGrowthStats)+'">'+growth.mp+'</span></div>' +
+                '<div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="color:'+getGrowthColor(growth.attack, 'attack', maxGrowthStats)+'">'+growth.attack+'</span></div>' +
+                '<div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="color:'+getGrowthColor(growth.defense, 'defense', maxGrowthStats)+'">'+growth.defense+'</span></div>' +
+                '<div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="color:'+getGrowthColor(growth.agility, 'agility', maxGrowthStats)+'">'+growth.agility+'</span></div>';
             
             document.getElementById('cardDetailPopup').classList.add('show');
             
