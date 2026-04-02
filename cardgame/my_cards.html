@@ -57,7 +57,7 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif; pad
   .album-card img { width: 100%; height: auto; }
   .popup-content { padding: 15px; }
   .popup-container { flex-direction: column; }
-  .popup-content .popup-image { flex: none; }
+  .popup-content .popup-image { flex: 0 0 250px; max-height: 350px; overflow: hidden; display: flex; background: #16213e; align-items: center; justify-content: center; }
   .popup-content .popup-image img { max-width: 150px; max-height: 150px; }
   .popup-info { min-width: unset; }
   .popup-name { font-size: 18px; }
@@ -74,7 +74,7 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif; pad
 .popup.show { display: flex; }
 .popup-content { width: 95%; max-width: 750px; border-radius: 10px; padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); border: 2px solid rgba(233,69,96,0.4); position: relative; max-height: 90vh; overflow-y: auto; background: rgba(26, 26, 46, 0.9); }
 .popup-close { position: absolute; top: 15px; right: 15px; background: #e94560; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; }
-.popup-content .popup-image { flex: 0 0 250px; display: flex; justify-content: center; }
+.popup-content .popup-image { flex: 0 0 250px; max-height: 350px; overflow: hidden; display: flex; background: #16213e; align-items: center; justify-content: center; }
 .popup-content .popup-image img { max-width: 100%; max-height: 300px; width: auto; height: auto; border-radius: 10px; object-fit: contain; cursor: pointer; }
 .popup-info { flex: 1; min-width: 280px; display: flex; flex-direction: column; }
 .popup-name { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
