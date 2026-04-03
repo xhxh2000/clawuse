@@ -60,16 +60,26 @@ if ($action === 'get_all') {
         $row['growth_stats'] = json_decode($row['growth_stats'] ?? '{}', true);
         $row['tags'] = json_decode($row['tags'] ?? '[]', true);
         
-        // 如果指定了user_id，计算拥有数量
+        // 如果指定了user_id，计算拥有数量和是否解锁
         if ($user_id > 0) {
+            // 当前拥有数量
             $stmt2 = $db->prepare('SELECT COUNT(*) FROM user_cards WHERE user_id = :uid AND card_id = :cid');
             $stmt2->bindValue(':uid', $user_id);
             $stmt2->bindValue(':cid', $row['id']);
             $res2 = $stmt2->execute();
             $count = $res2->fetchArray();
             $row['owned_count'] = $count ? $count[0] : 0;
+            
+            // 检查是否曾解锁（图鉴是否点亮）
+            $stmt3 = $db->prepare('SELECT COUNT(*) FROM user_album WHERE user_id = :uid AND card_id = :cid');
+            $stmt3->bindValue(':uid', $user_id);
+            $stmt3->bindValue(':cid', $row['id']);
+            $res3 = $stmt3->execute();
+            $unlocked = $res3->fetchArray();
+            $row['is_unlocked'] = ($unlocked && $unlocked[0] > 0) ? 1 : 0;
         } else {
             $row['owned_count'] = 0;
+            $row['is_unlocked'] = 0;
         }
         
         $cards[] = $row;
@@ -179,8 +189,152 @@ elseif ($action === 'get_cards') {
 }
 
 // 获取抽卡配置
+elseif ($action === 'get_user_wallet') {
+    $user_id = intval(getParam('user_id', 0));
+    $currency_id = intval(getParam('currency_id', 1));
+    if (!$user_id) response(400, 'user_id required');
+    $stmt = $db->prepare('SELECT amount FROM user_wallet WHERE user_id = :uid AND currency_id = :cid');
+    $stmt->bindValue(':uid', $user_id);
+    $stmt->bindValue(':cid', $currency_id);
+    $result = $stmt->execute();
+    $row = $result->fetchArray();
+    response(200, 'ok', ['amount' => $row ? intval($row['amount']) : 0]);
+}
+elseif ($action === 'update_user_wallet') {
+    $user_id = intval(getParam('user_id', 0));
+    $currency_id = intval(getParam('currency_id', 1));
+    $change = intval(getParam('change', 0));
+    error_log("update_user_wallet: user_id=$user_id, currency_id=$currency_id, change=$change");
+    if (!$user_id || !$currency_id) response(400, '参数错误');
+    
+    // 检查当前余额
+    $stmt = $db->prepare('SELECT amount FROM user_wallet WHERE user_id = :uid AND currency_id = :cid');
+    $stmt->bindValue(':uid', $user_id);
+    $stmt->bindValue(':cid', $currency_id);
+    $result = $stmt->execute();
+    $row = $result->fetchArray();
+    $currentAmount = $row ? intval($row['amount']) : 0;
+    
+    // 如果是扣款（change为负数），检查余额是否足够
+    if ($change < 0 && $currentAmount + $change < 0) {
+        response(400, '余额不足', ['current_amount' => $currentAmount]);
+    }
+    
+    if ($row) {
+        // 直接UPDATE
+        $db->exec("UPDATE user_wallet SET amount = amount + $change WHERE user_id = $user_id AND currency_id = $currency_id");
+    } else {
+        // INSERT（只有余额足够才插入）
+        if ($change >= 0) {
+            $db->exec("INSERT INTO user_wallet (user_id, currency_id, amount) VALUES ($user_id, $currency_id, $change)");
+        } else {
+            response(400, '余额不足', ['current_amount' => 0]);
+        }
+    }
+    
+    // 返回新余额
+    $result3 = $db->query("SELECT amount FROM user_wallet WHERE user_id = $user_id AND currency_id = $currency_id");
+    $row3 = $result3->fetchArray();
+    $newAmount = $row3 ? intval($row3['amount']) : 0;
+    
+    response(200, 'ok', ['new_amount' => $newAmount]);
+}
+elseif ($action === 'get_currencies') {
+    $stmt = $db->prepare('SELECT id, name FROM currency ORDER BY id');
+    $result = $stmt->execute();
+    $currencies = [];
+    while ($row = $result->fetchArray()) {
+        $currencies[] = $row;
+    }
+    response(200, 'ok', ['currencies' => $currencies]);
+}
+elseif ($action === 'get_draw_configs') {
+    $stmt = $db->prepare('SELECT id, config_name, draw_cost, currency_id FROM draw_config ORDER BY id');
+    $result = $stmt->execute();
+    $configs = [];
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        // 获取货币名称
+        $stmt2 = $db->prepare('SELECT name FROM currency WHERE id = :id');
+        $stmt2->bindValue(':id', $row['currency_id'] ?? 'gold');
+        $res2 = $stmt2->execute();
+        $currencyRow = $res2->fetchArray();
+        $row['currency_name'] = $currencyRow ? $currencyRow['name'] : '元宝';
+        unset($row['currency_id']);
+        $configs[] = $row;
+    }
+    response(200, 'ok', ['configs' => $configs]);
+}
+elseif ($action === 'add_user_card') {
+    $user_id = intval(getParam('user_id', 0));
+    $card_id = intval(getParam('card_id', 0));
+    if (!$user_id || !$card_id) response(400, '参数错误');
+    
+    error_log("add_user_card: user_id=$user_id, card_id=$card_id");
+    
+    // 每次抽卡都插入新记录（允许重复卡，用于强化升级）
+    $db->exec("INSERT INTO user_cards (user_id, card_id, level, exp, enhance_count, is_favorite, first_get) VALUES ($user_id, $card_id, 1, 0, 0, 0, datetime('now'))");
+    
+    // 点亮图鉴（如果之前未点亮）
+    $db->exec("INSERT OR IGNORE INTO user_album (user_id, card_id, unlocked_at) VALUES ($user_id, $card_id, datetime('now'))");
+    
+    response(200, 'ok', ['is_new' => true]);
+}
+elseif ($action === 'check_new_card') {
+    $user_id = intval(getParam('user_id', 0));
+    $card_id = intval(getParam('card_id', 0));
+    if (!$user_id || !$card_id) response(400, '参数错误');
+    
+    // 检查是否在user_cards中已有记录（count > 0）
+    $stmt = $db->prepare('SELECT COUNT(*) as cnt FROM user_cards WHERE user_id = :uid AND card_id = :cid AND count > 0');
+    $stmt->bindValue(':uid', $user_id);
+    $stmt->bindValue(':cid', $card_id);
+    $res = $stmt->execute();
+    $row = $res->fetchArray();
+    $has_card = $row && $row['cnt'] > 0;
+    
+    // 检查是否已点亮图鉴
+    $stmt2 = $db->prepare('SELECT COUNT(*) FROM user_album WHERE user_id = :uid AND card_id = :cid');
+    $stmt2->bindValue(':uid', $user_id);
+    $stmt2->bindValue(':cid', $card_id);
+    $res2 = $stmt2->execute();
+    $row2 = $res2->fetchArray();
+    $album_unlocked = $row2 && $row2[0] > 0;
+    
+    response(200, 'ok', ['has_card' => $has_card, 'album_unlocked' => $album_unlocked]);
+}
+elseif ($action === 'get_user_currency') {
+    $user_id = intval(getParam('user_id', 0));
+    $config_id = intval(getParam('config_id', 1));
+    if (!$user_id) response(400, 'user_id required');
+    
+    // 先获取配置确定货币类型
+    $stmt2 = $db->prepare('SELECT currency_id FROM draw_config WHERE id = :id');
+    $stmt2->bindValue(':id', $config_id);
+    $res2 = $stmt2->execute();
+    $configRow = $res2->fetchArray();
+    $currencyId = $configRow ? intval($configRow['currency_id']) : 1;
+    
+    // 从user_wallet表获取用户该货币的余额
+    $stmt = $db->prepare('SELECT amount FROM user_wallet WHERE user_id = :uid AND currency_id = :cid');
+    $stmt->bindValue(':uid', $user_id);
+    $stmt->bindValue(':cid', $currencyId);
+    $result = $stmt->execute();
+    $row = $result->fetchArray();
+    $amount = $row ? intval($row['amount']) : 0;
+    
+    // 获取货币名称
+    $stmt3 = $db->prepare('SELECT name FROM currency WHERE id = :id');
+    $stmt3->bindValue(':id', $currencyId);
+    $res3 = $stmt3->execute();
+    $currencyRow = $res3->fetchArray();
+    
+    response(200, 'ok', ['gold' => $amount, 'currency_id' => $currencyId]);
+}
+
 elseif ($action === 'get_config') {
-    $stmt = $db->prepare('SELECT * FROM draw_config WHERE id = 1');
+    $configId = intval(getParam('config_id', 1));
+    $stmt = $db->prepare('SELECT * FROM draw_config WHERE id = :id');
+    $stmt->bindValue(':id', $configId);
     $result = $stmt->execute();
     $config = $result->fetchArray(SQLITE3_ASSOC);
     
@@ -189,6 +343,14 @@ elseif ($action === 'get_config') {
         $config['rarity_weight'] = json_decode($config['rarity_weight'] ?? '[]', true);
         $config['tag'] = json_decode($config['tag'] ?? '[]', true);
         $config['tag_weight'] = json_decode($config['tag_weight'] ?? '[]', true);
+        
+        // 获取货币名称
+        $currencyId = $config['currency_id'] ?? 'gold';
+        $stmt2 = $db->prepare('SELECT name FROM currency WHERE id = :id');
+        $stmt2->bindValue(':id', $currencyId);
+        $res2 = $stmt2->execute();
+        $currencyRow = $res2->fetchArray();
+        $config['currency_name'] = $currencyRow ? $currencyRow['name'] : '元宝';
     }
     
     response(200, 'ok', ['config' => $config]);
@@ -230,6 +392,38 @@ elseif ($action === 'update_favorite') {
     $stmt->bindValue(':fav', $is_favorite);
     $stmt->bindValue(':id', $instance_id);
     $stmt->execute();
+    
+    response(200, 'ok');
+}
+
+elseif ($action === 'delete_user_data') {
+    $user_id = intval(getParam('user_id', 0));
+    if (!$user_id) response(400, 'user_id required');
+    
+    $db->exec("DELETE FROM user_cards WHERE user_id = $user_id");
+    $db->exec("DELETE FROM user_album WHERE user_id = $user_id");
+    
+    response(200, 'ok');
+}
+
+elseif ($action === 'update_card_level') {
+    $user_id = intval(getParam('user_id', 0));
+    $level = intval(getParam('level', 1));
+    $favorite_level = intval(getParam('favorite_level', 3));
+    if (!$user_id) response(400, 'user_id required');
+    
+    // 收藏的设为 favorite_level，其余设为1
+    $db->exec("UPDATE user_cards SET level = CASE WHEN is_favorite = 1 THEN $favorite_level ELSE 1 END WHERE user_id = $user_id");
+    
+    response(200, 'ok');
+}
+
+elseif ($action === 'delete_user_card') {
+    $user_id = intval(getParam('user_id', 0));
+    $card_id = intval(getParam('card_id', 0));
+    if (!$user_id || !$card_id) response(400, '参数错误');
+    
+    $db->exec("DELETE FROM user_cards WHERE user_id = $user_id AND card_id = $card_id");
     
     response(200, 'ok');
 }

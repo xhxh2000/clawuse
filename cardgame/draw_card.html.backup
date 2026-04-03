@@ -134,11 +134,7 @@ body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: linear-gra
 <body>
 <div class="header">
 <h1>🎮 卡牌游戏</h1>
-
-        <select id="configSelect" onchange="changeConfig(this.value)" style="margin-left:15px;padding:5px;background:#1a1a2e;color:#eee;border:1px solid #0f3460;border-radius:5px;">
-            <option value="">加载中...</option>
-        </select>
-        <button onclick="previewProbability()" style="margin-left:10px;padding:5px 10px;background:#2196f3;color:white;border:none;border-radius:5px;cursor:pointer;font-size:12px;">📊 概率</button>
+<div class="currency">💰 <span id="goldAmount">1000</span> 元宝</div>
 </div>
 <div class="container">
 <div class="top-draw-area">
@@ -148,126 +144,85 @@ body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: linear-gra
 <div class="result-actions" id="resultActions">
 <button class="draw-btn" onclick="drawCard()">单抽</button>
 <button class="draw-btn draw-btn-10" onclick="drawCard10()">十连</button>
-        
-<p class="cost-text">单抽消耗 <span id="drawCost">100</span> <span id="currencyUnit">元宝</span> | 十连消耗 <span id="drawCost10">900</span> <span id="currencyUnit">元宝</span> (9折)</p>
-        <p id="userBalance" class="balance-text" style="color:#ffd700;font-size:16px;font-weight:bold;margin-top:10px;"></p>
+<p class="cost-text">单抽消耗 <span id="drawCost">100</span> 元宝 | 十连消耗 <span id="drawCost10">900</span> 元宝 (9折)</p>
 </div>
 </div>
-</div></div>
-
-
+<div class="my-cards">
+<h2>📦 我的卡牌</h2>
+        <div class="pool-selector" style="display:flex;align-items:center;gap:10px;margin-bottom:15px;">
+            <label style="color:#aaa;">卡池：</label>
+            <select id="poolSelect" onchange="changePool(this.value)" style="padding:8px;background:#0f3460;color:#eee;border:1px solid #0f3460;border-radius:5px;">
+                <option value="NIKKE" selected>NIKKE</option>
+            </select>
+        </div>
+        <div id="albumProgress" style="display:none;padding:10px;background:#0f3460;border-radius:8px;margin-bottom:15px;">
+            <div style="text-align:center;margin-bottom:10px;">
+                <span style="font-size:14px;color:#aaa;">图鉴总达成率</span>
+                <span id="totalRateDisplay" style="font-size:24px;font-weight:bold;color:#4caf50;">0%</span>
+            </div>
+            <div id="progressBars" style="display:flex;flex-direction:column;gap:5px;"></div>
+        </div>
+        <div class="view-tabs">
+            <button class="view-tab active" id="tabMyCards" onclick="switchView('my')">我的卡牌</button>
+            <button class="view-tab" id="tabAlbum" onclick="switchView('album')">我的图鉴</button>
+        </div>
+        <div class="filter-row">
+            <input type="text" id="filterName" placeholder="名字搜索..." oninput="applyFilter()">
+            <select id="filterRarity" onchange="applyFilter()">
+                <option value="">全部稀有度</option>
+            </select>
+            <select id="filterOwned" onchange="applyFilter()" class="filter-owned hidden">
+                <option value="">全部</option>
+                <option value="owned">已拥有</option>
+                <option value="unowned">未拥有</option>
+            </select>
+            <button class="view-tab" onclick="resetFilter()" style="padding:6px 15px;font-size:12px;">重置</button>
+        </div>
+        <div class="cards-grid" id="myCards"></div>
+        <div class="album-grid hidden" id="albumGrid"></div>
+</div>
+</div>
+<div class="card-popup" id="cardPopup" onclick="closePopup()">
+<div class="popup-card" onclick="event.stopPropagation()">
+<button class="close-btn" onclick="closePopup()">关闭</button>
+<div class="popup-container">
+<div class="popup-image">
+<img id="popupImage" src="" alt="" onclick="showFullImage(this.src)">
+</div>
+<div class="popup-info">
+<div id="popupName" class="popup-name"></div>
+<div id="popupRarity" class="popup-rarity"></div>
+<p id="popupDesc" class="popup-desc"></p>
+<div class="popup-stats">
+<h4>📊 基础属性</h4>
+<div id="popupStatsBox" class="stats-grid-2"></div>
+</div>
+<div class="popup-radar">
+<canvas id="radarCanvas"></canvas>
+</div>
+</div>
+</div>
+<div id="popupCount" class="popup-count"></div>
+</div>
+</div>
+<div class="image-popup" id="imagePopup" onclick="closeImagePopup()">
+<img id="fullImage" src="">
+</div>
 <script>
-
-// 打开/关闭概率预览弹窗
-function closeProbabilityPopup() {
-    document.getElementById('probabilityPopup').style.display = 'none';
-}
-
-// 概率预览计算（复用抽卡管理页面的算法，但使用当前配置）
-async function previewProbability() {
-    const poolNames = drawConfig.card_pool || [currentPool];
-    const selectedTags = drawConfig.tag || [];
-    const rarityWeights = drawConfig.rarity_weight || [50, 30, 15, 4, 1];
-    const tagWeightMap = {};
-    (drawConfig.tag_weight || []).forEach(tw => {
-        const key = Object.keys(tw)[0];
-        tagWeightMap[key] = tw[key];
-    });
-    
-    // 加载卡池数据
-    let allCards = [];
-    for (const poolName of poolNames) {
-        try {
-            const res = await fetch('data/cards/' + poolName + '.json');
-            const data = await res.json();
-            allCards = allCards.concat(data.characters || []);
-        } catch(e) { console.error('加载卡池失败:', poolName, e); }
-    }
-    
-    // 过滤
-    let filteredCards = allCards.filter(card => {
-        const cardTags = card.tags || [];
-        return selectedTags.length === 0 || cardTags.some(t => selectedTags.includes(t));
-    });
-    
-    // 计算权重
-    const remainingRarities = new Set();
-    filteredCards.forEach(card => {
-        const r = card.rarity || 1;
-        if (r >= 1 && r <= rarityWeights.length) remainingRarities.add(r);
-    });
-    
-    let totalWeightByRarity = {};
-    for (let r = 1; r <= rarityWeights.length; r++) totalWeightByRarity[r] = 0;
-    
-    filteredCards.forEach(card => {
-        const r = card.rarity || 1;
-        if (!remainingRarities.has(r)) { card._finalWeight = 0; return; }
-        const baseWeight = card.draw_weight || 100;
-        let tagAdj = 0;
-        (card.tags || []).forEach(t => { if (tagWeightMap[t] !== undefined) tagAdj += tagWeightMap[t]; });
-        const finalWeight = Math.max(0, baseWeight + tagAdj);
-        card._finalWeight = finalWeight;
-        if (finalWeight > 0) totalWeightByRarity[r] += finalWeight;
-    });
-    
-    // 计算概率
-    const results = filteredCards.map(card => {
-        const r = card.rarity || 1;
-        const w = card._finalWeight || 0;
-        const tw = totalWeightByRarity[r] || 1;
-        const totalRarityW = rarityWeights.reduce((a,b) => a+b, 0);
-        const rarityBase = (rarityWeights[r-1] || 0) / totalRarityW;
-        const prob = rarityBase * (tw > 0 ? w/tw : 0) * 100;
-        return { name: card.name, rarity: r, tags: (card.tags||[]).join(','), weight: w, probability: prob, isZero: w <= 0 };
-    });
-    
-    results.sort((a, b) => b.probability - a.probability);
-    
-    // 渲染
-    const container = document.getElementById('probabilityList');
-    const rarityColors = ['', '#aaa', '#4caf50', '#2196f3', '#9c27b0', '#ff9800', '#f44336'];
-    container.innerHTML = results.map(c => {
-        const color = rarityColors[c.rarity] || '#aaa';
-        return '<div class="prob-item' + (c.isZero ? ' zero-prob' : '') + '">' +
-            '<span class="card-name" style="color:' + color + '">' + c.name + '</span>' +
-            '<span class="card-rarity">' + '⭐'.repeat(c.rarity) + '</span>' +
-            '<span class="card-tags">' + (c.tags || '-') + '</span>' +
-            '<span class="card-weight">权重:' + c.weight + '</span>' +
-            '<span class="card-prob">' + (c.isZero ? 0 : c.probability).toFixed(4) + '%</span></div>';
-    }).join('');
-    
-    document.getElementById('probabilityPopup').style.display = 'flex';
-}
-
-// 添加初始化选项
-function initPreviewFilters() {
-    const rf = document.getElementById('previewRarityFilter');
-    const of = document.getElementById('previewOwnedFilter');
-    if (rf) rf.innerHTML = '<option value="">全部稀有度</option>' + 
-        ['', '一星', '二星', '三星', '四星', '五星', '六星'].map((r,i) => '<option value="'+i+'">'+r+'</option>').join('');
-    if (of) of.innerHTML = '<option value="">全部</option><option value="owned">有效权重</option><option value="zero">零权重</option>';
-}
-
-initPreviewFilters();
-
-
 var gameData = null;
 var drawConfig = { rarity_weight: [], tag: [], tag_weight: [] };
 var rarityConfig = [];
-var myGold = 0; var currencyName = "元宝"; var drawCost = 100; // 从API获取
+var myGold = 0; // 从API获取
 var myCards = {};
 var isDrawing = false;
 var currentPool = "NIKKE";
 var currentView = 'my';
 var filterState = { name: '', rarity: '', owned: '' };
-var userId = null;
 var allCharacters = [];
 
 function changePool(pool) {
     currentPool = pool;
     resetFilter();
-    loadConfigList();
     loadData();
 }
 
@@ -276,33 +231,13 @@ if (card.image) return card.image;
 return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300"><rect fill="#0f3460" width="200" height="300"/><text fill="#fff" font-size="30" x="50%" y="50%" text-anchor="middle" dy=".3em">'+card.name+'</text></svg>');
 }
 
-async function drawCard() {
+function drawCard() {
 if (isDrawing) return;
-var cost = drawCost || 100;
-if (myGold < cost) { alert('货币不足！'); return; }
+var cost = gameData.settings.drawCost || 100;
+if (myGold < cost) { alert('元宝不足！'); return; }
 isDrawing = true;
-
-// 先刷新本地数据，确保一致性
-await fetch('game_api.php?action=get_my_cards&user_id=' + userId).then(r => r.json()).then(d => {
-    if (d.code === 200 && d.cards) {
-        d.cards.forEach(c => { 
-            c.baseStats = typeof c.base_stats === 'string' ? JSON.parse(c.base_stats) : c.base_stats;
-            c.growthStats = typeof c.growth_stats === 'string' ? JSON.parse(c.growth_stats) : c.growth_stats;
-            c.tags = typeof c.tags === 'string' ? JSON.parse(c.tags) : c.tags;
-            myCards[c.instance_id] = c; 
-        });
-    }
-});
-
-// 先扣除货币
-var deductRes = await fetch('game_api.php?action=update_user_wallet&user_id=' + userId + '&currency_id=1&change=-' + cost);
-var deductData = await deductRes.json();
-if (deductData.code !== 200) {
-    alert(deductData.msg || '扣除货币失败');
-    isDrawing = false;
-    return;
-}
-myGold = deductData.new_amount || myGold - cost;
+myGold -= cost;
+document.getElementById('goldAmount').textContent = myGold;
 var cardBack = document.getElementById('cardBack');
 var resultCard = document.getElementById('resultCard');
 var resultActions = document.getElementById('resultActions');
@@ -318,10 +253,6 @@ showResult(card);
 updateAlbumProgress(allCharacters);
 if (currentView === 'album') renderAlbum();
 isDrawing = false;
-
-// 更新余额显示
-var balanceEl = document.getElementById('userBalance');
-if (balanceEl) balanceEl.textContent = '我的' + currencyName + ': ' + myGold;
 }, 2000);
 }
 
@@ -332,41 +263,20 @@ var resultCard10 = document.getElementById('resultCard10');
 var resultActions = document.getElementById('resultActions');
 resultCard.classList.remove('show');
 resultCard10.classList.remove('show');
-var cost = drawCost || 100;
+var cost = gameData.settings.drawCost || 100;
 var cost10 = Math.floor(cost * 10 * 0.9);
-resultActions.innerHTML = '<button class="draw-btn" onclick="drawCard()">单抽</button><button class="draw-btn draw-btn-10" onclick="drawCard10()">十连</button></p><p class="cost-text">单抽消耗 <span id="drawCost">'+cost+'</span> <span id="currencyUnit">'+currencyName+'</span> | 十连消耗 <span id="drawCost10">'+cost10+'</span> <span id="currencyUnit">'+currencyName+'</span> (9折)</p><p id="userBalance" class="balance-text" style="color:#ffd700;font-size:16px;font-weight:bold;margin-top:10px;">我的' + currencyName + ': ' + myGold + '</p>';
-
+resultActions.innerHTML = '<button class="draw-btn" onclick="drawCard()">单抽</button><button class="draw-btn draw-btn-10" onclick="drawCard10()">十连</button><p class="cost-text">单抽消耗 <span id="drawCost">'+cost+'</span> 元宝 | 十连消耗 <span id="drawCost10">'+cost10+'</span> 元宝 (9折)</p>';
 resultActions.classList.remove('hidden');
 cardBack.style.display = 'flex';
 }
 
-async function drawCard10() {
+function drawCard10() {
 if (isDrawing) return;
-var cost10 = Math.floor(drawCost * 10 * 0.9);
-if (myGold < cost10) { alert('货币不足！'); return; }
+var cost10 = Math.floor((gameData.settings.drawCost || 100) * 10 * 0.9);
+if (myGold < cost10) { alert('元宝不足！'); return; }
 isDrawing = true;
-
-// 先刷新本地数据确保一致性
-await fetch('game_api.php?action=get_my_cards&user_id=' + userId).then(r => r.json()).then(d => {
-    if (d.code === 200 && d.cards) {
-        d.cards.forEach(c => { 
-            c.baseStats = typeof c.base_stats === 'string' ? JSON.parse(c.base_stats) : c.base_stats;
-            c.growthStats = typeof c.growth_stats === 'string' ? JSON.parse(c.growth_stats) : c.growth_stats;
-            c.tags = typeof c.tags === 'string' ? JSON.parse(c.tags) : c.tags;
-            myCards[c.instance_id] = c; 
-        });
-    }
-});
-
-// 先扣除货币
-var deductRes10 = await fetch('game_api.php?action=update_user_wallet&user_id=' + userId + '&currency_id=1&change=-' + cost10);
-var deductData10 = await deductRes10.json();
-if (deductData10.code !== 200) {
-    alert(deductData10.msg || '扣除货币失败');
-    isDrawing = false;
-    return;
-}
-myGold = deductData10.new_amount || myGold - cost10;
+myGold -= cost10;
+document.getElementById('goldAmount').textContent = myGold;
 var cardBack = document.getElementById('cardBack');
 var resultCard = document.getElementById('resultCard');
 var resultCard10 = document.getElementById('resultCard10');
@@ -386,13 +296,10 @@ cardBack.style.display = 'none';
 showResult10(cards);
 updateAlbumProgress(allCharacters);
 renderAlbum();
-var cost10 = Math.floor(drawCost * 10 * 0.9);
-resultActions.innerHTML = '<button class="draw-btn draw-btn-10" onclick="drawCard10()">再来十连</button><button class="draw-btn" onclick="resetDraw()">返回</button></p><p class="cost-text">十连消耗 <span id="drawCost10">'+cost10+'</span> <span id="currencyUnit">'+currencyName+'</span> (9折)</p><p id="userBalance" class="balance-text" style="color:#ffd700;font-size:16px;font-weight:bold;margin-top:10px;">我的' + currencyName + ': ' + myGold + '</p>';
+var cost10 = Math.floor((gameData.settings.drawCost || 100) * 10 * 0.9);
+resultActions.innerHTML = '<button class="draw-btn draw-btn-10" onclick="drawCard10()">再来十连</button><button class="draw-btn" onclick="resetDraw()">返回</button><p class="cost-text">十连消耗 <span id="drawCost10">'+cost10+'</span> 元宝 (9折)</p>';
 resultActions.classList.remove('hidden');
 isDrawing = false;
-// 更新余额显示
-var balanceEl = document.getElementById('userBalance');
-if (balanceEl) balanceEl.textContent = '我的' + currencyName + ': ' + myGold;
 }, 2000);
 }
 
@@ -472,40 +379,18 @@ function showResult(card) {
 var names = getRarityName(card.rarity);
 var rarityColor = getRarityColor(card.rarity);
 var cost = gameData.settings.drawCost || 100;
-var stats = card.baseStats || card.base_stats || {};
-var hpPercent = Math.round((stats.hp || 0) / maxStats.hp * 100);
-var mpPercent = Math.round((stats.mp || 0) / maxStats.mp * 100);
-var atkPercent = Math.round((stats.attack || 0) / maxStats.attack * 100);
-var defPercent = Math.round((stats.defense || 0) / maxStats.defense * 100);
-var agiPercent = Math.round((stats.agility || 0) / maxStats.agility * 100);
-
-var isNew = !myCards[card.instance_id]; // 预先判断，用于前端显示（后续会根据API结果更新）
-
-// 保存到数据库（API会返回是否新卡）
+var hpPercent = Math.round(card.baseStats.hp / maxStats.hp * 100);
+var mpPercent = Math.round(card.baseStats.mp / maxStats.mp * 100);
+var atkPercent = Math.round(card.baseStats.attack / maxStats.attack * 100);
+var defPercent = Math.round(card.baseStats.defense / maxStats.defense * 100);
+var agiPercent = Math.round(card.baseStats.agility / maxStats.agility * 100);
+var isNew = !myCards[card.id];
+if (!myCards[card.id]) myCards[card.id] = JSON.parse(JSON.stringify(card));
+myCards[card.id].count = (myCards[card.id].count || 0) + 1;
+var newTag = isNew ? '<span class="new-tag">新！</span>' : '';
 var rc = document.getElementById('resultCard');
-console.log('保存卡牌: userId=' + userId + ', card_id=' + card.id);
-fetch('game_api.php?action=add_user_card&user_id=' + userId + '&card_id=' + card.id, {method: 'POST'})
-.then(function(res) { return res.text(); })
-.then(function(text) {
-    try {
-        var data = JSON.parse(text);
-        if (data && data.is_new) {
-            var nameEl = rc.querySelector('h2');
-            if (nameEl) nameEl.innerHTML = card.name + '<span class="new-tag">新！</span>';
-        }
-    } catch(e) {}
-    // 更新本地数据
-    if (!myCards[card.id]) myCards[card.id] = JSON.parse(JSON.stringify(card));
-    myCards[card.id].count = (myCards[card.id].count || 0) + 1;
-    renderMyCards();
-})
-.catch(function(e) { console.log('保存完成'); });
-
-var newTag = ''; // 先不显示，等待API返回后再决定（避免本地缓存不一致问题）
-var rarityColor = getRarityColor(card.rarity);
-var names = getRarityNames(card.rarity);
-rc.innerHTML = '<div class="result-image"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div><div class="result-info"><h2 class="rarity-'+card.rarity+'" style="color:'+rarityColor+'">'+card.name+newTag+'</h2><div class="result-rarity" style="color:'+rarityColor+'">'+'⭐'.repeat(card.rarity)+' '+names+'</div><p class="result-desc">'+(card.description||'')+'</p><div class="result-stats-box"><h4>📊 基础属性</h4><div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).hp, 'hp')+'">'+(card.baseStats || card.base_stats || {}).hp+'</span></div><div class="stat-row"><span class="stat-label">MP</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).mp, 'mp')+'">'+(card.baseStats || card.base_stats || {}).mp+'</span></div><div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).attack, 'attack')+'">'+(card.baseStats || card.base_stats || {}).attack+'</span></div><div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).defense, 'defense')+'">'+(card.baseStats || card.base_stats || {}).defense+'</span></div><div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).agility, 'agility')+'">'+(card.baseStats || card.base_stats || {}).agility+'</span></div></div></div>';
-document.getElementById('resultActions').innerHTML = '<button class="draw-btn" onclick="drawCard()">再抽一张</button><button class="draw-btn" onclick="resetDraw()">返回</button><p class="cost-text">消耗 '+cost+' '+currencyName+'</p><p id="userBalance" class="balance-text" style="color:#ffd700;font-size:16px;font-weight:bold;margin-top:10px;">我的' + currencyName + ': ' + myGold + '</p>';
+rc.innerHTML = '<div class="result-image"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div><div class="result-info"><h2 class="rarity-'+card.rarity+'" style="color:'+rarityColor+'">'+card.name+newTag+'</h2><div class="result-rarity" style="color:'+rarityColor+'">'+'⭐'.repeat(card.rarity)+' '+names+'</div><p class="result-desc">'+(card.description||'')+'</p><div class="result-stats-box"><h4>📊 基础属性</h4><div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.hp, 'hp')+'">'+card.baseStats.hp+'</span></div><div class="stat-row"><span class="stat-label">MP</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.mp, 'mp')+'">'+card.baseStats.mp+'</span></div><div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.attack, 'attack')+'">'+card.baseStats.attack+'</span></div><div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.defense, 'defense')+'">'+card.baseStats.defense+'</span></div><div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.agility, 'agility')+'">'+card.baseStats.agility+'</span></div></div></div>';
+document.getElementById('resultActions').innerHTML = '<button class="draw-btn" onclick="drawCard()">再抽一张</button><button class="draw-btn" onclick="resetDraw()">返回</button><p class="cost-text">消耗 '+cost+' 元宝</p>';
 resultActions.classList.remove('hidden');
 rc.classList.add('show');
 renderMyCards();
@@ -513,7 +398,6 @@ renderMyCards();
 
 function renderMyCards() {
 var container = document.getElementById('myCards');
-if (!container) return;
 var cards = Object.values(myCards);
 
 // Apply filter
@@ -567,7 +451,7 @@ function getRarityName(rarity) {
 
 // 获取稀有度颜色 - 优先从 rarityConfig 动态读取，否则使用 fallback
 function getRarityColor(rarity) {
-    // 优先从动态配置获取
+    // 优先从动态配置获���
     if (rarityConfig && rarityConfig.length > 0) {
         var config = rarityConfig.find(function(c) { return c.rarity === rarity; });
         if (config) return config.color;
@@ -578,16 +462,6 @@ function getRarityColor(rarity) {
         return fallbackColors[rarity];
     }
     return '#fff';
-}
-
-// 获取稀有度名称
-function getRarityNames(rarity) {
-    if (typeof getRarityNamesFromConfig === 'function') {
-        var names = getRarityNamesFromConfig();
-        return names[rarity] || '未知';
-    }
-    var fallback = ['', '普通', '稀有', '杰出', '史诗', '传说', '远古'];
-    return fallback[rarity] || '未知';
 }
 
 // 动态填充稀有度筛选下拉框
@@ -701,39 +575,35 @@ function updateAlbumProgress(allCards) {
         '</div>';
     }
     
-    if (container) container.innerHTML = html;
+    container.innerHTML = html;
     
     // 更新总达成率
     var overallRate = totalCards > 0 ? (totalOwned / totalCards * 100) : 0;
     var totalDisplay = document.getElementById('totalRateDisplay');
-    if (totalDisplay) totalDisplay.textContent = overallRate.toFixed(0) + '%';
+    totalDisplay.textContent = overallRate.toFixed(0) + '%';
     
     if (allComplete && totalCards > 0) {
-        if (totalDisplay) {
-            totalDisplay.style.color = '#ffd700';
-            totalDisplay.style.textShadow = '0 0 30px #ffd700, 0 0 60px #ffd700';
-            totalDisplay.style.fontSize = '32px';
-        }
-        if (container) container.style.boxShadow = '0 0 30px rgba(255, 215, 0, 0.5), inset 0 0 20px rgba(255, 215, 0, 0.1)';
+        totalDisplay.style.color = '#ffd700';
+        totalDisplay.style.textShadow = '0 0 30px #ffd700, 0 0 60px #ffd700';
+        totalDisplay.style.fontSize = '32px';
+        container.style.boxShadow = '0 0 30px rgba(255, 215, 0, 0.5), inset 0 0 20px rgba(255, 215, 0, 0.1)';
     } else {
-        if (totalDisplay) {
-            totalDisplay.style.color = '#4caf50';
-            totalDisplay.style.textShadow = 'none';
-            totalDisplay.style.fontSize = '24px';
-        }
-        if (container) container.style.boxShadow = 'none';
+        totalDisplay.style.color = '#4caf50';
+        totalDisplay.style.textShadow = 'none';
+        totalDisplay.style.fontSize = '24px';
+        container.style.boxShadow = 'none';
     }
     
     // 显示/隐藏进度条
-    // document.getElementById('albumProgress').style.display = 'block'; // 已删除
+    document.getElementById('albumProgress').style.display = 'block';
 }
 
 function switchView(view) {
     currentView = view;
     document.getElementById('tabMyCards').classList.toggle('active', view === 'my');
     document.getElementById('tabAlbum').classList.toggle('active', view === 'album');
-    // document.getElementById('myCards').classList.toggle('hidden', view !== 'my'); // 已删除
-    // document.getElementById('albumGrid').classList.toggle('hidden', view !== 'album'); // 已删除
+    document.getElementById('myCards').classList.toggle('hidden', view !== 'my');
+    document.getElementById('albumGrid').classList.toggle('hidden', view !== 'album');
     document.getElementById('filterOwned').classList.toggle('hidden', view !== 'album');
     if (view === 'my') renderMyCards();
     else renderAlbum();
@@ -758,7 +628,6 @@ function resetFilter() {
 
 function renderAlbum() {
     var container = document.getElementById('albumGrid');
-    if (!container) return;
     var allCards = allCharacters || [];
     
     // 从 rarity_config.json 获取稀有度名称和颜色
@@ -837,28 +706,28 @@ document.getElementById('popupName').style.color = rarityColor;
 document.getElementById('popupRarity').innerHTML = '<span style="color:'+rarityColor+'">' + '⭐'.repeat(card.rarity) + ' ' + rarityName + '</span>';
 document.getElementById('popupDesc').textContent = card.description || '';
 document.getElementById('popupStatsBox').innerHTML = 
-    '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).hp, 'hp')+'">'+(card.baseStats || card.base_stats || {}).hp+'</span></div>' +
-    '<div class="stat-row"><span class="stat-label">MP</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).mp, 'mp')+'">'+(card.baseStats || card.base_stats || {}).mp+'</span></div>' +
-    '<div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).attack, 'attack')+'">'+(card.baseStats || card.base_stats || {}).attack+'</span></div>' +
-    '<div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).defense, 'defense')+'">'+(card.baseStats || card.base_stats || {}).defense+'</span></div>' +
-    '<div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).agility, 'agility')+'">'+(card.baseStats || card.base_stats || {}).agility+'</span></div>';
+    '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.hp, 'hp')+'">'+card.baseStats.hp+'</span></div>' +
+    '<div class="stat-row"><span class="stat-label">MP</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.mp, 'mp')+'">'+card.baseStats.mp+'</span></div>' +
+    '<div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.attack, 'attack')+'">'+card.baseStats.attack+'</span></div>' +
+    '<div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.defense, 'defense')+'">'+card.baseStats.defense+'</span></div>' +
+    '<div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.agility, 'agility')+'">'+card.baseStats.agility+'</span></div>';
 document.getElementById('popupCount').textContent = '持有: ' + card.count + ' 张';
             
-            // document.getElementById('cardPopup').classList.add('show'); // 已删除
+            document.getElementById('cardPopup').classList.add('show');
 setTimeout(function() { drawRadar(card); }, 100);
 }
 
 function closePopup() {
-// document.getElementById('cardPopup').classList.remove('show'); // 已删除
+document.getElementById('cardPopup').classList.remove('show');
 }
 
 function showFullImage(src) {
 document.getElementById('fullImage').src = src;
-// document.getElementById('imagePopup').classList.add('show'); // 已删除
+document.getElementById('imagePopup').classList.add('show');
 }
 
 function closeImagePopup() {
-// document.getElementById('imagePopup').classList.remove('show'); // 已删除
+document.getElementById('imagePopup').classList.remove('show');
 }
 
 function drawRadar(card) {
@@ -871,11 +740,11 @@ var cy = h / 2;
 var r = Math.min(w, h) / 2 - 30;
 var labels = ['HP', 'MP', '攻击', '防御', '敏捷'];
 var stats = [
-Math.round((card.baseStats || card.base_stats || {}).hp / maxStats.hp * 100),
-Math.round((card.baseStats || card.base_stats || {}).mp / maxStats.mp * 100),
-Math.round((card.baseStats || card.base_stats || {}).attack / maxStats.attack * 100),
-Math.round((card.baseStats || card.base_stats || {}).defense / maxStats.defense * 100),
-Math.round((card.baseStats || card.base_stats || {}).agility / maxStats.agility * 100)
+Math.round(card.baseStats.hp / maxStats.hp * 100),
+Math.round(card.baseStats.mp / maxStats.mp * 100),
+Math.round(card.baseStats.attack / maxStats.attack * 100),
+Math.round(card.baseStats.defense / maxStats.defense * 100),
+Math.round(card.baseStats.agility / maxStats.agility * 100)
 ];
 var maxVal = 100;
 var angleStep = (Math.PI * 2) / 5;
@@ -930,17 +799,16 @@ var minStats = {hp:Infinity, mp:Infinity, attack:Infinity, defense:Infinity, agi
 function calcMaxStats() {
 if (!gameData || !gameData.characters) return;
 gameData.characters.forEach(function(c) {
-    var stats = c.baseStats || c.base_stats || {};
-    if (stats.hp > maxStats.hp) maxStats.hp = stats.hp;
-    if (stats.hp < minStats.hp) minStats.hp = stats.hp;
-    if (stats.mp > maxStats.mp) maxStats.mp = stats.mp;
-    if (stats.mp < minStats.mp) minStats.mp = stats.mp;
-    if (stats.attack > maxStats.attack) maxStats.attack = stats.attack;
-    if (stats.attack < minStats.attack) minStats.attack = stats.attack;
-    if (stats.defense > maxStats.defense) maxStats.defense = stats.defense;
-    if (stats.defense < minStats.defense) minStats.defense = stats.defense;
-    if (stats.agility > maxStats.agility) maxStats.agility = stats.agility;
-    if (stats.agility < minStats.agility) minStats.agility = stats.agility;
+if (c.baseStats.hp > maxStats.hp) maxStats.hp = c.baseStats.hp;
+if (c.baseStats.hp < minStats.hp) minStats.hp = c.baseStats.hp;
+if (c.baseStats.mp > maxStats.mp) maxStats.mp = c.baseStats.mp;
+if (c.baseStats.mp < minStats.mp) minStats.mp = c.baseStats.mp;
+if (c.baseStats.attack > maxStats.attack) maxStats.attack = c.baseStats.attack;
+if (c.baseStats.attack < minStats.attack) minStats.attack = c.baseStats.attack;
+if (c.baseStats.defense > maxStats.defense) maxStats.defense = c.baseStats.defense;
+if (c.baseStats.defense < minStats.defense) minStats.defense = c.baseStats.defense;
+if (c.baseStats.agility > maxStats.agility) maxStats.agility = c.baseStats.agility;
+if (c.baseStats.agility < minStats.agility) minStats.agility = c.baseStats.agility;
 });
 if (minStats.hp === Infinity) minStats.hp = 0;
 if (minStats.mp === Infinity) minStats.mp = 0;
@@ -949,113 +817,16 @@ if (minStats.defense === Infinity) minStats.defense = 0;
 if (minStats.agility === Infinity) minStats.agility = 0;
 }
 
-function updateCostDisplay() {
-    var cost = drawCost;
-    var cost10 = Math.floor(cost * 10 * 0.9);
-    document.getElementById('drawCost').textContent = cost;
-    document.getElementById('drawCost10').textContent = cost10;
-}
-
-// 当前选中的配置ID
-var currentConfigId = 1;
-
-// 加载配置列表
-function loadConfigList() {
-    fetch('game_api.php?action=get_draw_configs').then(r => r.json()).then(d => {
-        console.log('配置数据:', d);
-        if (d.code === 200 && d.configs) {
-            const select = document.getElementById('configSelect');
-            select.innerHTML = '';
-            d.configs.forEach(function(cfg) {
-                const option = document.createElement('option');
-                option.value = cfg.id;
-                option.textContent = cfg.config_name + ' (消耗' + cfg.draw_cost + ' ' + cfg.currency_name + ')';
-                select.appendChild(option);
-            });
-            // 默认选中第一个
-            if (d.configs.length > 0) {
-                select.value = currentConfigId;
-            }
-        }
-    }).catch(e => console.error('加载配置列表失败:', e));
-}
-
-// 切换配置
-function changeConfig(configId) {
-    configId = parseInt(configId);
-    if (!configId) return;
-    
-    console.log('切换配置:', configId);
-    currentConfigId = configId;
-    localStorage.setItem('drawConfigId', configId);
-    
-    // 先清空数据强制重新获取
-    myGold = 0;
-    document.getElementById('userBalance').textContent = '加载中...';
-    
-    // 重新加载数据
-    loadConfigList();
-    loadData();
-}
-
 function loadData() {
-    // 获取用户ID
-    userId = localStorage.getItem('user_id') || localStorage.getItem('userId');
-    if (!userId) {
-        window.location.href = 'login.html';
-        return;
-    }
-    
-    // 获取用户货币和抽卡配置（带config_id参数）
-    Promise.all([
-        fetch('game_api.php?action=get_user_currency&user_id=' + userId + '&config_id=' + currentConfigId).then(r => r.json()),
-        fetch('game_api.php?action=get_config&config_id=' + currentConfigId).then(r => r.json())
-    ]).then(([userData, configData]) => {
-        // 设置用户货币
-        if (userData.code === 200) {
-            myGold = userData.gold || 0;
-            console.log('货币数据:', userData);
-        }
-        
-        // 设置货币名称和消耗（全局变量）
-        currencyName = '元宝';
-        drawCost = 100;
-        if (configData.code === 200 && configData.config) {
-            currencyName = configData.config.currency_name || '元宝';
-            drawCost = configData.config.draw_cost || 100;
-            // 设置drawConfig供概率预览使用
-            drawConfig = {
-                rarity_weight: configData.config.rarity_weight || [],
-                tag: configData.config.tag || [],
-                tag_weight: configData.config.tag_weight || [],
-                card_pool: configData.config.card_pool || []
-            };
-        }
-        
-        // 更新显示
-        try {
-            var el = document.getElementById('userBalance');
-            if (el) {
-                el.textContent = '我的' + currencyName + ': ' + myGold;
-                console.log('余额更新:', '我的' + currencyName + ': ' + myGold);
-            } else {
-                console.log('userBalance元素未找到');
+    // 获取用户货币
+    fetch('game_api.php?action=get_user_currency&user_id=' + userId)
+        .then(r => r.json())
+        .then(d => {
+            if (d.code === 200) {
+                myGold = d.gold || 0;
+                document.getElementById('goldAmount').textContent = myGold;
             }
-            var goldAmountEl = document.getElementById('goldAmount');
-            var goldUnitEl = document.getElementById('goldUnit');
-            if (goldAmountEl) goldAmountEl.textContent = myGold;
-            if (goldUnitEl) goldUnitEl.textContent = currencyName;
-        } catch(e) {
-            console.error('更新余额失败:', e);
-        }
-        document.querySelectorAll('#currencyUnit').forEach(function(el) { el.textContent = currencyName; });
-        document.getElementById('drawCost').textContent = drawCost;
-        document.getElementById('drawCost10').textContent = Math.floor(drawCost * 10 * 0.9);
-        
-        // 更新抽卡消耗文字
-        var costText = '消耗 ' + drawCost + ' ' + currencyName;
-        var cost10Text = '消耗 ' + Math.floor(drawCost * 10 * 0.9) + ' ' + currencyName + ' (9折)';
-    }).catch(e => console.error('加载失败:', e));
+        }).catch(e => console.error('获取货币失败:', e));
     // 加载稀有度配置
     fetch('data/sys_config/rarity_config.json').then(function(res) { return res.json(); }).then(function(config) {
         rarityConfig = config;
@@ -1065,13 +836,14 @@ function loadData() {
         rarityConfig = [];
     });
     
-    // 加载卡池数据 - 使用 get_all API 获取统一的卡牌数据
-    fetch('game_api.php?action=get_all&user_id=' + userId).then(function(res) { return res.json(); }).then(function(data) {
-        // get_all 返回包含 settings/rarity/config/characters，只取 characters
+    // 加载卡池数据
+    fetch('data/cards/' + currentPool + '.json').then(function(res) { return res.json(); }).then(function(data) {
         gameData = data;
         allCharacters = data.characters || [];
         calcMaxStats();
-        // 抽卡消耗已在loadData中更新
+        document.getElementById('goldAmount').textContent = myGold;
+        document.getElementById('drawCost').textContent = data.settings.drawCost || 100;
+        document.getElementById('drawCost10').textContent = Math.floor((data.settings.drawCost || 100) * 10 * 0.9);
         renderMyCards();
         renderAlbum();
         
@@ -1085,8 +857,7 @@ function loadData() {
         drawConfig = { rarity_weight: [], tag: [], tag_weight: [] };
     });
 }
-loadConfigList();
-    loadData();
+loadData();
 
 function showResult10(cards) {
 var container = document.getElementById('resultCard10');
@@ -1123,20 +894,10 @@ wasNewBefore[card.id] = true;
 }
 });
 
-// Update counts and save to DB
+// Update counts
 cards.forEach(function(card) {
 if (!myCards[card.id]) myCards[card.id] = JSON.parse(JSON.stringify(card));
 myCards[card.id].count = (myCards[card.id].count || 0) + 1;
-// 保存到数据库（图鉴点亮也在API里处理）
-if (userId && card.id) {
-    console.log('保存卡牌: userId=' + userId + ', card_id=' + card.id);
-    fetch('game_api.php?action=add_user_card&user_id=' + userId + '&card_id=' + card.id, {method: 'POST'})
-        .then(function(res) { return res.text(); })
-        .then(function(text) {
-            try { return JSON.parse(text); } catch(e) { return {code:200}; }
-        })
-        .catch(function(e) { console.log('保存完成'); });
-}
 });
 
 // Display: only first occurrence of each new card shows "新！"
@@ -1168,30 +929,5 @@ renderMyCards();
     <div style="text-align:center;margin:20px 0;">
         <a href="index.html" style="color:#aaa;text-decoration:none;padding:10px 20px;">🏠 返回主页</a>
     </div>
-
-<!-- 概率预览弹窗 -->
-<div class="modal" id="probabilityPopup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:2000;overflow-y:auto;justify-content:center;padding:20px;">
-    <div class="modal-content" style="max-width:900px;max-height:90vh;background:transparent;border-radius:10px;padding:20px;display:flex;flex-direction:column;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
-            <h3 style="color:#e94560;margin:0;">📊 概率预览</h3>
-            <button onclick="closeProbabilityPopup()" style="background:#e94560;color:white;border:none;padding:8px 15px;border-radius:5px;cursor:pointer;">关闭</button>
-        </div>
-        <div style="display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;">
-        </div>
-        <div id="probabilityList" style="overflow-y:auto;flex:1;background:transparent;"></div>
-    </div>
-</div>
-
-<style>
-.prob-item { display: flex; align-items: center; padding: 8px; margin-bottom: 5px; background: transparent; border-radius: 5px; }
-.prob-item:hover { background: rgba(255,255,255,0.1); }
-.prob-item .card-name { flex: 1; }
-.prob-item .card-rarity { color: #aaa; margin-right: 10px; font-size: 12px; }
-.prob-item .card-tags { color: #888; font-size: 11px; margin-right: 10px; }
-.prob-item .card-weight { color: #aaa; margin-right: 10px; font-size: 12px; }
-.prob-item .card-prob { font-weight: bold; color: #4caf50; }
-.prob-item.zero-prob { opacity: 0.5; }
-.prob-item.zero-prob .card-prob { color: #666; }
-</style>
 </body>
 </html>

@@ -97,13 +97,11 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif; pad
 .popup-buttons .btn-close { background: #0f3460; color: #fff; }
 .popup-buttons .btn-fav { background: #e94560; color: #fff; }
 .hidden { display: none; }
-
 </style>
 </head>
 <body>
 <div class="header">
-<h1 id="myCardsTitle">我的卡牌</h1>
-<h1 id="albumTitle" class="hidden">我的图鉴</h1>
+<h1>我的卡牌</h1>
 <a href="index.html" style="color:#aaa;">返回首页</a>
 </div>
 <div class="tabs">
@@ -293,8 +291,6 @@ function switchTab(tab) {
     document.getElementById('albumFilters').classList.toggle('hidden', tab !== 'album');
     document.getElementById('myCardsGrid').classList.toggle('hidden', tab !== 'my');
     document.getElementById('albumGrid').classList.toggle('hidden', tab !== 'album');
-    document.getElementById('myCardsTitle').classList.toggle('hidden', tab !== 'my');
-    document.getElementById('albumTitle').classList.toggle('hidden', tab !== 'album');
     if (tab === 'my') loadMyCards();
     else loadAlbum();
 }
@@ -366,10 +362,6 @@ function renderMyCards() {
         return true;
     });
     
-    // 更新标题数字（过滤后）
-    var titleEl = document.getElementById('myCardsTitle');
-    if (titleEl) titleEl.textContent = '我的卡牌 (' + cards.length + '张)';
-    
     cards.sort(function(a, b) { return b.rarity - a.rarity; });
     
     if (cards.length === 0) { container.innerHTML = '<div style="color:#aaa;grid-column:1/-1;padding:20px;">还没有卡牌，快去抽卡吧！</div>'; return; }
@@ -392,17 +384,11 @@ function renderAlbum() {
     var cards = allCards.filter(function(card) {
         if (albumFilterState.name && !card.name.toLowerCase().includes(albumFilterState.name)) return false;
         if (albumFilterState.rarity && card.rarity !== parseInt(albumFilterState.rarity)) return false;
-        var isUnlocked = card.is_unlocked || 0;
-        if (albumFilterState.owned === 'owned' && isUnlocked === 0) return false;
-        if (albumFilterState.owned === 'unlocked' && isUnlocked === 0) return false;
-        if (albumFilterState.owned === 'unowned' && isUnlocked === 1) return false;
+        var ownedCount = card.owned_count || 0;
+        if (albumFilterState.owned === 'owned' && ownedCount === 0) return false;
+        if (albumFilterState.owned === 'unowned' && ownedCount > 0) return false;
         return true;
     });
-    
-    // 更新标题数字 - 已拥有/总卡牌数
-    var ownedCount = cards.filter(function(c) { return (c.is_unlocked || 0) === 1; }).length;
-    var titleEl = document.getElementById('albumTitle');
-    if (titleEl) titleEl.textContent = '我的图鉴 (' + ownedCount + '/' + cards.length + ')';
     
     cards.sort(function(a, b) { return b.rarity - a.rarity; });
     
@@ -418,21 +404,14 @@ function renderAlbum() {
     cards.forEach(function(card) {
         var stars = '⭐'.repeat(card.rarity);
         var ownedCount = card.owned_count || 0;
-        var isUnlocked = card.is_unlocked || 0;
-        
-        if (isUnlocked) {
-            // 已解锁（图鉴点亮）- 使用淡化背景色
+        if (ownedCount > 0) {
             html += '<div class="album-card rarity-'+card.rarity+'" onclick="showAlbumPopup('+card.id+')" style="background:'+card._bgColor+';">';
             html += '<div class="card-thumb" style="background:'+card._bgColor+';"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div>';
             html += '<h4 style="color:'+rarityColors[card.rarity]+';">'+card.name+'</h4>';
             html += '<div style="font-size:10px;color:'+rarityColors[card.rarity]+';">'+stars+'</div>';
-            if (ownedCount > 0) {
-                html += '<div class="count">x'+ownedCount+'</div></div>';
-            } else {
-                html += '<div class="count" style="color:#666;">未拥有</div></div>';
-            }
+            html += '<div class="count">x'+ownedCount+'</div></div>';
         } else {
-            // 未解锁 - 使用 locked 样式
+            // 未拥有 - 使用 locked 样式，但名字和星星显示对应稀有度颜色
             html += '<div class="album-card locked">';
             html += '<div class="card-thumb"><img src="'+getImageUrl(card)+'" alt="'+card.name+'" style="filter:grayscale(100%) brightness(0.7);"></div>';
             html += '<h4 style="color:'+rarityColors[card.rarity]+';">'+card.name+'</h4>';

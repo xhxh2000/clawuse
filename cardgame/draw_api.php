@@ -143,6 +143,12 @@ if ($action === 'save_card') {
     
     // 记录抽卡历史
     $stmt = $db->prepare('INSERT INTO draw_history (user_id, card_id, cost, is_free) VALUES (:user_id, :card_id, :cost, 0)');
+    
+    // 写入图鉴解锁记录（如果不存在）
+    $stmt = $db->prepare('INSERT OR IGNORE INTO user_album (user_id, card_id) VALUES (:user_id, :card_id)');
+    $stmt->bindValue(':user_id', $userId);
+    $stmt->bindValue(':card_id', $cardId);
+    $stmt->execute();
     $stmt->bindValue(':user_id', $userId);
     $stmt->bindValue(':card_id', $cardId);
     $stmt->bindValue(':cost', 0); // 稍后在调用时传入
