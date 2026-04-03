@@ -255,7 +255,7 @@ initPreviewFilters();
 var gameData = null;
 var drawConfig = { rarity_weight: [], tag: [], tag_weight: [] };
 var rarityConfig = [];
-var myGold = 0; var currencyName = "元宝"; var drawCost = 100; // 从API获取
+var myGold = 0; var ownedCardIds = {}; var currencyName = "元宝"; var currencyId = 1; var drawCost = 100; // 从API获取
 var myCards = {};
 var isDrawing = false;
 var currentPool = "NIKKE";
@@ -282,6 +282,12 @@ var cost = drawCost || 100;
 if (myGold < cost) { alert('货币不足！'); return; }
 isDrawing = true;
 
+// 查询用户已有的card_id列表
+ownedCardIds = {};
+await fetch('game_api.php?action=get_owned_card_ids&user_id=' + userId).then(r => r.json()).then(d => {
+    if (d.code === 200 && d.card_ids) d.card_ids.forEach(id => ownedCardIds[id] = true);
+});
+
 // 先刷新本地数据，确保一致性
 await fetch('game_api.php?action=get_my_cards&user_id=' + userId).then(r => r.json()).then(d => {
     if (d.code === 200 && d.cards) {
@@ -295,7 +301,7 @@ await fetch('game_api.php?action=get_my_cards&user_id=' + userId).then(r => r.js
 });
 
 // 先扣除货币
-var deductRes = await fetch('game_api.php?action=update_user_wallet&user_id=' + userId + '&currency_id=1&change=-' + cost);
+var deductRes = await fetch('game_api.php?action=update_user_wallet&user_id=' + userId + '&currency_id=' + currencyId + '&change=-' + cost);
 var deductData = await deductRes.json();
 if (deductData.code !== 200) {
     alert(deductData.msg || '扣除货币失败');
@@ -310,11 +316,11 @@ resultCard.classList.remove('show');
 resultActions.classList.add('hidden');
 cardBack.style.display = 'flex';
 cardBack.classList.add('drawing');
-setTimeout(function() {
+setTimeout(async function() {
 var card = doDraw();
 cardBack.classList.remove('drawing');
 cardBack.style.display = 'none';
-showResult(card);
+await showResult(card);
 updateAlbumProgress(allCharacters);
 if (currentView === 'album') renderAlbum();
 isDrawing = false;
@@ -346,6 +352,12 @@ var cost10 = Math.floor(drawCost * 10 * 0.9);
 if (myGold < cost10) { alert('货币不足！'); return; }
 isDrawing = true;
 
+// 查询用户已有的card_id列表
+ownedCardIds = {};
+await fetch('game_api.php?action=get_owned_card_ids&user_id=' + userId).then(r => r.json()).then(d => {
+    if (d.code === 200 && d.card_ids) d.card_ids.forEach(id => ownedCardIds[id] = true);
+});
+
 // 先刷新本地数据确保一致性
 await fetch('game_api.php?action=get_my_cards&user_id=' + userId).then(r => r.json()).then(d => {
     if (d.code === 200 && d.cards) {
@@ -359,7 +371,7 @@ await fetch('game_api.php?action=get_my_cards&user_id=' + userId).then(r => r.js
 });
 
 // 先扣除货币
-var deductRes10 = await fetch('game_api.php?action=update_user_wallet&user_id=' + userId + '&currency_id=1&change=-' + cost10);
+var deductRes10 = await fetch('game_api.php?action=update_user_wallet&user_id=' + userId + '&currency_id=' + currencyId + '&change=-' + cost10);
 var deductData10 = await deductRes10.json();
 if (deductData10.code !== 200) {
     alert(deductData10.msg || '扣除货币失败');
@@ -376,14 +388,14 @@ resultCard10.classList.remove('show');
 resultActions.classList.add('hidden');
 cardBack.style.display = 'flex';
 cardBack.classList.add('drawing');
-setTimeout(function() {
+setTimeout(async function() {
 var cards = [];
 for (var i = 0; i < 10; i++) {
 cards.push(doDraw());
 }
 cardBack.classList.remove('drawing');
 cardBack.style.display = 'none';
-showResult10(cards);
+await showResult10(cards);
 updateAlbumProgress(allCharacters);
 renderAlbum();
 var cost10 = Math.floor(drawCost * 10 * 0.9);
@@ -468,7 +480,7 @@ function doDraw() {
     return cardWeights[cardWeights.length - 1].card;
 }
 
-function showResult(card) {
+async function showResult(card) {
 var names = getRarityName(card.rarity);
 var rarityColor = getRarityColor(card.rarity);
 var cost = gameData.settings.drawCost || 100;
@@ -479,29 +491,21 @@ var atkPercent = Math.round((stats.attack || 0) / maxStats.attack * 100);
 var defPercent = Math.round((stats.defense || 0) / maxStats.defense * 100);
 var agiPercent = Math.round((stats.agility || 0) / maxStats.agility * 100);
 
-var isNew = !myCards[card.instance_id]; // 预先判断，用于前端显示（后续会根据API结果更新）
+var isNew = !ownedCardIds[card.id]; // 用数据库查询的结果判断是否新卡
 
 // 保存到数据库（API会返回是否新卡）
 var rc = document.getElementById('resultCard');
 console.log('保存卡牌: userId=' + userId + ', card_id=' + card.id);
-fetch('game_api.php?action=add_user_card&user_id=' + userId + '&card_id=' + card.id, {method: 'POST'})
-.then(function(res) { return res.text(); })
-.then(function(text) {
-    try {
-        var data = JSON.parse(text);
-        if (data && data.is_new) {
-            var nameEl = rc.querySelector('h2');
-            if (nameEl) nameEl.innerHTML = card.name + '<span class="new-tag">新！</span>';
-        }
-    } catch(e) {}
-    // 更新本地数据
-    if (!myCards[card.id]) myCards[card.id] = JSON.parse(JSON.stringify(card));
-    myCards[card.id].count = (myCards[card.id].count || 0) + 1;
-    renderMyCards();
-})
-.catch(function(e) { console.log('保存完成'); });
+await fetch('game_api.php?action=add_user_card&user_id=' + userId + '&card_id=' + card.id, {method: 'POST'})
+    .then(r => r.text())
+    .then(t => {
+        try { JSON.parse(t); } catch(e) {}
+        if (!myCards[card.id]) myCards[card.id] = JSON.parse(JSON.stringify(card));
+        myCards[card.id].count = (myCards[card.id].count || 0) + 1;
+        renderMyCards();
+    });
 
-var newTag = ''; // 先不显示，等待API返回后再决定（避免本地缓存不一致问题）
+var newTag = isNew ? '<span class="new-tag">新！</span>' : '';
 var rarityColor = getRarityColor(card.rarity);
 var names = getRarityNames(card.rarity);
 rc.innerHTML = '<div class="result-image"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div><div class="result-info"><h2 class="rarity-'+card.rarity+'" style="color:'+rarityColor+'">'+card.name+newTag+'</h2><div class="result-rarity" style="color:'+rarityColor+'">'+'⭐'.repeat(card.rarity)+' '+names+'</div><p class="result-desc">'+(card.description||'')+'</p><div class="result-stats-box"><h4>📊 基础属性</h4><div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).hp, 'hp')+'">'+(card.baseStats || card.base_stats || {}).hp+'</span></div><div class="stat-row"><span class="stat-label">MP</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).mp, 'mp')+'">'+(card.baseStats || card.base_stats || {}).mp+'</span></div><div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).attack, 'attack')+'">'+(card.baseStats || card.base_stats || {}).attack+'</span></div><div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).defense, 'defense')+'">'+(card.baseStats || card.base_stats || {}).defense+'</span></div><div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).agility, 'agility')+'">'+(card.baseStats || card.base_stats || {}).agility+'</span></div></div></div>';
@@ -1023,6 +1027,7 @@ function loadData() {
         if (configData.code === 200 && configData.config) {
             currencyName = configData.config.currency_name || '元宝';
             drawCost = configData.config.draw_cost || 100;
+            currencyId = configData.config.currency_id || 1;
             // 设置drawConfig供概率预览使用
             drawConfig = {
                 rarity_weight: configData.config.rarity_weight || [],
@@ -1082,7 +1087,7 @@ function loadData() {
 loadConfigList();
     loadData();
 
-function showResult10(cards) {
+async function showResult10(cards) {
 var container = document.getElementById('resultCard10');
 var rarityColors = getRarityColorsFromConfig();
 var rarityNames = getRarityNamesFromConfig();
@@ -1112,26 +1117,21 @@ function getRarityNamesFromConfig() {
 // Before updating, record which cards are newly obtained
 var wasNewBefore = {};
 cards.forEach(function(card) {
-if (!myCards[card.id] && !wasNewBefore[card.id]) {
+if (!ownedCardIds[card.id] && !wasNewBefore[card.id]) {
 wasNewBefore[card.id] = true;
 }
 });
 
-// Update counts and save to DB
-cards.forEach(function(card) {
-if (!myCards[card.id]) myCards[card.id] = JSON.parse(JSON.stringify(card));
-myCards[card.id].count = (myCards[card.id].count || 0) + 1;
-// 保存到数据库（图鉴点亮也在API里处理）
-if (userId && card.id) {
-    console.log('保存卡牌: userId=' + userId + ', card_id=' + card.id);
-    fetch('game_api.php?action=add_user_card&user_id=' + userId + '&card_id=' + card.id, {method: 'POST'})
-        .then(function(res) { return res.text(); })
-        .then(function(text) {
-            try { return JSON.parse(text); } catch(e) { return {code:200}; }
-        })
-        .catch(function(e) { console.log('保存完成'); });
+// Update counts and save to DB - 同步等待保存完成
+for (var ci = 0; ci < cards.length; ci++) {
+    var card = cards[ci];
+    if (!myCards[card.id]) myCards[card.id] = JSON.parse(JSON.stringify(card));
+    myCards[card.id].count = (myCards[card.id].count || 0) + 1;
+    if (userId && card.id) {
+        console.log('保存卡牌: userId=' + userId + ', card_id=' + card.id);
+        await fetch('game_api.php?action=add_user_card&user_id=' + userId + '&card_id=' + card.id, {method: 'POST'});
+    }
 }
-});
 
 // Display: only first occurrence of each new card shows "新！"
 var firstSeen = {};

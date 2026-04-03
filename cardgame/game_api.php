@@ -271,13 +271,18 @@ elseif ($action === 'add_user_card') {
     
     error_log("add_user_card: user_id=$user_id, card_id=$card_id");
     
+    // 检查是否已存在（查询user_album，因为每张卡只记录一次）
+    $check = $db->query("SELECT id FROM user_album WHERE user_id = $user_id AND card_id = $card_id");
+    $existing = $check ? $check->fetchArray() : null;
+    $isNew = !$existing;
+    
     // 每次抽卡都插入新记录（允许重复卡，用于强化升级）
     $db->exec("INSERT INTO user_cards (user_id, card_id, level, exp, enhance_count, is_favorite, first_get) VALUES ($user_id, $card_id, 1, 0, 0, 0, datetime('now'))");
     
     // 点亮图鉴（如果之前未点亮）
     $db->exec("INSERT OR IGNORE INTO user_album (user_id, card_id, unlocked_at) VALUES ($user_id, $card_id, datetime('now'))");
     
-    response(200, 'ok', ['is_new' => true]);
+    response(200, 'ok', ['is_new' => $isNew]);
 }
 elseif ($action === 'check_new_card') {
     $user_id = intval(getParam('user_id', 0));
@@ -446,6 +451,23 @@ elseif ($action === 'delete_cards_by_rarity') {
     }
     
     response(200, 'ok', ['deleted' => $deleted]);
+}
+
+elseif ($action === 'get_owned_card_ids') {
+    $user_id = intval(getParam('user_id', 0));
+    if (!$user_id) response(400, 'user_id required');
+    
+    // 获取用户拥有的所有card_id
+    $stmt = $db->prepare('SELECT DISTINCT card_id FROM user_cards WHERE user_id = :uid');
+    $stmt->bindValue(':uid', $user_id);
+    $result = $stmt->execute();
+    
+    $card_ids = [];
+    while ($row = $result->fetchArray()) {
+        $card_ids[] = intval($row['card_id']);
+    }
+    
+    response(200, 'ok', ['card_ids' => $card_ids]);
 }
 
 else {
