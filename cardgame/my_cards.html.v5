@@ -97,13 +97,11 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif; pad
 .popup-buttons .btn-close { background: #0f3460; color: #fff; }
 .popup-buttons .btn-fav { background: #e94560; color: #fff; }
 .hidden { display: none; }
-
 </style>
 </head>
 <body>
 <div class="header">
-<h1 id="myCardsTitle">我的卡牌</h1>
-<h1 id="albumTitle" class="hidden">我的图鉴</h1>
+<h1>我的卡牌</h1>
 <a href="index.html" style="color:#aaa;">返回首页</a>
 </div>
 <div class="tabs">
@@ -293,8 +291,6 @@ function switchTab(tab) {
     document.getElementById('albumFilters').classList.toggle('hidden', tab !== 'album');
     document.getElementById('myCardsGrid').classList.toggle('hidden', tab !== 'my');
     document.getElementById('albumGrid').classList.toggle('hidden', tab !== 'album');
-    document.getElementById('myCardsTitle').classList.toggle('hidden', tab !== 'my');
-    document.getElementById('albumTitle').classList.toggle('hidden', tab !== 'album');
     if (tab === 'my') loadMyCards();
     else loadAlbum();
 }
@@ -366,10 +362,6 @@ function renderMyCards() {
         return true;
     });
     
-    // 更新标题数字（过滤后）
-    var titleEl = document.getElementById('myCardsTitle');
-    if (titleEl) titleEl.textContent = '我的卡牌 (' + cards.length + '张)';
-    
     cards.sort(function(a, b) { return b.rarity - a.rarity; });
     
     if (cards.length === 0) { container.innerHTML = '<div style="color:#aaa;grid-column:1/-1;padding:20px;">还没有卡牌，快去抽卡吧！</div>'; return; }
@@ -398,11 +390,6 @@ function renderAlbum() {
         if (albumFilterState.owned === 'unowned' && isUnlocked === 1) return false;
         return true;
     });
-    
-    // 更新标题数字 - 已拥有/总卡牌数
-    var ownedCount = cards.filter(function(c) { return (c.is_unlocked || 0) === 1; }).length;
-    var titleEl = document.getElementById('albumTitle');
-    if (titleEl) titleEl.textContent = '我的图鉴 (' + ownedCount + '/' + cards.length + ')';
     
     cards.sort(function(a, b) { return b.rarity - a.rarity; });
     

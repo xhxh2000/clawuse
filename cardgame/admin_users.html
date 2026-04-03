@@ -302,9 +302,10 @@
                 const fd = new FormData();
                 fd.append('user_id', currentUserId);
                 fd.append('currency_id', currencyId);
-                fd.append('amount', change);
+                fd.append('change', change);
                 
-                const res = await fetch('game_api.php?action=adjust_wallet', { method: 'POST', body: fd });
+                const url = 'game_api.php?action=update_user_wallet&user_id=' + currentUserId + '&currency_id=' + currencyId + '&change=' + change;
+                const res = await fetch(url, { method: 'POST' });
                 const r = await res.json();
                 
                 if (r.code === 200) {
