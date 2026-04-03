@@ -428,6 +428,26 @@ elseif ($action === 'delete_user_card') {
     response(200, 'ok');
 }
 
+elseif ($action === 'delete_cards_by_rarity') {
+    $user_id = intval(getParam('user_id', 0));
+    $rarity = intval(getParam('rarity', 0));
+    if (!$user_id || !$rarity) response(400, '参数错误');
+    
+    // 获取该稀有度的所有卡牌ID
+    $stmt = $db->prepare('SELECT id FROM cards WHERE rarity = :rarity');
+    $stmt->bindValue(':rarity', $rarity);
+    $result = $stmt->execute();
+    
+    $deleted = 0;
+    while ($row = $result->fetchArray()) {
+        $cid = $row['id'];
+        $db->exec("DELETE FROM user_cards WHERE user_id = $user_id AND card_id = $cid");
+        $deleted++;
+    }
+    
+    response(200, 'ok', ['deleted' => $deleted]);
+}
+
 else {
     response(400, '未知操作');
 }

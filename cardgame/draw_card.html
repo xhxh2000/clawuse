@@ -1074,15 +1074,9 @@ function loadData() {
         // 抽卡消耗已在loadData中更新
         renderMyCards();
         renderAlbum();
-        
-        // 加载抽卡配置
-        return fetch('data/card_draw_config/draw_default.json');
-    }).then(function(res) { return res.json(); }).then(function(config) {
-        console.log('抽卡配置加载:', config);
-        drawConfig = config;
+        // drawConfig 已在 loadData 中通过 get_config API 设置好了
     }).catch(function(e) { 
         console.error(e); 
-        drawConfig = { rarity_weight: [], tag: [], tag_weight: [] };
     });
 }
 loadConfigList();
