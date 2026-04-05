@@ -26,16 +26,16 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif; pad
 .album-card.locked .card-thumb { background: inherit; }
 .album-card.locked .count { color: #666; }
 .album-card.locked h4 { color: inherit; }
-/* 稀有度卡牌底色 - 使用抽卡页面图鉴的淡化背景色 */
+/* 稀有度卡牌底色 - 静态CSS作为默认值 */
 .album-card.rarity-1 { background: #0f3460; border: 1px solid #444; }
 .album-card.rarity-2 { background: #0f3460; border: 1px solid #4caf50; }
 .album-card.rarity-3 { background: #0f3460; border: 1px solid #2196f3; }
 .album-card.rarity-4 { background: #0f3460; border: 1px solid #9c27b0; }
 .album-card.rarity-5 { background: #0f3460; border: 1px solid #ffb300; }
 .album-card.rarity-6 { background: #0f3460; border: 1px solid #f44336; }
-/* 稀有度图片底色 */
+/* 稀有度图片底色 - 静态CSS作为默认值 */
 .album-card .card-thumb { background: #0f3460; }
-.album-card.rarity-1 .card-thumb { background: #16213e; }
+.album-card.rarity-1 .card-thumb { background: transparent; }
 .album-card.rarity-2 .card-thumb { background: #0f3460; }
 .album-card.rarity-3 .card-thumb { background: #0f3460; }
 .album-card.rarity-4 .card-thumb { background: #0f3460; }
@@ -49,41 +49,41 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif; pad
   .tab { padding: 8px 12px; font-size: 14px; }
   .filter-row { gap: 6px; }
   .filter-row input, .filter-row select { padding: 6px; font-size: 12px; }
-  .card-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 8px; max-height: 60vh; }
-  .album-card { padding: 6px; }
-  .album-card .card-thumb { width: 100%; aspect-ratio: 1; margin: 0 auto 4px; }
-  .album-card h4 { font-size: 10px; margin: 2px 0; }
-  .album-card .count { font-size: 9px; }
+  .card-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 6px; max-height: calc(33vw * 4 + 40px); }
+  .album-card { padding: 4px; }
+  .album-card .card-thumb { width: 100%; aspect-ratio: 1; margin: 0 auto 2px; }
+  .album-card h4 { font-size: 9px; margin: 1px 0; }
+  .album-card .count { font-size: 8px; }
   .album-card img { width: 100%; height: auto; }
   .popup-content { padding: 15px; }
   .popup-container { flex-direction: column; }
-  .popup-content .popup-image { flex: none; }
-  .popup-content .popup-image img { max-width: 150px; max-height: 150px; }
+  .popup-content .popup-image { flex: 0 0 280px; max-height: 400px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: transparent; }
+  .popup-content .popup-image img { max-width: 100%; max-height: 400px; width: auto; height: auto; object-fit: contain; border-radius: 10px; cursor: pointer; }
   .popup-info { min-width: unset; }
   .popup-name { font-size: 18px; }
   .popup-rarity { font-size: 14px; }
   .stats-grid-2 { grid-template-columns: repeat(3, 1fr); gap: 5px; }
-  .stats-grid-2 .stat-row { padding: 6px; }
+  .stats-grid-2 .stat-row { padding: 6px; background: transparent; }
 }
   .stats-grid-2 .stat-label { font-size: 10px; }
   .stats-grid-2 .stat-value { font-size: 14px; }
   .popup-radar canvas { width: 200px; height: 200px; margin: 10px auto; }
 }
 .album-card .card-thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto; justify-content: center; padding: 20px; }
+.popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; overflow-y: auto; justify-content: center; padding: 20px; }
 .popup.show { display: flex; }
-.popup-content { width: 95%; max-width: 750px; border-radius: 10px; padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); border: 2px solid rgba(233,69,96,0.4); position: relative; max-height: 90vh; overflow-y: auto; background: #1a1a2e; }
+.popup-content { width: 95%; max-width: 750px; border-radius: 15px; padding: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); border: 2px solid rgba(233,69,96,0.3); position: relative; max-height: 90vh; overflow-y: auto; background: transparent; }
 .popup-close { position: absolute; top: 15px; right: 15px; background: #e94560; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; }
-.popup-content .popup-image { flex: 0 0 250px; display: flex; justify-content: center; }
-.popup-content .popup-image img { max-width: 100%; max-height: 300px; width: auto; height: auto; border-radius: 10px; object-fit: contain; cursor: pointer; }
-.popup-info { flex: 1; min-width: 280px; }
+.popup-content .popup-image { flex: 0 0 280px; height: 400px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: transparent; border-radius: 10px; }
+.popup-content .popup-image img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border-radius: 10px; cursor: pointer; }
+.popup-info { flex: 1; min-width: 280px; display: flex; flex-direction: column; }
 .popup-name { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
 .popup-rarity { font-size: 18px; margin-bottom: 10px; }
 .popup-desc { color: #aaa; margin-bottom: 15px; line-height: 1.5; }
 .popup-stats { margin-top: 20px; }
 .popup-stats h4 { color: #e94560; margin-bottom: 10px; }
 .stats-grid-2 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; text-align: center; min-width: 0; }
-.stats-grid-2 .stat-row { background: #0f3460; padding: 8px; border-radius: 5px; min-width: 0; }
+.stats-grid-2 .stat-row { background: transparent; padding: 8px; border-radius: 5px; min-width: 0; }
 .stats-grid-2 .stat-label { display: block; color: #aaa; font-size: 11px; margin-bottom: 4px; word-break: break-all; }
 .stats-grid-2 .stat-value { display: block; font-weight: bold; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .popup-radar { margin-top: 20px; }
@@ -97,11 +97,13 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif; pad
 .popup-buttons .btn-close { background: #0f3460; color: #fff; }
 .popup-buttons .btn-fav { background: #e94560; color: #fff; }
 .hidden { display: none; }
+
 </style>
 </head>
 <body>
 <div class="header">
-<h1>我的卡牌</h1>
+<h1 id="myCardsTitle">我的卡牌</h1>
+<h1 id="albumTitle" class="hidden">我的图鉴</h1>
 <a href="index.html" style="color:#aaa;">返回首页</a>
 </div>
 <div class="tabs">
@@ -112,11 +114,13 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif; pad
 <input type="text" id="filterName" placeholder="名字搜索..." oninput="applyFilter()">
 <select id="filterRarity" onchange="applyFilter()"><option value="">全部稀有度</option></select>
 <select id="filterFavorite" onchange="applyFilter()"><option value="">全部</option><option value="1">仅收藏</option></select>
+<select id="filterSort" onchange="applyFilter()"><option value="rarity-desc">稀有度降序</option><option value="rarity-asc">稀有度升序</option><option value="time-desc">获取时间降序</option><option value="time-asc">获取时间升序</option></select>
 </div>
 <div id="albumFilters" class="filter-row hidden">
 <input type="text" id="albumFilterName" placeholder="名字搜索..." oninput="applyAlbumFilter()">
 <select id="albumFilterRarity" onchange="applyAlbumFilter()"><option value="">全部稀有度</option></select>
 <select id="albumFilterOwned" onchange="applyAlbumFilter()"><option value="">全部</option><option value="owned">仅拥有</option><option value="unowned">未拥有</option></select>
+<select id="albumSort" onchange="applyAlbumFilter()"><option value="rarity-desc">稀有度降序</option><option value="rarity-asc">稀有度升序</option><option value="time-desc">点亮时间降序</option><option value="time-asc">点亮时间升序</option></select>
 </div>
 <div id="myCardsGrid" class="card-grid"></div>
 <div id="albumGrid" class="card-grid hidden"></div>
@@ -133,11 +137,9 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif; pad
 <div id="popupRarity" class="popup-rarity"></div>
 <p id="popupDesc" class="popup-desc"></p>
 <div class="popup-stats" id="myCardStats">
-<h4>📊 当前属性</h4>
-<div class="stats-grid-2" id="myCardStatsBox"></div>
+<div id="myCardStatsBox"></div>
 </div>
 <div class="popup-stats" id="albumStats">
-<h4>📊 基础属性</h4>
 <div class="stats-grid-2" id="albumStatsBox"></div>
 </div>
 <div class="popup-radar" id="albumRadar">
@@ -170,32 +172,70 @@ var rarityNames = ['', '普通', '稀有', '杰出', '史诗', '传说', '远古
 
 // 加载稀有度配置（从数据库）
 function loadRarityConfig() {
+    console.log('开始加载稀有度配置...');
     return fetch('game_api.php?action=get_rarity')
         .then(function(r) { return r.json(); })
         .then(function(d) {
+            console.log('get_rarity 返回:', d);
             if (d.rarity && d.rarity.length > 0) {
                 rarityConfig = d.rarity;
-                var bgColors = [''];
-                var colors = [''];
-                rarityConfig.forEach(function(cfg) {
-                    bgColors.push(cfg.color || '#aaaaaa');
-                    colors.push(cfg.color || '#ffffff');
-                });
-                // 淡化背景色
-                var litBgColors = [''];
-                bgColors.slice(1).forEach(function(c) {
-                    if (c && c.length === 7) {
-                        litBgColors.push(lightenColor(c, 0.85));
-                    } else {
-                        litBgColors.push('#0f3460');
+                
+                // 填充下拉列表（带星星）
+                var raritySelect = document.getElementById('filterRarity');
+                var albumRaritySelect = document.getElementById('albumFilterRarity');
+                d.rarity.forEach(function(cfg) {
+                    if (cfg.rarity && cfg.name) {
+                        var stars = '⭐'.repeat(cfg.rarity);
+                        var option1 = document.createElement('option');
+                        option1.value = cfg.rarity;
+                        option1.textContent = stars + ' ' + cfg.name;
+                        raritySelect.appendChild(option1);
+                        
+                        var option2 = document.createElement('option');
+                        option2.value = cfg.rarity;
+                        option2.textContent = stars + ' ' + cfg.name;
+                        albumRaritySelect.appendChild(option2);
                     }
                 });
+                
+                // 收集颜色
+                var rawColors = {};
+                rarityConfig.forEach(function(cfg) {
+                    console.log('稀有度配置:', cfg);
+                    if (cfg.rarity && cfg.color) {
+                        rawColors[cfg.rarity] = cfg.color;
+                    }
+                });
+                // 构建颜色数组
+                var bgColors = [''];
+                var colors = [''];
+                var maxRarity = 0;
+                d.rarity.forEach(function(cfg) {
+                    if (cfg.rarity) {
+                        bgColors[cfg.rarity] = cfg.color || '#aaaaaa';
+                        colors[cfg.rarity] = cfg.color || '#ffffff';
+                        if (cfg.rarity > maxRarity) maxRarity = cfg.rarity;
+                    }
+                });
+                // 淡化背景色 - 动态根据实际稀有度数量
+                var litBgColors = [''];
+                for (var i = 1; i <= maxRarity; i++) {
+                    var c = bgColors[i];
+                    console.log('稀有度' + i + '原始颜色:', c);
+                    if (c && c.charAt(0) === '#') {
+                        litBgColors[i] = lightenColor(c, 0.3);
+                    } else {
+                        litBgColors[i] = '#0f3460';
+                    }
+                }
+                console.log('淡化背景色:', litBgColors);
                 window.rarityBgColors = litBgColors;
                 window.rarityColors = colors;
+                console.log('设置完成 - rarityBgColors:', window.rarityBgColors, 'rarityColors:', window.rarityColors);
             }
         })
         .catch(function(e) {
-            console.log('使用默认颜色', e);
+            console.log('加载稀有度配置失败，使用默认', e);
         });
 }
 
@@ -213,17 +253,27 @@ function lightenColor(hex, factor) {
     r = Math.round(r + (255 - r) * factor);
     g = Math.round(g + (255 - g) * factor);
     b = Math.round(b + (255 - b) * factor);
-    return 'rgb(' + r + ',' + g + ',' + b + ')';
+    return '#' + 
+        (r < 16 ? '0' : '') + r.toString(16) + 
+        (g < 16 ? '0' : '') + g.toString(16) + 
+        (b < 16 ? '0' : '') + b.toString(16);
 }
-var filterState = { name: '', rarity: '', favorite: '' };
-var albumFilterState = { name: '', rarity: '', owned: '' };
+var filterState = { name: '', rarity: '', favorite: '', sort: 'rarity-desc' };
+var albumFilterState = { name: '', rarity: '', owned: '', sort: 'rarity-desc' };
 var currentCardInstanceId = null;
 var maxStats = {hp:0, mp:0, attack:0, defense:0, agility:0};
 
-// 根据全局最大属性计算颜色
+// 根据全局最大属性计算颜色 - 百分比颜色
 function getStatColor(value, statName) {
-
-    document.getElementById('imagePopup').classList.remove('show');
+    var max = maxStats[statName];
+    if (!max || max === 0) return '#aaa';
+    var percent = (value / max) * 100;
+    if (percent >= 100) return '#ff0000';  // 红色 100%
+    if (percent >= 80) return '#ffd700';  // 黄色 80-99%
+    if (percent >= 60) return '#9400d3';  // 紫色 60-79%
+    if (percent >= 40) return '#4169e1';  // 蓝色 40-59%
+    if (percent >= 20) return '#00ff00';  // 绿色 20-39%
+    return '#ffffff';  // 白色 0-19%
 }
 
 // 从所有卡牌计算最大属性值
@@ -245,6 +295,8 @@ function switchTab(tab) {
     document.getElementById('albumFilters').classList.toggle('hidden', tab !== 'album');
     document.getElementById('myCardsGrid').classList.toggle('hidden', tab !== 'my');
     document.getElementById('albumGrid').classList.toggle('hidden', tab !== 'album');
+    document.getElementById('myCardsTitle').classList.toggle('hidden', tab !== 'my');
+    document.getElementById('albumTitle').classList.toggle('hidden', tab !== 'album');
     if (tab === 'my') loadMyCards();
     else loadAlbum();
 }
@@ -316,7 +368,21 @@ function renderMyCards() {
         return true;
     });
     
-    cards.sort(function(a, b) { return b.rarity - a.rarity; });
+    // 更新标题数字（过滤后）
+    var titleEl = document.getElementById('myCardsTitle');
+    if (titleEl) titleEl.textContent = '我的卡牌 (' + cards.length + '张)';
+    
+    // 根据排序选项排序
+    var sortOrder = filterState.sort || 'rarity-desc';
+    cards.sort(function(a, b) {
+        switch(sortOrder) {
+            case 'rarity-desc': return b.rarity - a.rarity;
+            case 'rarity-asc': return a.rarity - b.rarity;
+            case 'time-desc': return new Date(b.obtained_at || 0) - new Date(a.obtained_at || 0);
+            case 'time-asc': return new Date(a.obtained_at || 0) - new Date(b.obtained_at || 0);
+            default: return b.rarity - a.rarity;
+        }
+    });
     
     if (cards.length === 0) { container.innerHTML = '<div style="color:#aaa;grid-column:1/-1;padding:20px;">还没有卡牌，快去抽卡吧！</div>'; return; }
     
@@ -326,9 +392,9 @@ function renderMyCards() {
         var level = card.level || 1;
         html += '<div class="album-card rarity-'+card.rarity+'" onclick="showMyCardPopup('+card.instance_id+')" style="background:'+card._bgColor+';">';
         html += '<div class="card-thumb" style="background:'+card._bgColor+';"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div>';
-        html += '<h4 style="color:'+rarityNames[card.rarity]+';">'+card.name+'</h4>';
-        html += '<div style="font-size:10px;color:'+rarityNames[card.rarity]+';">'+stars+'</div>';
-        html += '<div class="count" style="color:'+rarityNames[card.rarity]+';">Lv.'+level+'</div></div>';
+        html += '<h4 style="color:'+rarityColors[card.rarity]+';">'+card.name+'</h4>';
+        html += '<div style="font-size:10px;color:'+rarityColors[card.rarity]+';">'+stars+'</div>';
+        html += '<div class="count" style="color:'+rarityColors[card.rarity]+';">Lv.'+level+'</div></div>';
     });
     container.innerHTML = html;
 }
@@ -338,13 +404,29 @@ function renderAlbum() {
     var cards = allCards.filter(function(card) {
         if (albumFilterState.name && !card.name.toLowerCase().includes(albumFilterState.name)) return false;
         if (albumFilterState.rarity && card.rarity !== parseInt(albumFilterState.rarity)) return false;
-        var ownedCount = card.owned_count || 0;
-        if (albumFilterState.owned === 'owned' && ownedCount === 0) return false;
-        if (albumFilterState.owned === 'unowned' && ownedCount > 0) return false;
+        var isUnlocked = card.is_unlocked || 0;
+        if (albumFilterState.owned === 'owned' && isUnlocked === 0) return false;
+        if (albumFilterState.owned === 'unlocked' && isUnlocked === 0) return false;
+        if (albumFilterState.owned === 'unowned' && isUnlocked === 1) return false;
         return true;
     });
     
-    cards.sort(function(a, b) { return b.rarity - a.rarity; });
+    // 更新标题数字 - 已拥有/总卡牌数
+    var ownedCount = cards.filter(function(c) { return (c.is_unlocked || 0) === 1; }).length;
+    var titleEl = document.getElementById('albumTitle');
+    if (titleEl) titleEl.textContent = '我的图鉴 (' + ownedCount + '/' + cards.length + ')';
+    
+    // 根据排序选项排序
+    var albumSortOrder = albumFilterState.sort || 'rarity-desc';
+    cards.sort(function(a, b) {
+        switch(albumSortOrder) {
+            case 'rarity-desc': return b.rarity - a.rarity;
+            case 'rarity-asc': return a.rarity - b.rarity;
+            case 'time-desc': return new Date(b.unlocked_at || 0) - new Date(a.unlocked_at || 0);
+            case 'time-asc': return new Date(a.unlocked_at || 0) - new Date(b.unlocked_at || 0);
+            default: return b.rarity - a.rarity;
+        }
+    });
     
     // 计算淡化背景色
     cards.forEach(function(card) {
@@ -358,18 +440,25 @@ function renderAlbum() {
     cards.forEach(function(card) {
         var stars = '⭐'.repeat(card.rarity);
         var ownedCount = card.owned_count || 0;
-        if (ownedCount > 0) {
+        var isUnlocked = card.is_unlocked || 0;
+        
+        if (isUnlocked) {
+            // 已解锁（图鉴点亮）- 使用淡化背景色
             html += '<div class="album-card rarity-'+card.rarity+'" onclick="showAlbumPopup('+card.id+')" style="background:'+card._bgColor+';">';
             html += '<div class="card-thumb" style="background:'+card._bgColor+';"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div>';
-            html += '<h4 style="color:'+rarityNames[card.rarity]+';">'+card.name+'</h4>';
-            html += '<div style="font-size:10px;color:'+rarityNames[card.rarity]+';">'+stars+'</div>';
-            html += '<div class="count">x'+ownedCount+'</div></div>';
+            html += '<h4 style="color:'+rarityColors[card.rarity]+';">'+card.name+'</h4>';
+            html += '<div style="font-size:10px;color:'+rarityColors[card.rarity]+';">'+stars+'</div>';
+            if (ownedCount > 0) {
+                html += '<div class="count">x'+ownedCount+'</div></div>';
+            } else {
+                html += '<div class="count" style="color:#666;">未拥有</div></div>';
+            }
         } else {
-            // 未拥有 - 使用 locked 样式
+            // 未解锁 - 使用 locked 样式
             html += '<div class="album-card locked">';
             html += '<div class="card-thumb"><img src="'+getImageUrl(card)+'" alt="'+card.name+'" style="filter:grayscale(100%) brightness(0.7);"></div>';
-            html += '<h4 style="color:inherit;">'+card.name+'</h4>';
-            html += '<div style="font-size:10px;color:inherit;filter:grayscale(50%);">'+stars+'</div>';
+            html += '<h4 style="color:'+rarityColors[card.rarity]+';">'+card.name+'</h4>';
+            html += '<div style="font-size:10px;color:'+rarityColors[card.rarity]+';">'+stars+'</div>';
             html += '<div class="count">未拥有</div></div>';
         }
     });
@@ -380,6 +469,7 @@ function applyFilter() {
     filterState.name = document.getElementById('filterName').value.trim().toLowerCase();
     filterState.rarity = document.getElementById('filterRarity').value;
     filterState.favorite = document.getElementById('filterFavorite').value;
+    filterState.sort = document.getElementById('filterSort').value;
     renderMyCards();
 }
 
@@ -387,6 +477,7 @@ function applyAlbumFilter() {
     albumFilterState.name = document.getElementById('albumFilterName').value.trim().toLowerCase();
     albumFilterState.rarity = document.getElementById('albumFilterRarity').value;
     albumFilterState.owned = document.getElementById('albumFilterOwned').value;
+    albumFilterState.sort = document.getElementById('albumSort').value;
     renderAlbum();
 }
 
@@ -410,31 +501,45 @@ function showMyCardPopup(instanceId) {
         agility: (baseStats.agility || 0) + (level - 1) * (growthStats.agility || 0)
     };
     
+    // 动态字体大小（取最大值的位数）
+    var statValues = [baseStats.hp||0, baseStats.mp||0, baseStats.attack||0, baseStats.defense||0, baseStats.agility||0, currentStats.hp, currentStats.mp, currentStats.attack, currentStats.defense, currentStats.agility];
+    var maxValue = Math.max.apply(null, statValues);
+    var fontSize;
+    if (maxValue >= 100000) fontSize = '10px';
+    else if (maxValue >= 10000) fontSize = '11px';
+    else if (maxValue >= 1000) fontSize = '12px';
+    else if (maxValue >= 100) fontSize = '14px';
+    else fontSize = '16px';
+    
     document.getElementById('popupImage').src = getImageUrl(card);
     document.getElementById('popupName').textContent = card.name + ' Lv.' + level;
-    document.getElementById('popupName').style.color = rarityNames[card.rarity];
-    document.getElementById('popupRarity').innerHTML =  '⭐'.repeat(card.rarity) + ' <span style="color:'+rarityColors[card.rarity]+'">' + rarityNames[card.rarity] + '</span>';
-    document.getElementById('popupDesc').textContent = card.description || '';
+    document.getElementById('popupName').style.color = rarityColors[card.rarity];
+    document.getElementById('popupRarity').innerHTML =  '⭐'.repeat(card.rarity) + ' <span style="color:'+rarityColors[card.rarity]+'">' + rarityNames[card.rarity] + '</span>' + 
+        '<div style="color:#888;font-size:14px;margin:5px 0;">经验：' + exp + '</div>';
+    // 移除描述文字（我的卡牌弹窗不显示）
     
     // 显示卡牌详情的两个属性块
     document.getElementById('myCardStats').classList.remove('hidden');
     document.getElementById('myCardStatsBox').innerHTML = 
-        '<div style="color:#888;margin-bottom:5px;">经验：'+exp+'</div>' +
+        '<div style="margin-bottom:20px;clear:both;">' +
         '<h4 style="color:#aaa;margin:10px 0 5px;">📊 基础属性</h4>' +
-        '<div class="stats-grid-2">' +
-        '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value">'+(baseStats.hp||0)+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">MP</span><span class="stat-value">'+(baseStats.mp||0)+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value">'+(baseStats.attack||0)+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">防御</span><span class="stat-value">'+(baseStats.defense||0)+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value">'+(baseStats.agility||0)+'</span></div>' +
+        '<div class="stats-grid-2" style="font-size:'+fontSize+';">' +
+        '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="font-size:'+fontSize+';">'+(baseStats.hp||0)+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">MP</span><span class="stat-value" style="font-size:'+fontSize+';">'+(baseStats.mp||0)+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="font-size:'+fontSize+';">'+(baseStats.attack||0)+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="font-size:'+fontSize+';">'+(baseStats.defense||0)+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="font-size:'+fontSize+';">'+(baseStats.agility||0)+'</span></div>' +
         '</div>' +
+        '</div>' +
+        '<div style="clear:both;">' +
         '<h4 style="color:#e94560;margin:15px 0 5px;">📊 当前属性</h4>' +
-        '<div class="stats-grid-2">' +
-        '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:#ffd700;">'+currentStats.hp+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">MP</span><span class="stat-value" style="color:#ffd700;">'+currentStats.mp+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="color:#ffd700;">'+currentStats.attack+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="color:#ffd700;">'+currentStats.defense+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="color:#ffd700;">'+currentStats.agility+'</span></div>' +
+        '<div class="stats-grid-2" style="font-size:'+fontSize+';">' +
+        '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:#ffd700;font-size:'+fontSize+';">'+currentStats.hp+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">MP</span><span class="stat-value" style="color:#ffd700;font-size:'+fontSize+';">'+currentStats.mp+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="color:#ffd700;font-size:'+fontSize+';">'+currentStats.attack+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="color:#ffd700;font-size:'+fontSize+';">'+currentStats.defense+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="color:#ffd700;font-size:'+fontSize+';">'+currentStats.agility+'</span></div>' +
+        '</div>' +
         '</div>';
     
     // 显示收藏按钮
@@ -458,16 +563,16 @@ function showAlbumPopup(cardId) {
     var baseStats = card.baseStats || {};
     var ownedCount = card.owned_count || 0;
     
-    // 计算属性值中的最大值，用于动态字体大小
+    // 计算属性值中的最大值，用于动态字体大小（确保能显示下）
     var statValues = [baseStats.hp||0, baseStats.mp||0, baseStats.attack||0, baseStats.defense||0, baseStats.agility||0];
     var maxValue = Math.max.apply(null, statValues);
-    // 根据最大值确定字体大小：值越小字体越大
+    // 根据最大值确定字体大小：值越大字体越小
     var fontSize;
-    if (maxValue >= 10000) fontSize = '12px';
-    else if (maxValue >= 5000) fontSize = '14px';
-    else if (maxValue >= 1000) fontSize = '16px';
-    else if (maxValue >= 500) fontSize = '18px';
-    else fontSize = '20px';
+    if (maxValue >= 100000) fontSize = '10px';  // 5位数
+    else if (maxValue >= 10000) fontSize = '11px';  // 4位数
+    else if (maxValue >= 1000) fontSize = '12px';  // 3位数
+    else if (maxValue >= 100) fontSize = '14px';  // 2位数
+    else fontSize = '16px';  // 1位数
     
     document.getElementById('popupImage').src = getImageUrl(card);
     document.getElementById('popupName').textContent = card.name;
