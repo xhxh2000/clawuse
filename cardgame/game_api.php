@@ -70,13 +70,14 @@ if ($action === 'get_all') {
             $count = $res2->fetchArray();
             $row['owned_count'] = $count ? $count[0] : 0;
             
-            // 检查是否曾解锁（图鉴是否点亮）
-            $stmt3 = $db->prepare('SELECT COUNT(*) FROM user_album WHERE user_id = :uid AND card_id = :cid');
+            // 检查是否曾解锁（图鉴是否点亮），并获取点亮时间
+            $stmt3 = $db->prepare('SELECT unlocked_at FROM user_album WHERE user_id = :uid AND card_id = :cid');
             $stmt3->bindValue(':uid', $user_id);
             $stmt3->bindValue(':cid', $row['id']);
             $res3 = $stmt3->execute();
             $unlocked = $res3->fetchArray();
-            $row['is_unlocked'] = ($unlocked && $unlocked[0] > 0) ? 1 : 0;
+            $row['is_unlocked'] = ($unlocked && $unlocked[0]) ? 1 : 0;
+            $row['unlocked_at'] = ($unlocked && $unlocked[0]) ? $unlocked[0] : null;
         } else {
             $row['owned_count'] = 0;
             $row['is_unlocked'] = 0;
@@ -267,9 +268,11 @@ elseif ($action === 'get_draw_configs') {
 elseif ($action === 'add_user_card') {
     $user_id = intval(getParam('user_id', 0));
     $card_id = intval(getParam('card_id', 0));
+    $config_id = intval(getParam('config_id', 0));
+    $thisDrawCount = intval(getParam('draw_count', 1));  // 本次抽卡数：单抽=1，十连=10
     if (!$user_id || !$card_id) response(400, '参数错误');
     
-    error_log("add_user_card: user_id=$user_id, card_id=$card_id");
+    error_log("add_user_card: user_id=$user_id, card_id=$card_id, config_id=$config_id, draw_count=$thisDrawCount");
     
     // 检查是否已存在（查询user_album，因为每张卡只记录一次）
     $check = $db->query("SELECT id FROM user_album WHERE user_id = $user_id AND card_id = $card_id");
@@ -281,6 +284,44 @@ elseif ($action === 'add_user_card') {
     
     // 点亮图鉴（如果之前未点亮）
     $db->exec("INSERT OR IGNORE INTO user_album (user_id, card_id, unlocked_at) VALUES ($user_id, $card_id, datetime('now'))");
+    
+    // 更新抽卡次数记录
+    if ($config_id > 0) {
+        // 确保表存在
+        $db->exec("CREATE TABLE IF NOT EXISTS user_draw_info (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            config_id INTEGER NOT NULL,
+            draw_count INTEGER DEFAULT 0,
+            last_draw_at TEXT,
+            UNIQUE(user_id, config_id)
+        )");
+        
+        // 查询已有记录
+        $stmt = $db->prepare('SELECT draw_count FROM user_draw_info WHERE user_id = :uid AND config_id = :cid');
+        $stmt->bindValue(':uid', $user_id);
+        $stmt->bindValue(':cid', $config_id);
+        $res = $stmt->execute();
+        $row = $res->fetchArray();
+        
+        if ($row) {
+            // 存在则累加：已有次数 + 本次次数
+            $existingCount = $row['draw_count'];
+            $totalDrawCount = $existingCount + $thisDrawCount;
+            $stmt2 = $db->prepare('UPDATE user_draw_info SET draw_count = :cnt, last_draw_at = datetime("now") WHERE user_id = :uid AND config_id = :cid');
+            $stmt2->bindValue(':cnt', $totalDrawCount);
+            $stmt2->bindValue(':uid', $user_id);
+            $stmt2->bindValue(':cid', $config_id);
+            $stmt2->execute();
+        } else {
+            // 不存在则插入新记录
+            $stmt2 = $db->prepare('INSERT INTO user_draw_info (user_id, config_id, draw_count, last_draw_at) VALUES (:uid, :cid, :cnt, datetime("now"))');
+            $stmt2->bindValue(':uid', $user_id);
+            $stmt2->bindValue(':cid', $config_id);
+            $stmt2->bindValue(':cnt', $thisDrawCount);
+            $stmt2->execute();
+        }
+    }
     
     response(200, 'ok', ['is_new' => $isNew]);
 }
@@ -366,7 +407,7 @@ elseif ($action === 'get_my_cards') {
     if (!$user_id) response(400, 'user_id required');
     
     $stmt = $db->prepare('
-        SELECT c.*, uc.id as instance_id, uc.level, uc.exp, uc.enhance_count, uc.is_favorite
+        SELECT c.*, uc.id as instance_id, uc.level, uc.exp, uc.enhance_count, uc.is_favorite, uc.first_get as obtained_at
         FROM user_cards uc
         JOIN cards c ON uc.card_id = c.id
         WHERE uc.user_id = :user_id

@@ -114,11 +114,13 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif; pad
 <input type="text" id="filterName" placeholder="名字搜索..." oninput="applyFilter()">
 <select id="filterRarity" onchange="applyFilter()"><option value="">全部稀有度</option></select>
 <select id="filterFavorite" onchange="applyFilter()"><option value="">全部</option><option value="1">仅收藏</option></select>
+<select id="filterSort" onchange="applyFilter()"><option value="rarity-desc">稀有度降序</option><option value="rarity-asc">稀有度升序</option><option value="time-desc">获取时间降序</option><option value="time-asc">获取时间升序</option></select>
 </div>
 <div id="albumFilters" class="filter-row hidden">
 <input type="text" id="albumFilterName" placeholder="名字搜索..." oninput="applyAlbumFilter()">
 <select id="albumFilterRarity" onchange="applyAlbumFilter()"><option value="">全部稀有度</option></select>
 <select id="albumFilterOwned" onchange="applyAlbumFilter()"><option value="">全部</option><option value="owned">仅拥有</option><option value="unowned">未拥有</option></select>
+<select id="albumSort" onchange="applyAlbumFilter()"><option value="rarity-desc">稀有度降序</option><option value="rarity-asc">稀有度升序</option><option value="time-desc">点亮时间降序</option><option value="time-asc">点亮时间升序</option></select>
 </div>
 <div id="myCardsGrid" class="card-grid"></div>
 <div id="albumGrid" class="card-grid hidden"></div>
@@ -256,8 +258,8 @@ function lightenColor(hex, factor) {
         (g < 16 ? '0' : '') + g.toString(16) + 
         (b < 16 ? '0' : '') + b.toString(16);
 }
-var filterState = { name: '', rarity: '', favorite: '' };
-var albumFilterState = { name: '', rarity: '', owned: '' };
+var filterState = { name: '', rarity: '', favorite: '', sort: 'rarity-desc' };
+var albumFilterState = { name: '', rarity: '', owned: '', sort: 'rarity-desc' };
 var currentCardInstanceId = null;
 var maxStats = {hp:0, mp:0, attack:0, defense:0, agility:0};
 
@@ -370,7 +372,17 @@ function renderMyCards() {
     var titleEl = document.getElementById('myCardsTitle');
     if (titleEl) titleEl.textContent = '我的卡牌 (' + cards.length + '张)';
     
-    cards.sort(function(a, b) { return b.rarity - a.rarity; });
+    // 根据排序选项排序
+    var sortOrder = filterState.sort || 'rarity-desc';
+    cards.sort(function(a, b) {
+        switch(sortOrder) {
+            case 'rarity-desc': return b.rarity - a.rarity;
+            case 'rarity-asc': return a.rarity - b.rarity;
+            case 'time-desc': return new Date(b.obtained_at || 0) - new Date(a.obtained_at || 0);
+            case 'time-asc': return new Date(a.obtained_at || 0) - new Date(b.obtained_at || 0);
+            default: return b.rarity - a.rarity;
+        }
+    });
     
     if (cards.length === 0) { container.innerHTML = '<div style="color:#aaa;grid-column:1/-1;padding:20px;">还没有卡牌，快去抽卡吧！</div>'; return; }
     
@@ -404,7 +416,17 @@ function renderAlbum() {
     var titleEl = document.getElementById('albumTitle');
     if (titleEl) titleEl.textContent = '我的图鉴 (' + ownedCount + '/' + cards.length + ')';
     
-    cards.sort(function(a, b) { return b.rarity - a.rarity; });
+    // 根据排序选项排序
+    var albumSortOrder = albumFilterState.sort || 'rarity-desc';
+    cards.sort(function(a, b) {
+        switch(albumSortOrder) {
+            case 'rarity-desc': return b.rarity - a.rarity;
+            case 'rarity-asc': return a.rarity - b.rarity;
+            case 'time-desc': return new Date(b.unlocked_at || 0) - new Date(a.unlocked_at || 0);
+            case 'time-asc': return new Date(a.unlocked_at || 0) - new Date(b.unlocked_at || 0);
+            default: return b.rarity - a.rarity;
+        }
+    });
     
     // 计算淡化背景色
     cards.forEach(function(card) {
@@ -447,6 +469,7 @@ function applyFilter() {
     filterState.name = document.getElementById('filterName').value.trim().toLowerCase();
     filterState.rarity = document.getElementById('filterRarity').value;
     filterState.favorite = document.getElementById('filterFavorite').value;
+    filterState.sort = document.getElementById('filterSort').value;
     renderMyCards();
 }
 
@@ -454,6 +477,7 @@ function applyAlbumFilter() {
     albumFilterState.name = document.getElementById('albumFilterName').value.trim().toLowerCase();
     albumFilterState.rarity = document.getElementById('albumFilterRarity').value;
     albumFilterState.owned = document.getElementById('albumFilterOwned').value;
+    albumFilterState.sort = document.getElementById('albumSort').value;
     renderAlbum();
 }
 
