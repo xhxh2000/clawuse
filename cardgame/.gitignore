@@ -1,7 +1,13 @@
 # 备份文件
-*-.html
+*.backup*
+*.bak*
+*.v*
 *_*.html
+backup_*
 
 # 临时文件
 *.tmp
 *.log
+
+# Node模块
+node_modules/

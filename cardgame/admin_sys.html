@@ -44,9 +44,8 @@
             </table>
             <button class="btn btn-primary" style="margin-top:15px;" onclick="addRarity()">+ 添加稀有度</button>
             <button class="btn btn-danger" style="margin-top:15px;" onclick="deleteHighestRarity()">删除最高稀有度</button>
+                <button class="btn btn-success" style="margin-top:15px;" onclick="saveConfig()">保存稀有度</button>
         </div>
-        <button class="btn btn-success" onclick="saveConfig()">保存配置</button>
-    </div>
     <div style="text-align:center;margin:20px 0;">
         <a href="index.html" style="color:#aaa;text-decoration:none;padding:10px 20px;">🏠 返回主页</a>
     </div>
@@ -56,8 +55,8 @@
         
         async function loadConfig() {
             try {
-                const res = await fetch('data/sys_config/rarity_config.json');
-                rarityConfig = await res.json();
+                const res = await fetch('game_api.php?action=get_rarity');
+                rarityConfig = (await res.json()).rarity || [];
                 renderTable();
             } catch(e) {
                 console.error('加载配置失败:', e);
@@ -89,8 +88,8 @@
             });
             
             // 检查该稀有度下是否有卡牌
-            fetch('data/cards/NIKKE.json').then(function(res) { return res.json(); }).then(function(data) {
-                var hasCards = data.characters.some(function(c) { return c.rarity === maxRarityObj.rarity; });
+            fetch('game_api.php?action=check_rarity_cards&rarity=' + maxRarityObj.rarity).then(function(res) { return res.json(); }).then(function(data) {
+                var hasCards = data.count > 0;
                 if (hasCards) {
                     alert('该稀有度（' + maxRarityObj.name + '）下已有卡牌，无法删除');
                     return;
@@ -122,14 +121,14 @@
         }
         
         
-        function saveConfig() {
-            const data = JSON.stringify(rarityConfig, null, 2);
-            const blob = new Blob([data], { type: 'application/json' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'rarity_config.json';
-            a.click();
-            alert('配置已保存！请将文件上传到服务器。');
+        async function saveConfig() {
+            // 保存到数据库
+            const form = new FormData();
+            form.append('action', 'save_rarity');
+            form.append('rarity', JSON.stringify(rarityConfig));
+            const res = await fetch('game_api.php', { method: 'POST', body: form });
+            const result = await res.json();
+            alert(result.msg || '保存成功');
         }
         
         loadConfig();

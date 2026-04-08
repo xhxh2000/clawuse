@@ -14,7 +14,7 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif; pad
 .tab.active { background: #e94560; color: #fff; }
 .filter-row { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
 .filter-row input, .filter-row select { padding: 8px; background: #1a1a2e; color: #fff; border: 1px solid #0f3460; border-radius: 5px; }
-.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; max-height: 70vh; overflow-y: auto; padding: 10px; background: #0f0f20; border-radius: 10px; }
+.card-grid { display: grid; grid-teMPlate-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; max-height: 70vh; overflow-y: auto; padding: 10px; background: #0f0f20; border-radius: 10px; }
 .album-card { border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; transition: transform 0.2s; }
 .album-card:hover { transform: scale(1.05); }
 .album-card .card-thumb { width: 80px; height: 80px; margin: 0 auto 8px; border-radius: 5px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
@@ -49,7 +49,7 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif; pad
   .tab { padding: 8px 12px; font-size: 14px; }
   .filter-row { gap: 6px; }
   .filter-row input, .filter-row select { padding: 6px; font-size: 12px; }
-  .card-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 6px; max-height: calc(33vw * 4 + 40px); }
+  .card-grid { grid-teMPlate-columns: repeat(3, 1fr); gap: 6px; padding: 6px; max-height: calc(33vw * 4 + 40px); }
   .album-card { padding: 4px; }
   .album-card .card-thumb { width: 100%; aspect-ratio: 1; margin: 0 auto 2px; }
   .album-card h4 { font-size: 9px; margin: 1px 0; }
@@ -62,7 +62,7 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif; pad
   .popup-info { min-width: unset; }
   .popup-name { font-size: 18px; }
   .popup-rarity { font-size: 14px; }
-  .stats-grid-2 { grid-template-columns: repeat(3, 1fr); gap: 5px; }
+  .stats-grid-2 { grid-teMPlate-columns: repeat(3, 1fr); gap: 5px; }
   .stats-grid-2 .stat-row { padding: 6px; background: transparent; }
 }
   .stats-grid-2 .stat-label { font-size: 10px; }
@@ -82,7 +82,7 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif; pad
 .popup-desc { color: #aaa; margin-bottom: 15px; line-height: 1.5; }
 .popup-stats { margin-top: 20px; }
 .popup-stats h4 { color: #e94560; margin-bottom: 10px; }
-.stats-grid-2 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; text-align: center; min-width: 0; }
+.stats-grid-2 { display: grid; grid-teMPlate-columns: repeat(5, 1fr); gap: 8px; text-align: center; min-width: 0; }
 .stats-grid-2 .stat-row { background: transparent; padding: 8px; border-radius: 5px; min-width: 0; }
 .stats-grid-2 .stat-label { display: block; color: #aaa; font-size: 11px; margin-bottom: 4px; word-break: break-all; }
 .stats-grid-2 .stat-value { display: block; font-weight: bold; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
@@ -261,7 +261,7 @@ function lightenColor(hex, factor) {
 var filterState = { name: '', rarity: '', favorite: '', sort: 'rarity-desc' };
 var albumFilterState = { name: '', rarity: '', owned: '', sort: 'rarity-desc' };
 var currentCardInstanceId = null;
-var maxStats = {hp:0, mp:0, attack:0, defense:0, agility:0};
+var maxStats = {HP:0, ATK:0, DEF:0, SKL:0, SPD:0};
 
 // 根据全局最大属性计算颜色 - 百分比颜色
 function getStatColor(value, statName) {
@@ -280,11 +280,11 @@ function getStatColor(value, statName) {
 function calcMaxStats(cards) {
     if (!cards) return;
     cards.forEach(function(c) {
-        if (c.baseStats.hp > maxStats.hp) maxStats.hp = c.baseStats.hp;
-        if (c.baseStats.mp > maxStats.mp) maxStats.mp = c.baseStats.mp;
-        if (c.baseStats.attack > maxStats.attack) maxStats.attack = c.baseStats.attack;
-        if (c.baseStats.defense > maxStats.defense) maxStats.defense = c.baseStats.defense;
-        if (c.baseStats.agility > maxStats.agility) maxStats.agility = c.baseStats.agility;
+        if (c.baseStats.HP > maxStats.HP) maxStats.HP = c.baseStats.HP;
+        if (c.baseStats.SPD > maxStats.SPD) maxStats.SPD = c.baseStats.SPD;
+        if (c.baseStats.ATK > maxStats.ATK) maxStats.ATK = c.baseStats.ATK;
+        if (c.baseStats.DEF > maxStats.DEF) maxStats.DEF = c.baseStats.DEF;
+        if (c.baseStats.SPD > maxStats.SKL) maxStats.SKL = c.baseStats.SPD;
     });
 }
 
@@ -324,11 +324,11 @@ function loadMyCards() {
         if (d.code === 200 && d.cards) {
             myCards = {};
             d.cards.forEach(function(card) {
-                card.baseStats = typeof card.base_stats === 'string' ? JSON.parse(card.base_stats) : card.base_stats;
-                card.growthStats = typeof card.growth_stats === 'string' ? JSON.parse(card.growth_stats) : card.growth_stats;
-                card.tags = typeof card.tags === 'string' ? JSON.parse(card.tags) : card.tags;
                 myCards[card.instance_id] = card;
             });
+            console.log('myCards loaded, maxStats before:', maxStats);
+            calcMaxStats(Object.values(myCards));
+            console.log('maxStats after:', maxStats);
             renderMyCards();
         }
     });
@@ -336,18 +336,50 @@ function loadMyCards() {
 
 function loadAlbum() {
     if (!userId) return;
-    fetch('game_api.php?action=get_all&user_id=' + userId).then(function(r) { return r.json(); }).then(function(d) {
-        if (d.code === 200 && d.characters) {
-            allCards = d.characters.map(function(card) {
-                card.baseStats = typeof card.base_stats === 'string' ? JSON.parse(card.base_stats) : card.base_stats;
-                card.growthStats = typeof card.growth_stats === 'string' ? JSON.parse(card.growth_stats) : card.growth_stats;
-                card.tags = typeof card.tags === 'string' ? JSON.parse(card.tags) : card.tags;
-                return card;
-            });
-            // 计算所有卡牌的最大属性值
-            calcMaxStats(allCards);
-            renderAlbum();
+    
+    // 先获取所有卡牌，再获取用户数据
+    Promise.all([
+        fetch('game_api.php?action=get_all&user_id=' + userId).then(r => r.json()),
+        fetch('game_api.php?action=get_user_album&user_id=' + userId).then(r => r.json()),
+        fetch('game_api.php?action=get_my_cards&user_id=' + userId).then(r => r.json())
+    ]).then(function(results) {
+        var allData = results[0];
+        var albumData = results[1];
+        var myCardsData = results[2];
+        
+        // 获取所有卡牌
+        if (allData.code === 200 && allData.characters) {
+            allCards = allData.characters;
+        } else {
+            allCards = [];
         }
+        
+        // 构建card_id -> 拥有数量 的映射
+        var ownedCounts = {};
+        if (myCardsData.code === 200 && myCardsData.cards) {
+            myCardsData.cards.forEach(function(c) {
+                ownedCounts[c.id] = (ownedCounts[c.id] || 0) + 1;
+            });
+        }
+        
+        // 构建已点亮card_id集合
+        var unlocked = {};
+        if (albumData.code === 200 && albumData.album) {
+            unlocked = albumData.album;
+        }
+        
+        // 给allCards加上owned_count和is_unlocked
+        allCards.forEach(function(card) {
+            var u = unlocked[card.id] || {};
+            card.is_unlocked = u.unlocked ? 1 : 0;
+            card.unlocked_at = u.unlocked_at || null;
+            card.owned_count = ownedCounts[card.id] || 0;
+        });
+        
+        console.log('allCards loaded, maxStats before:', maxStats);
+        calcMaxStats(allCards);
+        console.log('maxStats after:', maxStats);
+        renderAlbum();
     });
 }
 
@@ -378,8 +410,8 @@ function renderMyCards() {
         switch(sortOrder) {
             case 'rarity-desc': return b.rarity - a.rarity;
             case 'rarity-asc': return a.rarity - b.rarity;
-            case 'time-desc': return new Date(b.obtained_at || 0) - new Date(a.obtained_at || 0);
-            case 'time-asc': return new Date(a.obtained_at || 0) - new Date(b.obtained_at || 0);
+            case 'time-desc': return new Date(b.unlocked_at || 0) - new Date(a.unlocked_at || 0);
+            case 'time-asc': return new Date(a.unlocked_at || 0) - new Date(b.unlocked_at || 0);
             default: return b.rarity - a.rarity;
         }
     });
@@ -494,15 +526,15 @@ function showMyCardPopup(instanceId) {
     
     // 计算当前属性
     var currentStats = {
-        hp: (baseStats.hp || 0) + (level - 1) * (growthStats.hp || 0),
-        mp: (baseStats.mp || 0) + (level - 1) * (growthStats.mp || 0),
-        attack: (baseStats.attack || 0) + (level - 1) * (growthStats.attack || 0),
-        defense: (baseStats.defense || 0) + (level - 1) * (growthStats.defense || 0),
-        agility: (baseStats.agility || 0) + (level - 1) * (growthStats.agility || 0)
+        hp: Math.round((baseStats.HP || 0) + (level - 1) * (growthStats.HP || 0)),
+        ATK: Math.round((baseStats.ATK || 0) + (level - 1) * (growthStats.ATK || 0)),
+        DEF: Math.round((baseStats.DEF || 0) + (level - 1) * (growthStats.DEF || 0)),
+        SKL: Math.round((baseStats.SKL || 0) + (level - 1) * (growthStats.SKL || 0)),
+        SPD: Math.round((baseStats.SPD || 0) + (level - 1) * (growthStats.SPD || 0))
     };
     
     // 动态字体大小（取最大值的位数）
-    var statValues = [baseStats.hp||0, baseStats.mp||0, baseStats.attack||0, baseStats.defense||0, baseStats.agility||0, currentStats.hp, currentStats.mp, currentStats.attack, currentStats.defense, currentStats.agility];
+    var statValues = [baseStats.HP||0, baseStats.ATK||0, baseStats.DEF||0, baseStats.SKL||0, baseStats.SPD||0, currentStats.hp, currentStats.ATK, currentStats.DEF, currentStats.SKL, currentStats.SPD];
     var maxValue = Math.max.apply(null, statValues);
     var fontSize;
     if (maxValue >= 100000) fontSize = '10px';
@@ -524,21 +556,21 @@ function showMyCardPopup(instanceId) {
         '<div style="margin-bottom:20px;clear:both;">' +
         '<h4 style="color:#aaa;margin:10px 0 5px;">📊 基础属性</h4>' +
         '<div class="stats-grid-2" style="font-size:'+fontSize+';">' +
-        '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="font-size:'+fontSize+';">'+(baseStats.hp||0)+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">MP</span><span class="stat-value" style="font-size:'+fontSize+';">'+(baseStats.mp||0)+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="font-size:'+fontSize+';">'+(baseStats.attack||0)+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="font-size:'+fontSize+';">'+(baseStats.defense||0)+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="font-size:'+fontSize+';">'+(baseStats.agility||0)+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getStatColor(baseStats.HP, 'HP')+';font-size:'+fontSize+';">'+(baseStats.HP||0)+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">ATK</span><span class="stat-value" style="color:'+getStatColor(baseStats.ATK, 'ATK')+';font-size:'+fontSize+';">'+(baseStats.ATK||0)+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">DEF</span><span class="stat-value" style="color:'+getStatColor(baseStats.DEF, 'DEF')+';font-size:'+fontSize+';">'+(baseStats.DEF||0)+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">SKL</span><span class="stat-value" style="color:'+getStatColor(baseStats.SKL, 'SKL')+';font-size:'+fontSize+';">'+(baseStats.SKL||0)+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">SPD</span><span class="stat-value" style="color:'+getStatColor(baseStats.SPD, 'SPD')+';font-size:'+fontSize+';">'+(baseStats.SPD||0)+'</span></div>' +
         '</div>' +
         '</div>' +
         '<div style="clear:both;">' +
         '<h4 style="color:#e94560;margin:15px 0 5px;">📊 当前属性</h4>' +
         '<div class="stats-grid-2" style="font-size:'+fontSize+';">' +
         '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:#ffd700;font-size:'+fontSize+';">'+currentStats.hp+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">MP</span><span class="stat-value" style="color:#ffd700;font-size:'+fontSize+';">'+currentStats.mp+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="color:#ffd700;font-size:'+fontSize+';">'+currentStats.attack+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="color:#ffd700;font-size:'+fontSize+';">'+currentStats.defense+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="color:#ffd700;font-size:'+fontSize+';">'+currentStats.agility+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">ATK</span><span class="stat-value" style="color:#ffd700;font-size:'+fontSize+';">'+currentStats.ATK+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">DEF</span><span class="stat-value" style="color:#ffd700;font-size:'+fontSize+';">'+currentStats.DEF+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">SKL</span><span class="stat-value" style="color:#ffd700;font-size:'+fontSize+';">'+currentStats.SKL+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">SPD</span><span class="stat-value" style="color:#ffd700;font-size:'+fontSize+';">'+currentStats.SPD+'</span></div>' +
         '</div>' +
         '</div>';
     
@@ -564,7 +596,7 @@ function showAlbumPopup(cardId) {
     var ownedCount = card.owned_count || 0;
     
     // 计算属性值中的最大值，用于动态字体大小（确保能显示下）
-    var statValues = [baseStats.hp||0, baseStats.mp||0, baseStats.attack||0, baseStats.defense||0, baseStats.agility||0];
+    var statValues = [baseStats.HP||0, baseStats.SPD||0, baseStats.ATK||0, baseStats.DEF||0, baseStats.SPD||0];
     var maxValue = Math.max.apply(null, statValues);
     // 根据最大值确定字体大小：值越大字体越小
     var fontSize;
@@ -583,11 +615,11 @@ function showAlbumPopup(cardId) {
     // 显示图鉴的基础属性（带颜色和动态字体大小）
     document.getElementById('albumStats').classList.remove('hidden');
     document.getElementById('albumStatsBox').innerHTML = 
-        '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getStatColor(baseStats.hp, 'hp')+';font-size:'+fontSize+'">'+(baseStats.hp||0)+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">MP</span><span class="stat-value" style="color:'+getStatColor(baseStats.mp, 'mp')+';font-size:'+fontSize+'">'+(baseStats.mp||0)+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="color:'+getStatColor(baseStats.attack, 'attack')+';font-size:'+fontSize+'">'+(baseStats.attack||0)+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="color:'+getStatColor(baseStats.defense, 'defense')+';font-size:'+fontSize+'">'+(baseStats.defense||0)+'</span></div>' +
-        '<div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="color:'+getStatColor(baseStats.agility, 'agility')+';font-size:'+fontSize+'">'+(baseStats.agility||0)+'</span></div>';
+        '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getStatColor(baseStats.HP, 'HP')+';font-size:'+fontSize+'">'+(baseStats.HP||0)+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">ATK</span><span class="stat-value" style="color:'+getStatColor(baseStats.ATK, 'ATK')+';font-size:'+fontSize+'">'+(baseStats.ATK||0)+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">DEF</span><span class="stat-value" style="color:'+getStatColor(baseStats.DEF, 'DEF')+';font-size:'+fontSize+'">'+(baseStats.DEF||0)+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">SKL</span><span class="stat-value" style="color:'+getStatColor(baseStats.SKL, 'SKL')+';font-size:'+fontSize+'">'+(baseStats.SKL||0)+'</span></div>' +
+        '<div class="stat-row"><span class="stat-label">SPD</span><span class="stat-value" style="color:'+getStatColor(baseStats.SPD, 'SPD')+';font-size:'+fontSize+'">'+(baseStats.SPD||0)+'</span></div>';
     
     // 显示持有数量
     document.getElementById('popupCount').classList.remove('hidden');
@@ -611,14 +643,14 @@ function drawRadar(card) {
     var cx = w / 2;
     var cy = h / 2;
     var r = Math.min(w, h) / 2 - 30;
-    var labels = ['HP', 'MP', '攻击', '防御', '敏捷'];
+    var labels = ['HP', 'MP', 'ATK', 'DEF', 'SPD'];
     var baseStats = card.baseStats || {};
     var stats = [
-        maxStats.hp > 0 ? Math.round(baseStats.hp / maxStats.hp * 100) : 0,
-        maxStats.mp > 0 ? Math.round(baseStats.mp / maxStats.mp * 100) : 0,
-        maxStats.attack > 0 ? Math.round(baseStats.attack / maxStats.attack * 100) : 0,
-        maxStats.defense > 0 ? Math.round(baseStats.defense / maxStats.defense * 100) : 0,
-        maxStats.agility > 0 ? Math.round(baseStats.agility / maxStats.agility * 100) : 0
+        maxStats.HP > 0 ? Math.round(baseStats.HP / maxStats.HP * 100) : 0,
+        maxStats.SPD > 0 ? Math.round(baseStats.SPD / maxStats.SPD * 100) : 0,
+        maxStats.ATK > 0 ? Math.round(baseStats.ATK / maxStats.ATK * 100) : 0,
+        maxStats.DEF > 0 ? Math.round(baseStats.DEF / maxStats.DEF * 100) : 0,
+        maxStats.SKL > 0 ? Math.round(baseStats.SPD / maxStats.SKL * 100) : 0
     ];
     var maxVal = 100;
     var angleStep = (Math.PI * 2) / 5;
