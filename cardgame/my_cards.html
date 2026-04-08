@@ -281,10 +281,10 @@ function calcMaxStats(cards) {
     if (!cards) return;
     cards.forEach(function(c) {
         if (c.baseStats.HP > maxStats.HP) maxStats.HP = c.baseStats.HP;
-        if (c.baseStats.SPD > maxStats.SPD) maxStats.SPD = c.baseStats.SPD;
+        if (c.baseStats.SKL > maxStats.SKL) maxStats.SKL = c.baseStats.SKL;
         if (c.baseStats.ATK > maxStats.ATK) maxStats.ATK = c.baseStats.ATK;
         if (c.baseStats.DEF > maxStats.DEF) maxStats.DEF = c.baseStats.DEF;
-        if (c.baseStats.SPD > maxStats.SKL) maxStats.SKL = c.baseStats.SPD;
+        if (c.baseStats.SPD > maxStats.SPD) maxStats.SPD = c.baseStats.SPD;
     });
 }
 
@@ -643,14 +643,14 @@ function drawRadar(card) {
     var cx = w / 2;
     var cy = h / 2;
     var r = Math.min(w, h) / 2 - 30;
-    var labels = ['HP', 'MP', 'ATK', 'DEF', 'SPD'];
+    var labels = ['HP', 'ATK', 'DEF', 'SKL', 'SPD'];
     var baseStats = card.baseStats || {};
     var stats = [
         maxStats.HP > 0 ? Math.round(baseStats.HP / maxStats.HP * 100) : 0,
-        maxStats.SPD > 0 ? Math.round(baseStats.SPD / maxStats.SPD * 100) : 0,
         maxStats.ATK > 0 ? Math.round(baseStats.ATK / maxStats.ATK * 100) : 0,
         maxStats.DEF > 0 ? Math.round(baseStats.DEF / maxStats.DEF * 100) : 0,
-        maxStats.SKL > 0 ? Math.round(baseStats.SPD / maxStats.SKL * 100) : 0
+        maxStats.SKL > 0 ? Math.round(baseStats.SKL / maxStats.SKL * 100) : 0,
+        maxStats.SPD > 0 ? Math.round(baseStats.SPD / maxStats.SPD * 100) : 0
     ];
     var maxVal = 100;
     var angleStep = (Math.PI * 2) / 5;
