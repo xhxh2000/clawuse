@@ -141,8 +141,9 @@
         let rarityConfig = [];
         async function loadRarityConfig() {
             try {
-                const res = await fetch('data/sys_config/rarity_config.json');
-                rarityConfig = await res.json();
+                const res = await fetch('game_api.php?action=get_rarity');
+                const data = await res.json();
+                rarityConfig = data.rarity || [];
             } catch (e) { rarityConfig = []; }
         }
         function getRarityName(r) {
@@ -170,7 +171,12 @@
                     configSelect.innerHTML = r.configs.map(c => '<option value="'+c.config_name+'">'+c.config_name+'</option>').join("");
                     const poolSelect = document.getElementById("availablePools");
                     if (poolSelect) poolSelect.innerHTML = r.pools.map(p => '<option value="'+p+'">'+p+'</option>').join("");
-                    loadConfig("default");
+                    
+                    // 默认选中第一个config并加载
+                    if (r.configs.length > 0) {
+                        configSelect.value = r.configs[0].config_name;
+                        loadConfig(r.configs[0].config_name);
+                    }
                 }
             } catch(e) { console.error(e); }
         }
@@ -354,7 +360,7 @@
             
             container.innerHTML = rarityWeights.map((w, idx) => {
                 return '<div class="rarity-weight-item" data-idx="'+idx+'">' +
-                    '<span class="rarity-name">'+ (idx + 1) + '⭐</span><span style="color:#aaa;font-size:12px;margin-left:5px;">' + getRarityName(idx+1) + '</span>' +
+                    '<span class="rarity-name" style="color:'+getRarityColor(idx+1)+'">'+ getRarityName(idx+1) + '</span><span style="color:#aaa;font-size:12px;margin-left:5px;">' + getRarityName(idx+1) + '</span>' +
                     '<input type="number" value="'+w+'" min="0" onchange="updateRarityWeight('+idx+', this.value)">' +
                     '<button class="remove-btn" ' + (idx === (currentConfig.rarity_weight || []).length - 1 ? 'onclick="removeRarityWeight('+idx+')"' : 'style="opacity:0.5;pointer-events:none"') + '>删除</button>' +
                 '</div>';
@@ -400,22 +406,27 @@
                 tagWeightMap[key] = val;
             });
             
-            // 加载所有卡池数据
+            // 从API获取所有卡牌数据
             let allCards = [];
-            for (const poolName of poolNames) {
-                try {
-                    const res = await fetch('data/cards/' + poolName + '.json');
-                    const data = await res.json();
-                    allCards = allCards.concat(data.characters || []);
-                } catch(e) {
-                    console.error('加载卡池失败:', poolName, e);
-                }
+            try {
+                const res = await fetch('game_api.php?action=get_all');
+                const data = await res.json();
+                console.log('get_all result:', data);
+                allCards = data.characters || [];
+                console.log('allCards length:', allCards.length);
+            } catch(e) {
+                console.error('加载卡牌失败:', e);
             }
             
-            // 第一步：卡池标签过滤
+            // 过滤卡牌（按pool_name）
             let filteredCards = allCards.filter(card => {
+                const cardPool = card.pool_name || card.poolName || '';
                 const cardTags = card.tags || [];
-                return selectedTags.length === 0 || cardTags.some(t => selectedTags.includes(t));
+                // 卡池名称匹配
+                const poolMatch = poolNames.length === 0 || poolNames.includes(cardPool);
+                // 标签过滤
+                const tagMatch = selectedTags.length === 0 || cardTags.some(t => selectedTags.includes(t));
+                return poolMatch && tagMatch;
             });
             
             // 第二步：统计过滤后剩下的稀有度
@@ -537,7 +548,7 @@
                     const rColor = cfg ? cfg.color : (r.rarity >= 5 ? '#ff9800' : rarityColors[r.rarity]);
                     return '<div class="prob-item ' + (r.isZero ? 'zero-prob' : '') + '">' +
                         '<span class="card-name" style="color:' + rColor + '">' + r.name + '</span>' +
-                        '<span class="card-rarity">' + '⭐'.repeat(r.rarity) + ' ' + getRarityName(r.rarity) + '</span>' +
+                        '<span class="card-rarity" style="color:'+getRarityColor(r.rarity)+'">' + getRarityName(r.rarity) + '</span>' +
                         '<span class="card-tags">' + (r.tags || '-') + '</span>' +
                         '<span class="card-weight">权重:' + r.weight + '</span>' +
                         '<span class="card-prob">' + (r.probability < 0 ? 0 : r.probability).toFixed(2) + '%</span>' +

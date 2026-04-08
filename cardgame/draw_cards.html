@@ -500,7 +500,7 @@ function updateAlbumProgress(allCards) {
     var totalCards = 0;
     var allComplete = true;
     
-    // 从 rarity_config.json 获取稀有度名称和颜色
+    
     var rarityNames = [];
     var rarityColors = [];
     var maxRarity = rarityConfig.length;
@@ -630,7 +630,7 @@ function renderAlbum() {
     var container = document.getElementById('albumGrid');
     var allCards = allCharacters || [];
     
-    // 从 rarity_config.json 获取稀有度名称和颜色
+    
     var rarityNames = [];
     var rarityColors = [];
     
@@ -819,8 +819,8 @@ if (minStats.agility === Infinity) minStats.agility = 0;
 
 function loadData() {
     // 加载稀有度配置
-    fetch('data/sys_config/rarity_config.json').then(function(res) { return res.json(); }).then(function(config) {
-        rarityConfig = config;
+    fetch('game_api.php?action=get_rarity').then(function(res) { return res.json(); }).then(function(data) {
+        rarityConfig = data.rarity || [];
         populateRarityFilter();
     }).catch(function(e) {
         console.error('加载稀有度配置失败:', e);

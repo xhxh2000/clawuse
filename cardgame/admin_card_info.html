@@ -40,25 +40,8 @@
         .card-item.rarity-1:hover { background: #3a3a3a; }
         .card-item.rarity-2:hover { background: #2a4a2a; }
         .card-item.rarity-3:hover { background: #2a2a4a; }
-        
-        /* 移动端适配 */
-        @media (max-width: 768px) {
-            .card-list { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-            .card-item { padding: 10px; }
-            .stats-grid, .stats-grid-2 { grid-template-columns: repeat(3, 1fr); gap: 5px; }
-            .stat-row { padding: 5px; }
-            .stat-label { font-size: 10px; }
-            .stat-value { font-size: 14px; }
-        }
-        @media (max-width: 480px) {
-            .card-list { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-            .card-item { padding: 8px; }
-            .container { padding: 10px; }
-            .panel { padding: 10px; }
-            .header h1 { font-size: 18px; }
-            
-        }
         .card-item.rarity-4:hover { background: #3a2a4a; }
+        .card-item.rarity-6 { background: #3a1a1a; }
         .card-item.rarity-5:hover { background: #4a3a2a; }
         .card-item:hover { background: #1a4a7a; }
         .card-item h3 { margin: 10px 0 5px; }
@@ -102,12 +85,12 @@
         /* 弹窗 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto; }
         .modal.show { display: flex; justify-content: center; padding: 20px; }
-        .modal-content { background: transparent; border-radius: 10px; padding: 30px; max-width: 750px; width: 100%; max-height: 90vh; overflow-y: auto; }
+        .modal-content { background: #16213e; border-radius: 10px; padding: 30px; max-width: 750px; width: 100%; max-height: 90vh; overflow-y: auto; }
         
         /* 卡片详情弹窗 */
         #cardDetailPopup { max-width: 800px; }
         .popup-container { display: flex; gap: 20px; flex-wrap: wrap; }
-        .popup-image { flex: 0 0 250px; max-height: 350px; overflow: hidden; border-radius: 10px; background: transparent; display: flex; align-items: center; justify-content: center; }
+        .popup-image { flex: 0 0 250px; max-height: 350px; overflow: hidden; display: flex; background: #16213e; align-items: center; justify-content: center; }
         .popup-image img { max-width: 100%; max-height: 350px; width: auto; height: auto; object-fit: contain; border-radius: 10px; }
         .popup-info { flex: 1; min-width: 280px; }
         .popup-name { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
@@ -116,7 +99,7 @@
         .popup-stats { margin-top: 20px; }
         .popup-stats h4 { color: #e94560; margin-bottom: 10px; }
         .stats-grid-2 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; text-align: center; }
-        .stat-row { background: transparent; padding: 10px; border-radius: 5px; }
+        .stat-row { background: #0f3460; padding: 10px; border-radius: 5px; }
         .stat-label { display: block; color: #aaa; font-size: 12px; margin-bottom: 5px; }
         .stat-value { display: block; font-size: 18px; font-weight: bold; }
         .stat-value.growth { color: #ffd700 !important; font-size: 16px; }
@@ -180,6 +163,13 @@
             <div class="filter-panel">
                 <h4>🔍 筛选条件</h4>
                 <div class="filter-row">
+                    <div class="filter-item">
+                        <label>卡池</label>
+                        <select id="filterPool" onchange="applyFilter()">
+                            <option value="">ALL</option>
+                            <!-- 由 loadData() 动态加载 -->
+                        </select>
+                    </div>
                     <div class="filter-item filter-item-name">
                         <label>名字（模糊）</label>
                         <input type="text" id="filterName" placeholder="输入名字..." oninput="applyFilter()">
@@ -201,19 +191,9 @@
                             <input type="number" id="filterHp" placeholder="值" oninput="applyFilter()">
                         </div>
                     </div>
+                    <!-- MP过滤器已删除 -->
                     <div class="filter-item">
-                        <label>MP</label>
-                        <div style="display:flex;gap:5px;">
-                            <select id="filterMpOp" onchange="applyFilter()" style="width:60px;">
-                                <option value="">=</option>
-                                <option value=">=">≥</option>
-                                <option value="<=">≤</option>
-                            </select>
-                            <input type="number" id="filterMp" placeholder="值" oninput="applyFilter()">
-                        </div>
-                    </div>
-                    <div class="filter-item">
-                        <label>攻击</label>
+                        <label>ATK</label>
                         <div style="display:flex;gap:5px;">
                             <select id="filterAttackOp" onchange="applyFilter()" style="width:60px;">
                                 <option value="">=</option>
@@ -224,7 +204,7 @@
                         </div>
                     </div>
                     <div class="filter-item">
-                        <label>防御</label>
+                        <label>DEF</label>
                         <div style="display:flex;gap:5px;">
                             <select id="filterDefenseOp" onchange="applyFilter()" style="width:60px;">
                                 <option value="">=</option>
@@ -235,14 +215,25 @@
                         </div>
                     </div>
                     <div class="filter-item">
-                        <label>敏捷</label>
+                        <label>SKL</label>
                         <div style="display:flex;gap:5px;">
-                            <select id="filterAgilityOp" onchange="applyFilter()" style="width:60px;">
+                            <select id="filterSklOp" onchange="applyFilter()" style="width:60px;">
                                 <option value="">=</option>
                                 <option value=">=">≥</option>
                                 <option value="<=">≤</option>
                             </select>
-                            <input type="number" id="filterAgility" placeholder="值" oninput="applyFilter()">
+                            <input type="number" id="filterSkl" placeholder="值" oninput="applyFilter()">
+                        </div>
+                    </div>
+                    <div class="filter-item">
+                        <label>SPD</label>
+                        <div style="display:flex;gap:5px;">
+                            <select id="filterSpdOp" onchange="applyFilter()" style="width:60px;">
+                                <option value="">=</option>
+                                <option value=">=">≥</option>
+                                <option value="<=">≤</option>
+                            </select>
+                            <input type="number" id="filterSpd" placeholder="值" oninput="applyFilter()">
                         </div>
                     </div>
                     <div class="filter-item filter-item-name">
@@ -277,11 +268,11 @@
                             <tr>
                                 <th onclick="sortTable('name')">名字</th>
                                 <th onclick="sortTable('rarity')">稀有度</th>
-                                <th onclick="sortTable('hp')">HP</th>
-                                <th onclick="sortTable('mp')">MP</th>
-                                <th onclick="sortTable('attack')">攻击</th>
-                                <th onclick="sortTable('defense')">防御</th>
-                                <th onclick="sortTable('agility')">敏捷</th>
+                                <th onclick="sortTable('HP')">HP</th>
+                                <th onclick="sortTable('ATK')">ATK</th>
+                                <th onclick="sortTable('DEF')">DEF</th>
+                                <th onclick="sortTable('SKL')">SKL</th>
+                                <th onclick="sortTable('SPD')">SPD</th>
                                 <th onclick="sortTable('draw_weight')">权重</th>
                                 <th>标签</th>
                                 <th>操作</th>
@@ -325,25 +316,21 @@
                     <label>抽卡权重</label>
                     <input type="number" id="cardDrawWeight" value="100">
                 </div>
-                <div class="form-group">
-                    <label>卡池</label>
-                    <input type="text" id="cardPoolName" placeholder="例如: NIKKE">
-                </div>
                 <h3>基础属性</h3>
                 <div class="stats-grid">
-                    <div class="form-group"><label>HP</label><input type="number" id="baseHp" value="0"></div>
-                    <div class="form-group"><label>MP</label><input type="number" id="baseMp" value="0"></div>
-                    <div class="form-group"><label>攻击</label><input type="number" id="baseAttack" value="0"></div>
-                    <div class="form-group"><label>防御</label><input type="number" id="baseDefense" value="0"></div>
-                    <div class="form-group"><label>敏捷</label><input type="number" id="baseAgility" value="0"></div>
+                    <div class="form-group"><label>HP</label><input type="text" id="baseHp" value="0"></div>
+                    <div class="form-group"><label>ATK</label><input type="number" id="baseAttack" value="0"></div>
+                    <div class="form-group"><label>DEF</label><input type="number" id="baseDefense" value="0"></div>
+                    <div class="form-group"><label>SKL</label><input type="text" id="baseSkl" value="0"></div>
+                    <div class="form-group"><label>SPD</label><input type="text" id="baseSpd" value="0"></div>
                 </div>
                 <h3>成长属性</h3>
                 <div class="stats-grid">
-                    <div class="form-group"><label>HP</label><input type="number" id="growthHp" value="0"></div>
-                    <div class="form-group"><label>MP</label><input type="number" id="growthMp" value="0"></div>
-                    <div class="form-group"><label>攻击</label><input type="number" id="growthAttack" value="0"></div>
-                    <div class="form-group"><label>防御</label><input type="number" id="growthDefense" value="0"></div>
-                    <div class="form-group"><label>敏捷</label><input type="number" id="growthAgility" value="0"></div>
+                    <div class="form-group"><label>HP</label><input type="text" id="growthHp" value="0" step="0.1"></div>
+                    <div class="form-group"><label>ATK</label><input type="text" id="growthAtk" value="0" step="0.1"></div>
+                    <div class="form-group"><label>DEF</label><input type="text" id="growthDef" value="0" step="0.1"></div>
+                    <div class="form-group"><label>SKL</label><input type="text" id="growthSkl" value="0" step="0.1"></div>
+                    <div class="form-group"><label>SPD</label><input type="text" id="growthSpd" value="0" step="0.1"></div>
                 </div>
                 <div style="margin-top: 20px;">
                     <button type="submit" class="btn btn-success">保存</button>
@@ -359,7 +346,7 @@
             <button class="close-popup" onclick="closeDetailPopup()">关闭</button>
             <div class="popup-container">
                 <div class="popup-image">
-                    <img id="detailImage" src="" alt="" style="cursor:pointer;max-width:100%;max-height:350px;width:auto;height:auto;object-fit:contain;border-radius:8px;" onclick="showFullImage(this.src)">
+                    <img id="detailImage" src="" alt="" style="cursor:pointer;" onclick="showFullImage(this.src)">
                 </div>
                 <div class="popup-info">
                     <div id="detailName" class="popup-name"></div>
@@ -400,46 +387,49 @@ let rarityConfig = [];
         
         // 过滤状态
         let filterState = {
+            pool: '',
             name: '',
             rarity: '',
-            hp: { op: '', value: '' },
-            mp: { op: '', value: '' },
-            attack: { op: '', value: '' },
-            defense: { op: '', value: '' },
-            agility: { op: '', value: '' },
+            HP: { op: '', value: '' },
+            ATK: { op: '', value: '' },
+            DEF: { op: '', value: '' },
+            SKL: { op: '', value: '' },
+            SPD: { op: '', value: '' },
             tag: ''
         };
         
         function changePool(pool) {
-            currentPool = pool === 'ALL' ? '' : pool;
+            currentPool = pool;
             resetFilter();
             loadData();
         }
         
         // 过滤函数
         function applyFilter() {
+            filterState.pool = document.getElementById('filterPool').value;
             filterState.name = document.getElementById('filterName').value.trim().toLowerCase();
             filterState.rarity = document.getElementById('filterRarity').value;
-            filterState.hp.op = document.getElementById('filterHpOp').value;
-            filterState.hp.value = document.getElementById('filterHp').value;
-            filterState.mp.op = document.getElementById('filterMpOp').value;
-            filterState.mp.value = document.getElementById('filterMp').value;
-            filterState.attack.op = document.getElementById('filterAttackOp').value;
-            filterState.attack.value = document.getElementById('filterAttack').value;
-            filterState.defense.op = document.getElementById('filterDefenseOp').value;
-            filterState.defense.value = document.getElementById('filterDefense').value;
-            filterState.agility.op = document.getElementById('filterAgilityOp').value;
-            filterState.agility.value = document.getElementById('filterAgility').value;
+            filterState.HP.op = document.getElementById('filterHpOp').value;
+            filterState.HP.value = document.getElementById('filterHp').value;
+            filterState.ATK.op = document.getElementById('filterAttackOp').value;
+            filterState.ATK.value = document.getElementById('filterAttack').value;
+            filterState.DEF.op = document.getElementById('filterDefenseOp').value;
+            filterState.DEF.value = document.getElementById('filterDefense').value;
+            filterState.SKL.op = document.getElementById('filterSklOp').value;
+            filterState.SKL.value = document.getElementById('filterSkl').value;
+            filterState.SPD.op = document.getElementById('filterSpdOp').value;
+            filterState.SPD.value = document.getElementById('filterSpd').value;
             filterState.tag = document.getElementById('filterTag').value.trim().toLowerCase();
             
             filteredCharacters = gameData.characters.filter(card => {
                 if (filterState.name && !card.name.toLowerCase().includes(filterState.name)) return false;
+                if (filterState.pool && card.pool_name !== filterState.pool) return false;
                 if (filterState.rarity && card.rarity !== parseInt(filterState.rarity)) return false;
-                if (!filterByStat(card.baseStats.hp, filterState.hp)) return false;
-                if (!filterByStat(card.baseStats.mp, filterState.mp)) return false;
-                if (!filterByStat(card.baseStats.attack, filterState.attack)) return false;
-                if (!filterByStat(card.baseStats.defense, filterState.defense)) return false;
-                if (!filterByStat(card.baseStats.agility, filterState.agility)) return false;
+                if (!filterByStat(card.baseStats.HP, filterState.HP)) return false;
+                if (!filterByStat(card.baseStats.ATK, filterState.ATK)) return false;
+                if (!filterByStat(card.baseStats.DEF, filterState.DEF)) return false;
+                if (!filterByStat(card.baseStats.SKL, filterState.SKL)) return false;
+                if (!filterByStat(card.baseStats.SPD, filterState.SPD)) return false;
                 if (filterState.tag) {
                     const cardTags = card.tags || [];
                     if (!cardTags.some(t => t.toLowerCase().includes(filterState.tag))) return false;
@@ -467,21 +457,23 @@ let rarityConfig = [];
             document.getElementById('filterRarity').value = '';
             document.getElementById('filterHpOp').value = '';
             document.getElementById('filterHp').value = '';
-            document.getElementById('filterMpOp').value = '';
-            document.getElementById('filterMp').value = '';
             document.getElementById('filterAttackOp').value = '';
             document.getElementById('filterAttack').value = '';
             document.getElementById('filterDefenseOp').value = '';
             document.getElementById('filterDefense').value = '';
-            document.getElementById('filterAgilityOp').value = '';
-            document.getElementById('filterAgility').value = '';
+            document.getElementById('filterSklOp').value = '';
+            document.getElementById('filterSkl').value = '';
+            document.getElementById('filterSpdOp').value = '';
+            document.getElementById('filterSpd').value = '';
             document.getElementById('filterTag').value = '';
             
             filterState = {
                 name: '', rarity: '',
-                hp: { op: '', value: '' }, mp: { op: '', value: '' },
-                attack: { op: '', value: '' }, defense: { op: '', value: '' },
-                agility: { op: '', value: '' }, tag: ''
+                HP: { op: '', value: '' },
+                ATK: { op: '', value: '' },
+                DEF: { op: '', value: '' },
+                SKL: { op: '', value: '' },
+                SPD: { op: '', value: '' }, tag: ''
             };
             filteredCharacters = [...gameData.characters];
             currentPage = 1;
@@ -491,10 +483,10 @@ let rarityConfig = [];
         
         function getDisplayCharacters() {
             const hasFilter = filterState.name || filterState.rarity || 
-                filterState.hp.op || filterState.mp.op || filterState.attack.op || 
-                filterState.defense.op || filterState.agility.op || filterState.tag ||
-                filterState.hp.value || filterState.mp.value || filterState.attack.value || 
-                filterState.defense.value || filterState.agility.value;
+                filterState.HP.op || filterState.ATK.op || filterState.DEF.op || 
+                filterState.SKL.op || filterState.SPD.op || filterState.tag ||
+                filterState.HP.value || filterState.ATK.value || filterState.DEF.value || 
+                filterState.SKL.value || filterState.SPD.value;
             return hasFilter ? filteredCharacters : gameData.characters;
         }
         
@@ -509,7 +501,7 @@ let rarityConfig = [];
                 const cfg = rarityConfig.find(function(x) { return x.rarity === rarity; });
                 if (cfg) return cfg.name;
             }
-            return rarity + '星';
+            return getRarityName(rarity);
         }
         
         // 稀有度颜色 - 从配置动态获取
@@ -521,21 +513,6 @@ let rarityConfig = [];
             return rarityColors[rarity] || '#fff';
         }
         
-        function lightenColor(hex, factor) {
-            if (!hex) return '#0f3460';
-            var r = parseInt(hex.slice(1, 3), 16);
-            var g = parseInt(hex.slice(3, 5), 16);
-            var b = parseInt(hex.slice(5, 7), 16);
-            r = Math.min(255, Math.round(r + (255 - r) * factor));
-            g = Math.min(255, Math.round(g + (255 - g) * factor));
-            b = Math.min(255, Math.round(b + (255 - b) * factor));
-            return '#' + ((r << 16) + (g << 8) + b).toString(16).padStart(6, '0');
-        }
-        
-        function getBgColor(rarity) {
-            return (window.rarityLitBgColors && window.rarityLitBgColors[rarity]) || '#0f3460';
-        }
-        
         // 稀有度名称（备用默认值）
         const rarityNames = ['', '普通', '稀有', '杰出', '史诗', '传说'];
         
@@ -543,30 +520,46 @@ let rarityConfig = [];
         const rarityColors = ['', '#ffffff', '#4caf50', '#2196f3', '#9c27b0', '#ff9800'];
         
         // 最大属性值（用于计算百分比）
-        const maxStats = { hp: 0, mp: 0, attack: 0, defense: 0, agility: 0 };
-        const minStats = { hp: Infinity, mp: Infinity, attack: Infinity, defense: Infinity, agility: Infinity };
+        const maxStats = { HP: 0, ATK: 0, DEF: 0, SKL: 0, SPD: 0 };
+        const minStats = { HP: Infinity, ATK: Infinity, DEF: Infinity, SKL: Infinity, SPD: Infinity };
+        const maxGrowthStats = { HP: 0, ATK: 0, DEF: 0, SKL: 0, SPD: 0 };
+        
+        // 动态计算成长最大值
+        function calcMaxGrowthStats() { console.log('calcMaxGrowthStats called, maxGrowthStats:', maxGrowthStats);
+            if (!gameData || !gameData.characters) return;
+            gameData.characters.forEach(function(c) {
+                if (c.growthStats) {
+                    if (c.growthStats.HP > maxGrowthStats.HP) maxGrowthStats.HP = c.growthStats.HP;
+                    if (c.growthStats.ATK > maxGrowthStats.ATK) maxGrowthStats.ATK = c.growthStats.ATK;
+                    if (c.growthStats.DEF > maxGrowthStats.DEF) maxGrowthStats.DEF = c.growthStats.DEF;
+                    if (c.growthStats.SKL > maxGrowthStats.SKL) maxGrowthStats.SKL = c.growthStats.SKL;
+                    if (c.growthStats.SPD > maxGrowthStats.SPD) maxGrowthStats.SPD = c.growthStats.SPD;
+                }
+            });
+        }
         
         // 动态计算最大和最小属性值
         function calcMaxStats() {
             if (!gameData || !gameData.characters) return;
             gameData.characters.forEach(function(c) {
-                if (c.baseStats.hp > maxStats.hp) maxStats.hp = c.baseStats.hp;
-                if (c.baseStats.hp < minStats.hp) minStats.hp = c.baseStats.hp;
-                if (c.baseStats.mp > maxStats.mp) maxStats.mp = c.baseStats.mp;
-                if (c.baseStats.mp < minStats.mp) minStats.mp = c.baseStats.mp;
-                if (c.baseStats.attack > maxStats.attack) maxStats.attack = c.baseStats.attack;
-                if (c.baseStats.attack < minStats.attack) minStats.attack = c.baseStats.attack;
-                if (c.baseStats.defense > maxStats.defense) maxStats.defense = c.baseStats.defense;
-                if (c.baseStats.defense < minStats.defense) minStats.defense = c.baseStats.defense;
-                if (c.baseStats.agility > maxStats.agility) maxStats.agility = c.baseStats.agility;
-                if (c.baseStats.agility < minStats.agility) minStats.agility = c.baseStats.agility;
+                if (c.baseStats.HP > maxStats.HP) maxStats.HP = c.baseStats.HP;
+                if (c.baseStats.HP < minStats.HP) minStats.HP = c.baseStats.HP;
+                // mp 已删除
+                if (c.baseStats.ATK > maxStats.ATK) maxStats.ATK = c.baseStats.ATK;
+                if (c.baseStats.ATK < minStats.ATK) minStats.ATK = c.baseStats.ATK;
+                if (c.baseStats.DEF > maxStats.DEF) maxStats.DEF = c.baseStats.DEF;
+                if (c.baseStats.DEF < minStats.DEF) minStats.DEF = c.baseStats.DEF;
+                if (c.baseStats.SKL > maxStats.SKL) maxStats.SKL = c.baseStats.SKL;
+                if (c.baseStats.SKL < minStats.SKL) minStats.SKL = c.baseStats.SKL;
+                if (c.baseStats.SPD > maxStats.SPD) maxStats.SPD = c.baseStats.SPD;
+                if (c.baseStats.SPD < minStats.SPD) minStats.SPD = c.baseStats.SPD;
             });
             // 确保最小值不为无穷大
-            if (minStats.hp === Infinity) minStats.hp = 0;
-            if (minStats.mp === Infinity) minStats.mp = 0;
-            if (minStats.attack === Infinity) minStats.attack = 0;
-            if (minStats.defense === Infinity) minStats.defense = 0;
-            if (minStats.agility === Infinity) minStats.agility = 0;
+            if (minStats.HP === Infinity) minStats.HP = 0;
+            if (minStats.ATK === Infinity) minStats.ATK = 0;
+            if (minStats.DEF === Infinity) minStats.DEF = 0;
+            if (minStats.SKL === Infinity) minStats.SKL = 0;
+            if (minStats.SPD === Infinity) minStats.SPD = 0;
         }
         
         // 渲染稀有度下拉框（用于编辑表单）
@@ -574,7 +567,7 @@ let rarityConfig = [];
             const select = document.getElementById('cardRarity');
             if (!select || !rarityConfig || rarityConfig.length === 0) return;
             select.innerHTML = rarityConfig.map(function(r) {
-                return '<option value="'+r.rarity+'">' + '⭐'.repeat(r.rarity) + ' ' + r.name + ' (' + r.rarity + ')</option>';
+                return '<option value="'+r.rarity+'">' + r.name + ' ' + r.name + ' (' + r.rarity + ')</option>';
             }).join('');
         }
         
@@ -584,7 +577,7 @@ let rarityConfig = [];
             if (!select || !rarityConfig || rarityConfig.length === 0) return;
             let html = '<option value="">全部</option>';
             html += rarityConfig.map(function(r) {
-                return '<option value="'+r.rarity+'">' + '⭐'.repeat(r.rarity) + ' ' + r.name + ' (' + r.rarity + ')</option>';
+                return '<option value="'+r.rarity+'">' + r.name + ' ' + r.name + ' (' + r.rarity + ')</option>';
             }).join('');
             select.innerHTML = html;
         }
@@ -644,13 +637,13 @@ let rarityConfig = [];
                 const count = rarityCounts[r];
                 const pct = ((count / total) * 100).toFixed(1);
                 var color = '#666';
-                var name = r + '⭐';
+                var name = r;
                 if (rarityConfig && rarityConfig.length > 0) {
                     var cfg = rarityConfig.find(function(x) { return x.rarity === r; });
-                    if (cfg) { color = cfg.color; name = cfg.rarity + '⭐ ' + cfg.name; }
+                    if (cfg) { color = cfg.color; name = cfg.name; }
                 } else {
                     color = rarityColors[r] || '#666';
-                    name = r + '⭐ ' + getRarityName(r);
+                    name = getRarityName(r);
                 }
                 return '<div style="display:flex;align-items:center;gap:5px;margin:3px 0;"><span style="width:12px;height:12px;background:'+color+';display:inline-block;"></span> ' + name + ': ' + count + '张 (' + pct + '%)</div>';
             }).join('');
@@ -668,10 +661,11 @@ let rarityConfig = [];
             if (percent >= 60) return '#9400d3';
             if (percent >= 40) return '#4169e1';
             if (percent >= 20) return '#00ff00';
-            return '#ffffff';
+            if (percent >= 0) return '#ffffff';
+            return '#aaa';
         }
         
-        // 获取成长属性颜色（基于固定范围）
+        // 获取成长属性颜色
         function getGrowthColor(value, statName, maxStatsg) {
             const max = maxStatsg[statName];
             if (max === 0) return '#aaa';
@@ -681,7 +675,8 @@ let rarityConfig = [];
             if (percent >= 60) return '#9400d3';
             if (percent >= 40) return '#4169e1';
             if (percent >= 20) return '#00ff00';
-            return '#ffffff';
+            if (percent >= 0) return '#ffffff';
+            return '#aaa';
         }
         
         // 获取图片URL
@@ -699,13 +694,13 @@ let rarityConfig = [];
             var cx = w / 2;
             var cy = h / 2;
             var r = Math.min(w, h) / 2 - 30;
-            var labels = ['HP', 'MP', '攻击', '防御', '敏捷'];
+            var labels = ['HP', 'ATK', 'DEF', 'SKL', 'SPD'];
             var stats = [
-                Math.round(card.baseStats.hp / maxStats.hp * 100),
-                Math.round(card.baseStats.mp / maxStats.mp * 100),
-                Math.round(card.baseStats.attack / maxStats.attack * 100),
-                Math.round(card.baseStats.defense / maxStats.defense * 100),
-                Math.round(card.baseStats.agility / maxStats.agility * 100)
+                Math.round(card.baseStats.HP / maxStats.HP * 100),
+                Math.round(card.baseStats.ATK / maxStats.ATK * 100),
+                Math.round(card.baseStats.DEF / maxStats.DEF * 100),
+                Math.round(card.baseStats.SKL / maxStats.SKL * 100),
+                Math.round(card.baseStats.SPD / maxStats.SPD * 100)
             ];
             var maxVal = 100;
             var angleStep = (Math.PI * 2) / 5;
@@ -784,30 +779,29 @@ let rarityConfig = [];
             // 显示权重
             document.getElementById('detailWeight').textContent = '抽卡权重: ' + (card.draw_weight || 100);
             
-            var hpPercent = Math.round(card.baseStats.hp / maxStats.hp * 100);
-            var mpPercent = Math.round(card.baseStats.mp / maxStats.mp * 100);
-            var atkPercent = Math.round(card.baseStats.attack / maxStats.attack * 100);
-            var defPercent = Math.round(card.baseStats.defense / maxStats.defense * 100);
-            var agiPercent = Math.round(card.baseStats.agility / maxStats.agility * 100);
+            var hpPercent = Math.round(card.baseStats.HP / maxStats.HP * 100);
+            var atkPercent = Math.round(card.baseStats.ATK / maxStats.ATK * 100);
+            var defPercent = Math.round(card.baseStats.DEF / maxStats.DEF * 100);
+            var sklPercent = Math.round(card.baseStats.SKL / maxStats.SKL * 100);
+            var spdPercent = Math.round(card.baseStats.SPD / maxStats.SPD * 100);
             
             document.getElementById('detailStats').innerHTML = 
-                '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.hp, 'hp')+'">'+card.baseStats.hp+'</span></div>' +
-                '<div class="stat-row"><span class="stat-label">MP</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.mp, 'mp')+'">'+card.baseStats.mp+'</span></div>' +
-                '<div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.attack, 'attack')+'">'+card.baseStats.attack+'</span></div>' +
-                '<div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.defense, 'defense')+'">'+card.baseStats.defense+'</span></div>' +
-                '<div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.agility, 'agility')+'">'+card.baseStats.agility+'</span></div>';
+                '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.HP, 'HP')+'">'+card.baseStats.HP+'</span></div>' +
+                '<div class="stat-row"><span class="stat-label">ATK</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.ATK, 'ATK')+'">'+card.baseStats.ATK+'</span></div>' +
+                '<div class="stat-row"><span class="stat-label">DEF</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.DEF, 'DEF')+'">'+card.baseStats.DEF+'</span></div>' +
+                '<div class="stat-row"><span class="stat-label">SKL</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.SKL, 'SKL')+'">'+card.baseStats.SKL+'</span></div>' +
+                '<div class="stat-row"><span class="stat-label">SPD</span><span class="stat-value" style="color:'+getStatColor(card.baseStats.SPD, 'SPD')+'">'+card.baseStats.SPD+'</span></div>';
             
             // 成长数据
-            const growth = card.growthStats || {hp:0,mp:0,attack:0,defense:0,agility:0};
-            // 获取成长数据的最大范围用于颜色计算
-            const maxGrowthStats = { hp: 100, mp: 50, attack: 20, defense: 10, agility: 15 };
+            const growth = card.growthStats || {HP:0,ATK:0,DEF:0,SKL:0,SPD:0};
+            // 使用动态计算的 maxGrowthStats
             document.getElementById('detailGrowth').innerHTML = 
-                '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getGrowthColor(growth.hp, 'hp', maxGrowthStats)+'">'+growth.hp+'</span></div>' +
-                '<div class="stat-row"><span class="stat-label">MP</span><span class="stat-value" style="color:'+getGrowthColor(growth.mp, 'mp', maxGrowthStats)+'">'+growth.mp+'</span></div>' +
-                '<div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="color:'+getGrowthColor(growth.attack, 'attack', maxGrowthStats)+'">'+growth.attack+'</span></div>' +
-                '<div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="color:'+getGrowthColor(growth.defense, 'defense', maxGrowthStats)+'">'+growth.defense+'</span></div>' +
-                '<div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="color:'+getGrowthColor(growth.agility, 'agility', maxGrowthStats)+'">'+growth.agility+'</span></div>';
-            
+                '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getGrowthColor(growth.HP, 'HP', maxGrowthStats)+'">'+growth.HP+'</span></div>' +
+                '<div class="stat-row"><span class="stat-label">ATK</span><span class="stat-value" style="color:'+getGrowthColor(growth.ATK, 'ATK', maxGrowthStats)+'">'+growth.ATK+'</span></div>' +
+                '<div class="stat-row"><span class="stat-label">DEF</span><span class="stat-value" style="color:'+getGrowthColor(growth.DEF, 'DEF', maxGrowthStats)+'">'+growth.DEF+'</span></div>' +
+                '<div class="stat-row"><span class="stat-label">SKL</span><span class="stat-value" style="color:'+getGrowthColor(growth.SKL, 'SKL', maxGrowthStats)+'">'+growth.SKL+'</span></div>' +
+                '<div class="stat-row"><span class="stat-label">SPD</span><span class="stat-value" style="color:'+getGrowthColor(growth.SPD, 'SPD', maxGrowthStats)+'">'+growth.SPD+'</span></div>';
+
             document.getElementById('cardDetailPopup').classList.add('show');
             
             // 绘制雷达图
@@ -831,18 +825,25 @@ let rarityConfig = [];
         }
         
         async function loadData() {
-            // 获取卡池列表（从数据库）
+            // 获取卡池列表
             try {
-                const res = await fetch('game_api.php?action=get_pools');
-                const d = await res.json();
-                if (d.code === 200 && d.pools) {
-                    poolList = d.pools;
-                    const select = document.getElementById('poolSelect');
-                    if (select) {
-                        select.innerHTML = '<option value="ALL">ALL</option>' + poolList.map(p => 
-                            '<option value="'+p+'" '+(p===currentPool?'selected':'')+'>'+p+'</option>'
-                        ).join('');
-                    }
+                const poolsRes = await fetch('game_api.php?action=get_pools');
+                const poolsData = await poolsRes.json();
+                if (poolsData.code === 200 && poolsData.pools) {
+                    poolList = poolsData.pools;
+                }
+                const select = document.getElementById('poolSelect');
+                if (select) {
+                    select.innerHTML = poolList.map(p => 
+                        '<option value="'+p+'" '+(p===currentPool?'selected':'')+'>'+p+'</option>'
+                    ).join('');
+                }
+                // 填充筛选框的卡池下拉
+                const filterPool = document.getElementById('filterPool');
+                if (filterPool) {
+                    filterPool.innerHTML = '<option value="">ALL</option>' + poolList.map(p => 
+                        '<option value="'+p+'">'+p+'</option>'
+                    ).join('');
                 }
             } catch(e) { console.error('获取卡池列表失败:', e); }
             // 加载稀有度配置
@@ -851,46 +852,18 @@ let rarityConfig = [];
                 const r = await rarityRes.json();
                 if (r.code === 200) {
                     rarityConfig = r.rarity || [];
-                    // 生成背景色配置
-                    var bgColors = [''];
-                    var litBgColors = [''];
-                    var maxRarity = 0;
-                    r.rarity.forEach(function(cfg) {
-                        if (cfg && cfg.rarity && cfg.color) {
-                            bgColors[cfg.rarity] = cfg.color;
-                            litBgColors[cfg.rarity] = lightenColor(cfg.color, 0.7);
-                            if (cfg.rarity > maxRarity) maxRarity = cfg.rarity;
-                        }
-                    });
-                    for (var i = 1; i <= maxRarity; i++) {
-                        if (!litBgColors[i]) litBgColors[i] = lightenColor(bgColors[i] || '#0f3460', 0.7);
-                    }
-                    window.rarityBgColors = bgColors;
-                    window.rarityLitBgColors = litBgColors;
-                    console.log('背景色设置完成:', litBgColors);
+                    renderRaritySelect();
+                    renderFilterRaritySelect();
                 }
-                renderRaritySelect();
-                renderFilterRaritySelect();
             } catch(e) { console.error('加载稀有度配置失败:', e); rarityConfig = []; }
-            // 从数据库加载卡片
+            // 从数据库加载卡牌
             try {
-                console.log('Loading cards for pool:', currentPool);
-                const res = await fetch('game_api.php?action=get_cards&pool=' + currentPool);
-                console.log('Response:', res);
-                const d = await res.json();
-                console.log('Data:', d);
-                if (d.code === 200 && d.characters) {
-                    gameData.characters = d.characters.map(c => ({
-                        ...c,
-                        baseStats: typeof c.base_stats === 'string' ? JSON.parse(c.base_stats) : c.base_stats,
-                        growthStats: typeof c.growth_stats === 'string' ? JSON.parse(c.growth_stats) : c.growth_stats,
-                        tags: typeof c.tags === 'string' ? JSON.parse(c.tags) : c.tags
-                    }));
-                    console.log('gameData.characters:', gameData.characters.length);
-                } else {
-                    gameData.characters = [];
+                const res = await fetch('game_api.php?action=get_cards');
+                const r = await res.json();
+                if (r.code === 200) {
+                    gameData = { settings: {}, characters: r.characters || [], rarityWeights: {} };
+                    renderCards(); renderListView(); calcMaxStats(); calcMaxGrowthStats(); switchView('list'); drawRarityPieChart();
                 }
-                renderCards(); renderListView(); calcMaxStats(); switchView('list'); drawRarityPieChart();
             } catch(e) { console.error('加载失败:', e); }
         }
         
@@ -918,7 +891,7 @@ let rarityConfig = [];
             
             if (displayMode === 'image') {
                 list.innerHTML = chars.map(c => `
-                    <div class="card-item rarity-${c.rarity}" onclick="showCardDetail(${c.id})" style="background:${getBgColor(c.rarity)}">
+                    <div class="card-item rarity-${c.rarity}" onclick="showCardDetail(${c.id})">
                         <img src="${c.image || ''}" alt="${c.name}" style="width:100%;height:150px;object-fit:contain;margin-bottom:10px;">
                         <h3 style="color:${getRarityColor(c.rarity)}">${c.name}</h3>
                         <div class="actions" onclick="event.stopPropagation()">
@@ -929,10 +902,10 @@ let rarityConfig = [];
                 `).join('');
             } else {
                 list.innerHTML = chars.map(c => `
-                    <div class="card-item rarity-${c.rarity}" onclick="showCardDetail(${c.id})" style="background:${getBgColor(c.rarity)}">
+                    <div class="card-item rarity-${c.rarity}" onclick="showCardDetail(${c.id})">
                         <h3 style="color:${getRarityColor(c.rarity)}">${c.name}</h3>
                         <p>${c.description || ''}</p>
-                        <p>基础: HP${c.baseStats.hp} MP${c.baseStats.mp} 攻${c.baseStats.attack} 防${c.baseStats.defense} 敏${c.baseStats.agility}</p>
+                        <p>基础: HP${c.baseStats.HP} ATK${c.baseStats.ATK} DEF${c.baseStats.DEF} SKL${c.baseStats.SKL} SPD${c.baseStats.SPD}</p>
                         <p style="color:#aaa;font-size:12px;">权重: ${c.draw_weight || 100}</p>
                         ${c.tags ? '<p style="color:#aaa;font-size:12px;margin-top:5px;">🏷️ ' + c.tags.join(' / ') + '</p>' : ''}
                         <div class="actions" onclick="event.stopPropagation()">
@@ -960,8 +933,8 @@ let rarityConfig = [];
                     valA = a.draw_weight || 100;
                     valB = b.draw_weight || 100;
                 } else {
-                    valA = a.baseStats[sortColumn] || 0;
-                    valB = b.baseStats[sortColumn] || 0;
+                    var statKey = sortColumn; if(sortColumn==='HP')statKey='HP';else if(sortColumn==='ATK')statKey='ATK';else if(sortColumn==='DEF')statKey='DEF';else if(sortColumn==='SKL')statKey='SKL';else if(sortColumn==='SPD')statKey='SPD'; valA = a.baseStats[statKey] || 0;
+                    var statKey2 = sortColumn; if(sortColumn==='HP')statKey2='HP';else if(sortColumn==='ATK')statKey2='ATK';else if(sortColumn==='DEF')statKey2='DEF';else if(sortColumn==='SKL')statKey2='SKL';else if(sortColumn==='SPD')statKey2='SPD'; valB = b.baseStats[statKey2] || 0;
                 }
                 if (typeof valA === 'string') {
                     return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
@@ -987,11 +960,11 @@ let rarityConfig = [];
                 return '<tr onclick="showCardDetail('+c.id+')">' +
                     '<td style="color:'+rColor+'">'+c.name+'</td>' +
                     '<td style="color:'+rColor+'">'+rName+'</td>' +
-                    '<td style="color:'+getStatColor(c.baseStats.hp, 'hp')+'">'+c.baseStats.hp+'</td>' +
-                    '<td style="color:'+getStatColor(c.baseStats.mp, 'mp')+'">'+c.baseStats.mp+'</td>' +
-                    '<td style="color:'+getStatColor(c.baseStats.attack, 'attack')+'">'+c.baseStats.attack+'</td>' +
-                    '<td style="color:'+getStatColor(c.baseStats.defense, 'defense')+'">'+c.baseStats.defense+'</td>' +
-                    '<td style="color:'+getStatColor(c.baseStats.agility, 'agility')+'">'+c.baseStats.agility+'</td>' +
+                    '<td style="color:'+getStatColor(c.baseStats.HP, 'HP')+'">'+c.baseStats.HP+'</td>' +
+                    '<td style="color:'+getStatColor(c.baseStats.ATK, 'ATK')+'">'+c.baseStats.ATK+'</td>' +
+                    '<td style="color:'+getStatColor(c.baseStats.DEF, 'DEF')+'">'+c.baseStats.DEF+'</td>' +
+                    '<td style="color:'+getStatColor(c.baseStats.SKL, 'SKL')+'">'+c.baseStats.SKL+'</td>' +
+                    '<td style="color:'+getStatColor(c.baseStats.SPD, 'SPD')+'">'+c.baseStats.SPD+'</td>' +
                     '<td>'+(c.draw_weight || 100)+'</td>' +
                     '<td style="font-size:11px;color:#aaa;">'+(c.tags ? c.tags.join('<br>') : '-')+'</td>' +
                     '<td class="actions-cell" onclick="event.stopPropagation()">' +
@@ -1067,6 +1040,13 @@ let rarityConfig = [];
             renderListView();
         }
         
+        function saveSettings() {
+            gameData.settings.drawCost = parseInt(document.getElementById('drawCost').value);
+            gameData.settings.currencyName = document.getElementById('currencyName').value;
+            downloadJson();
+            alert('设置已保存！请将 data/cards/' + currentPool + '.json 文件内容同步到服务器。');
+        }
+        
         function showAddModal() {
             document.getElementById('modalTitle').textContent = '添加新卡牌';
             document.getElementById('cardForm').reset();
@@ -1085,17 +1065,16 @@ let rarityConfig = [];
             document.getElementById('cardDesc').value = c.description || '';
             document.getElementById('cardTags').value = (c.tags || []).join(', ');
             document.getElementById('cardDrawWeight').value = c.draw_weight || 100;
-            document.getElementById('cardPoolName').value = c.pool_name || currentPool;
-            document.getElementById('baseHp').value = c.baseStats.hp;
-            document.getElementById('baseMp').value = c.baseStats.mp;
-            document.getElementById('baseAttack').value = c.baseStats.attack;
-            document.getElementById('baseDefense').value = c.baseStats.defense;
-            document.getElementById('baseAgility').value = c.baseStats.agility;
-            document.getElementById('growthHp').value = c.growthStats.hp;
-            document.getElementById('growthMp').value = c.growthStats.mp;
-            document.getElementById('growthAttack').value = c.growthStats.attack;
-            document.getElementById('growthDefense').value = c.growthStats.defense;
-            document.getElementById('growthAgility').value = c.growthStats.agility;
+            document.getElementById('baseHp').value = c.baseStats.HP;
+            document.getElementById('baseAttack').value = c.baseStats.ATK;
+            document.getElementById('baseDefense').value = c.baseStats.DEF;
+            document.getElementById('baseSkl').value = c.baseStats.SKL || 0;
+            document.getElementById('baseSpd').value = c.baseStats.SPD || 0;
+            document.getElementById('growthHp').value = c.growthStats.HP;
+            document.getElementById('growthAtk').value = c.growthStats.ATK || c.growthStats.ATK || 0;
+            document.getElementById('growthDef').value = c.growthStats.DEF || c.growthStats.DEFense || 0;
+            document.getElementById('growthSkl').value = c.growthStats.SKL || 0;
+            document.getElementById('growthSpd').value = c.growthStats.SPD || 0;
             document.getElementById('cardModal').classList.add('show');
         }
         
@@ -1115,50 +1094,66 @@ let rarityConfig = [];
             document.getElementById('cardModal').classList.remove('show');
         }
         
-        document.getElementById('cardForm').onsubmit = async function(e) {
+        document.getElementById('cardForm').onsubmit = function(e) {
             e.preventDefault();
             const id = document.getElementById('cardId').value;
-            
-            try {
-                const fd = new FormData();
-                if (id) fd.append('id', id);
-                fd.append('name', document.getElementById('cardName').value);
-                fd.append('rarity', document.getElementById('cardRarity').value);
-                fd.append('image', document.getElementById('cardImage').value);
-                fd.append('description', document.getElementById('cardDesc').value);
-                fd.append('base_stats', JSON.stringify({
-                    hp: parseInt(document.getElementById('baseHp').value),
-                    mp: parseInt(document.getElementById('baseMp').value),
-                    attack: parseInt(document.getElementById('baseAttack').value),
-                    defense: parseInt(document.getElementById('baseDefense').value),
-                    agility: parseInt(document.getElementById('baseAgility').value)
-                }));
-                fd.append('growth_stats', JSON.stringify({
-                    hp: parseInt(document.getElementById('growthHp').value),
-                    mp: parseInt(document.getElementById('growthMp').value),
-                    attack: parseInt(document.getElementById('growthAttack').value),
-                    defense: parseInt(document.getElementById('growthDefense').value),
-                    agility: parseInt(document.getElementById('growthAgility').value)
-                }));
-                fd.append('tags', JSON.stringify(document.getElementById('cardTags').value.split(',').map(t => t.trim()).filter(t => t)));
-                fd.append('draw_weight', document.getElementById('cardDrawWeight').value || 100);
-                fd.append('pool_name', document.getElementById('cardPoolName').value || currentPool);
-                
-                const res = await fetch('game_api.php?action=save_card', { method: 'POST', body: fd });
-                const r = await res.json();
-                if (r.code === 200) {
-                    alert('保存成功！');
-                    loadData();
-                    closeModal();
-                } else {
-                    alert('保存失败: ' + r.msg);
+            const card = {
+                id: id ? parseInt(id) : Date.now(),
+                name: document.getElementById('cardName').value,
+                rarity: parseInt(document.getElementById('cardRarity').value),
+                image: document.getElementById('cardImage').value,
+                description: document.getElementById('cardDesc').value,
+                tags: document.getElementById('cardTags').value.split(',').map(t => t.trim()).filter(t => t),
+                draw_weight: parseInt(document.getElementById('cardDrawWeight').value) || 100,
+                baseStats: {
+                    HP: parseFloat(document.getElementById('baseHp').value),
+                    ATK: parseFloat(document.getElementById('baseAttack').value),
+                    DEF: parseFloat(document.getElementById('baseDefense').value),
+                    SKL: parseFloat(document.getElementById('baseSkl').value),
+                    SPD: parseFloat(document.getElementById('baseSpd').value)
+                },
+                growthStats: {
+                    HP: parseFloat(document.getElementById('growthHp').value),
+                    ATK: parseFloat(document.getElementById('growthAtk').value),
+                    DEF: parseFloat(document.getElementById('growthDef').value),
+                    SKL: parseFloat(document.getElementById('growthSkl').value),
+                    SPD: parseFloat(document.getElementById('growthSpd').value)
                 }
-            } catch(e) { alert('保存失败: ' + e.message); }
+            };
+            if (id) {
+                const i = gameData.characters.findIndex(x => x.id === parseInt(id));
+                if (i !== -1) gameData.characters[i] = card;
+            } else {
+                gameData.characters.push(card);
+            }
+            // 保存到数据库
+            const formData = new FormData();
+            formData.append('action', 'save_card');
+            formData.append('id', card.id);
+            formData.append('name', card.name);
+            formData.append('rarity', card.rarity);
+            formData.append('image', card.image);
+            formData.append('description', card.description);
+            formData.append('base_stats', JSON.stringify(card.baseStats));
+            formData.append('growth_stats', JSON.stringify(card.growthStats));
+            formData.append('tags', JSON.stringify(card.tags));
+            formData.append('draw_weight', card.draw_weight);
+            formData.append('pool_name', currentPool);
+            
+            fetch('game_api.php', { method: 'POST', body: formData })
+                .then(r => r.json())
+                .then(result => {
+                    if (result.code === 200) {
+                        console.log('已保存到数据库');
+                    }
+                });
+            
+            closeModal();
             renderCards();
             renderListView();
             drawRarityPieChart();
             
-        }
+        };
         
         function downloadJson() {
             const data = JSON.stringify(gameData, null, 2);
@@ -1170,17 +1165,54 @@ let rarityConfig = [];
         }
         
         async function saveToServer() {
+            // 从表单获取数据
+            const card = {
+                id: parseInt(document.getElementById('cardId').value),
+                name: document.getElementById('cardName').value,
+                rarity: parseInt(document.getElementById('cardRarity').value),
+                image: document.getElementById('cardImage').value,
+                description: document.getElementById('cardDescription').value,
+                baseStats: {
+                    HP: parseFloat(document.getElementById('baseHp').value) || 0,
+                    ATK: parseFloat(document.getElementById('baseAttack').value) || 0,
+                    DEF: parseFloat(document.getElementById('baseDefense').value) || 0,
+                    SKL: parseFloat(document.getElementById('baseSkl').value) || 0,
+                    SPD: parseFloat(document.getElementById('baseSpd').value) || 0
+                },
+                growthStats: {
+                    HP: parseFloat(document.getElementById('growthHp').value) || 0,
+                    ATK: parseFloat(document.getElementById('growthAtk').value) || 0,
+                    DEF: parseFloat(document.getElementById('growthDef').value) || 0,
+                    SKL: parseFloat(document.getElementById('growthSkl').value) || 0,
+                    SPD: parseFloat(document.getElementById('growthSpd').value) || 0
+                },
+                tags: document.getElementById('cardTags').value.split(',').map(t=>t.trim()).filter(t=>t),
+                draw_weight: parseInt(document.getElementById('cardWeight').value) || 100,
+                pool_name: currentPool
+            };
             try {
-                const res = await fetch('/save-json', {
+                const formData = new FormData();
+                formData.append('action', 'save_card');
+                formData.append('id', card.id);
+                formData.append('name', card.name);
+                formData.append('rarity', card.rarity);
+                formData.append('image', card.image);
+                formData.append('description', card.description);
+                formData.append('base_stats', JSON.stringify(card.baseStats));
+                formData.append('growth_stats', JSON.stringify(card.growthStats));
+                formData.append('tags', JSON.stringify(card.tags));
+                formData.append('draw_weight', card.draw_weight);
+                formData.append('pool_name', card.pool_name);
+                
+                const res = await fetch('game_api.php?action=save_card', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ filename: currentPool, content: gameData })
+                    body: formData
                 });
                 const result = await res.json();
-                if (result.success) {
-                    alert('已保存到服务器！');
+                if (result.code === 200) {
+                    alert('保存成功！');
                 } else {
-                    alert('保存失败: ' + result.error);
+                    alert('保存失败: ' + result.msg);
                 }
             } catch(e) {
                 alert('保存失败: ' + e.message);

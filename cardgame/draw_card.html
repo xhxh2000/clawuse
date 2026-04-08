@@ -42,11 +42,12 @@ body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: linear-gra
 .result-info h2 { font-size: 22px; margin-bottom: 4px; }
 .result-rarity { font-size: 14px; letter-spacing: 2px; margin-bottom: 6px; }
 .result-desc { color: #aaa; font-size: 12px; line-height: 1.4; margin-bottom: 10px; }
-.result-stats-box { background: rgba(0,0,0,0.3); border-radius: 8px; padding: 8px; }
-.result-stats-box h4 { color: #e94560; font-size: 12px; margin-bottom: 6px; text-align: center; }
-.result-stats-box .stat-row { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; }
+.result-stats-box { background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; margin-top: 10px; }
+.result-stats-box h4 { color: #e94560; font-size: 12px; margin-bottom: 8px; text-align: center; }
+.result-stats-box .stat-row { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.result-stats-box .stat-row:last-child { border-bottom: none; }
 .result-stats-box .stat-label { color: #888; }
-.result-stats-box .stat-value { color: #4ade80; font-weight: bold; }
+.result-stats-box .stat-value { color: #4ade80; font-weight: bold; text-align: right; }
 .result-actions { text-align: center; margin-top: 15px; }
 .result-actions.hidden { display: none; }
 .hidden { display: none !important; }
@@ -165,6 +166,8 @@ function closeProbabilityPopup() {
 
 // 概率预览计算（复用抽卡管理页面的算法，但使用当前配置）
 async function previewProbability() {
+    // 使用已加载的allCards数据，不用再从json读取
+    let allCards = allCharacters || [];
     const poolNames = drawConfig.card_pool || [currentPool];
     const selectedTags = drawConfig.tag || [];
     const rarityWeights = drawConfig.rarity_weight || [50, 30, 15, 4, 1];
@@ -174,18 +177,10 @@ async function previewProbability() {
         tagWeightMap[key] = tw[key];
     });
     
-    // 加载卡池数据
-    let allCards = [];
-    for (const poolName of poolNames) {
-        try {
-            const res = await fetch('data/cards/' + poolName + '.json');
-            const data = await res.json();
-            allCards = allCards.concat(data.characters || []);
-        } catch(e) { console.error('加载卡池失败:', poolName, e); }
-    }
-    
-    // 过滤
+    // 过滤卡池
     let filteredCards = allCards.filter(card => {
+        const cardPool = card.pool_name || '';
+        if (!poolNames.includes(cardPool) && poolNames.length > 0) return false;
         const cardTags = card.tags || [];
         return selectedTags.length === 0 || cardTags.some(t => selectedTags.includes(t));
     });
@@ -226,12 +221,11 @@ async function previewProbability() {
     
     // 渲染
     const container = document.getElementById('probabilityList');
-    const rarityColors = ['', '#aaa', '#4caf50', '#2196f3', '#9c27b0', '#ff9800', '#f44336'];
     container.innerHTML = results.map(c => {
-        const color = rarityColors[c.rarity] || '#aaa';
+        const color = getRarityColor(c.rarity);
         return '<div class="prob-item' + (c.isZero ? ' zero-prob' : '') + '">' +
             '<span class="card-name" style="color:' + color + '">' + c.name + '</span>' +
-            '<span class="card-rarity">' + '⭐'.repeat(c.rarity) + '</span>' +
+            '<span class="card-rarity" style="color:' + getRarityColor(c.rarity) + '">' + getRarityName(c.rarity) + '</span>' +
             '<span class="card-tags">' + (c.tags || '-') + '</span>' +
             '<span class="card-weight">权重:' + c.weight + '</span>' +
             '<span class="card-prob">' + (c.isZero ? 0 : c.probability).toFixed(4) + '%</span></div>';
@@ -255,7 +249,7 @@ initPreviewFilters();
 var gameData = null;
 var drawConfig = { rarity_weight: [], tag: [], tag_weight: [] };
 var rarityConfig = [];
-var myGold = 0; var ownedCardIds = {}; var currencyName = "元宝"; var currencyId = 1; var drawCost = 100; // 从API获取
+var myGold = 0; var ownedCardIds = {}; var userAlbum = {}; var currencyName = "元宝"; var currencyId = 1; var drawCost = 100; // 从API获取
 var myCards = {};
 var isDrawing = false;
 var currentPool = "NIKKE";
@@ -481,17 +475,12 @@ function doDraw() {
 }
 
 async function showResult(card) {
-var names = getRarityName(card.rarity);
 var rarityColor = getRarityColor(card.rarity);
 var cost = gameData.settings.drawCost || 100;
-var stats = card.baseStats || card.base_stats || {};
-var hpPercent = Math.round((stats.hp || 0) / maxStats.hp * 100);
-var mpPercent = Math.round((stats.mp || 0) / maxStats.mp * 100);
-var atkPercent = Math.round((stats.attack || 0) / maxStats.attack * 100);
-var defPercent = Math.round((stats.defense || 0) / maxStats.defense * 100);
-var agiPercent = Math.round((stats.agility || 0) / maxStats.agility * 100);
+var stats = card.baseStats || {};
 
-var isNew = !ownedCardIds[card.id]; // 用数据库查询的结果判断是否新卡
+var isNew = !ownedCardIds[card.id];
+console.log('showResult card:', card, 'baseStats:', card.baseStats); // 用数据库查询的结果判断是否新卡
 
 // 保存到数据库（API会返回是否新卡）
 var rc = document.getElementById('resultCard');
@@ -508,7 +497,7 @@ await fetch('game_api.php?action=add_user_card&user_id=' + userId + '&card_id=' 
 var newTag = isNew ? '<span class="new-tag">新！</span>' : '';
 var rarityColor = getRarityColor(card.rarity);
 var names = getRarityNames(card.rarity);
-rc.innerHTML = '<div class="result-image"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div><div class="result-info"><h2 class="rarity-'+card.rarity+'" style="color:'+rarityColor+'">'+card.name+newTag+'</h2><div class="result-rarity" style="color:'+rarityColor+'">'+'⭐'.repeat(card.rarity)+' '+names+'</div><p class="result-desc">'+(card.description||'')+'</p><div class="result-stats-box"><h4>📊 基础属性</h4><div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).hp, 'hp')+'">'+(card.baseStats || card.base_stats || {}).hp+'</span></div><div class="stat-row"><span class="stat-label">MP</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).mp, 'mp')+'">'+(card.baseStats || card.base_stats || {}).mp+'</span></div><div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).attack, 'attack')+'">'+(card.baseStats || card.base_stats || {}).attack+'</span></div><div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).defense, 'defense')+'">'+(card.baseStats || card.base_stats || {}).defense+'</span></div><div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).agility, 'agility')+'">'+(card.baseStats || card.base_stats || {}).agility+'</span></div></div></div>';
+rc.innerHTML = '<div class="result-image"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div><div class="result-info"><h2 class="rarity-'+card.rarity+'" style="color:'+rarityColor+'">'+card.name+newTag+'</h2><div class="result-rarity" style="color:'+rarityColor+'">'+'⭐'.repeat(card.rarity)+' '+getRarityName(card.rarity)+'</div><p class="result-desc">'+(card.description||'')+'</p></div>';
 document.getElementById('resultActions').innerHTML = '<button class="draw-btn" onclick="drawCard()">再抽一张</button><button class="draw-btn" onclick="resetDraw()">返回</button><p class="cost-text">消耗 '+cost+' '+currencyName+'</p><p id="userBalance" class="balance-text" style="color:#ffd700;font-size:16px;font-weight:bold;margin-top:10px;">我的' + currencyName + ': ' + myGold + '</p>';
 resultActions.classList.remove('hidden');
 rc.classList.add('show');
@@ -630,7 +619,7 @@ function updateAlbumProgress(allCards) {
     var totalCards = 0;
     var allComplete = true;
     
-    // 从 rarity_config.json 获取稀有度名称和颜色
+    // 从数据库获取稀有度名称和颜色
     var rarityNames = [];
     var rarityColors = [];
     var maxRarity = rarityConfig.length;
@@ -697,7 +686,7 @@ function updateAlbumProgress(allCards) {
         }
         
         html += '<div style="display:flex;align-items:center;gap:10px;'+rowStyle+'">' +
-            '<span style="'+nameStyle+'">' + r + '⭐ ' + rName + '</span>' +
+            '<span style="'+nameStyle+'">' + r + ' ' + rName + '</span>' +
             '<div style="flex:1;height:20px;background:#1a1a2e;border-radius:10px;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,0.3);border:1px solid #333;">' +
                 '<div style="width:'+rRate+'%;'+barFillStyle+gradientFill+'"></div>' +
             '</div>' +
@@ -765,7 +754,7 @@ function renderAlbum() {
     if (!container) return;
     var allCards = allCharacters || [];
     
-    // 从 rarity_config.json 获取稀有度名称和颜色
+    
     var rarityNames = [];
     var rarityColors = [];
     
@@ -801,7 +790,7 @@ function renderAlbum() {
     });
     
     var filtered = allCards.filter(function(card) {
-        var owned = myCards[card.id];
+        var owned = userAlbum[card.id];
         if (filterState.name && !card.name.toLowerCase().includes(filterState.name)) return false;
         if (filterState.rarity && card.rarity !== parseInt(filterState.rarity)) return false;
         if (filterState.owned === 'owned' && !owned) return false;
@@ -819,12 +808,12 @@ function renderAlbum() {
     
     var html = '';
     filtered.forEach(function(card) {
-        var owned = myCards[card.id];
-        var stars = '⭐'.repeat(card.rarity);
+        var owned = userAlbum[card.id];
+        var rarityName = '⭐'.repeat(card.rarity);
         if (owned) {
-            html += '<div class="album-card" onclick="showCardPopup('+card.id+')" style="background:'+card._bgColor+';"><div class="card-thumb" style="background:'+card._bgColor+';"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div><h4 style="color:'+rarityColors[card.rarity]+';">'+card.name+'</h4><div class="album-stars" style="font-size:10px;color:'+rarityColors[card.rarity]+';word-break:break-all;">'+stars+'</div><span class="count">x'+owned.count+'</span></div>';
+            html += '<div class="album-card" onclick="showCardPopup('+card.id+')" style="background:'+card._bgColor+';"><div class="card-thumb" style="background:'+card._bgColor+';"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div><h4 style="color:'+rarityColors[card.rarity]+';">'+card.name+'</h4><div class="album-stars" style="font-size:10px;color:'+rarityColors[card.rarity]+';word-break:break-all;">'+rarityName+'</div><span class="count">x'+owned.count+'</span></div>';
         } else {
-            html += '<div class="album-card locked"><div class="card-thumb" style="background:inherit;"><img src="'+getImageUrl(card)+'" alt="'+card.name+'" style="filter:grayscale(100%) brightness(0.7);"></div><h4 style="color:'+rarityColors[card.rarity]+';">'+card.name+'</h4><div class="album-stars" style="font-size:10px;color:'+rarityColors[card.rarity]+';word-break:break-all;filter:grayscale(50%);">'+stars+'</div><span class="count">未拥有</span></div>';
+            html += '<div class="album-card locked"><div class="card-thumb" style="background:inherit;"><img src="'+getImageUrl(card)+'" alt="'+card.name+'" style="filter:grayscale(100%) brightness(0.7);"></div><h4 style="color:'+rarityColors[card.rarity]+';">'+card.name+'</h4><div class="album-stars" style="font-size:10px;color:'+rarityColors[card.rarity]+';word-break:break-all;filter:grayscale(50%);">'+rarityName+'</div><span class="count">未拥有</span></div>';
         }
     });
     container.innerHTML = html;
@@ -834,18 +823,18 @@ function showCardPopup(id) {
 var card = myCards[id];
 if (!card) return;
 var rarityColor = getRarityColor(card.rarity);
-var rarityName = getRarityName(card.rarity);
+var rarityName = '⭐'.repeat(card.rarity);
 document.getElementById('popupImage').src = getImageUrl(card);
 document.getElementById('popupName').textContent = card.name;
 document.getElementById('popupName').style.color = rarityColor;
-document.getElementById('popupRarity').innerHTML = '<span style="color:'+rarityColor+'">' + '⭐'.repeat(card.rarity) + ' ' + rarityName + '</span>';
+document.getElementById('popupRarity').innerHTML = '<span style="color:'+rarityColor+'">' + rarityName + '</span>';
 document.getElementById('popupDesc').textContent = card.description || '';
 document.getElementById('popupStatsBox').innerHTML = 
-    '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).hp, 'hp')+'">'+(card.baseStats || card.base_stats || {}).hp+'</span></div>' +
-    '<div class="stat-row"><span class="stat-label">MP</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).mp, 'mp')+'">'+(card.baseStats || card.base_stats || {}).mp+'</span></div>' +
-    '<div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).attack, 'attack')+'">'+(card.baseStats || card.base_stats || {}).attack+'</span></div>' +
-    '<div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).defense, 'defense')+'">'+(card.baseStats || card.base_stats || {}).defense+'</span></div>' +
-    '<div class="stat-row"><span class="stat-label">敏捷</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || card.base_stats || {}).agility, 'agility')+'">'+(card.baseStats || card.base_stats || {}).agility+'</span></div>';
+    '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || {}).HP, 'HP')+'">'+(card.baseStats || {}).HP+'</span></div>' +
+    '<div class="stat-row"><span class="stat-label">ATK</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || {}).ATK, 'ATK')+'">'+(card.baseStats || {}).ATK+'</span></div>' +
+    '<div class="stat-row"><span class="stat-label">DEF</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || {}).DEF, 'DEF')+'">'+(card.baseStats || {}).DEF+'</span></div>' +
+    '<div class="stat-row"><span class="stat-label">SKL</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || {}).SKL, 'SKL')+'">'+(card.baseStats || {}).SKL+'</span></div>' +
+    '<div class="stat-row"><span class="stat-label">SPD</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || {}).SPD, 'SPD')+'">'+(card.baseStats || {}).SPD+'</span></div>';
 document.getElementById('popupCount').textContent = '持有: ' + card.count + ' 张';
             
             // document.getElementById('cardPopup').classList.add('show'); // 已删除
@@ -875,11 +864,11 @@ var cy = h / 2;
 var r = Math.min(w, h) / 2 - 30;
 var labels = ['HP', 'MP', '攻击', '防御', '敏捷'];
 var stats = [
-Math.round((card.baseStats || card.base_stats || {}).hp / maxStats.hp * 100),
-Math.round((card.baseStats || card.base_stats || {}).mp / maxStats.mp * 100),
-Math.round((card.baseStats || card.base_stats || {}).attack / maxStats.attack * 100),
-Math.round((card.baseStats || card.base_stats || {}).defense / maxStats.defense * 100),
-Math.round((card.baseStats || card.base_stats || {}).agility / maxStats.agility * 100)
+Math.round((card.baseStats || card.base_stats || {}).HP / maxStats.HP * 100),
+Math.round((card.baseStats || card.base_stats || {}).SKL / maxStats.SKL * 100),
+Math.round((card.baseStats || card.base_stats || {}).ATK / maxStats.ATK * 100),
+Math.round((card.baseStats || card.base_stats || {}).DEF / maxStats.DEF * 100),
+Math.round((card.baseStats || card.base_stats || {}).SKL / maxStats.SKL * 100)
 ];
 var maxVal = 100;
 var angleStep = (Math.PI * 2) / 5;
@@ -928,29 +917,29 @@ ctx.fill();
 }
 }
 
-var maxStats = {hp:0, mp:0, attack:0, defense:0, agility:0};
+var maxStats = {HP:0, ATK:0, DEF:0, SKL:0, SPD:0};
 var minStats = {hp:Infinity, mp:Infinity, attack:Infinity, defense:Infinity, agility:Infinity};
 
 function calcMaxStats() {
 if (!gameData || !gameData.characters) return;
 gameData.characters.forEach(function(c) {
     var stats = c.baseStats || c.base_stats || {};
-    if (stats.hp > maxStats.hp) maxStats.hp = stats.hp;
-    if (stats.hp < minStats.hp) minStats.hp = stats.hp;
-    if (stats.mp > maxStats.mp) maxStats.mp = stats.mp;
-    if (stats.mp < minStats.mp) minStats.mp = stats.mp;
-    if (stats.attack > maxStats.attack) maxStats.attack = stats.attack;
-    if (stats.attack < minStats.attack) minStats.attack = stats.attack;
-    if (stats.defense > maxStats.defense) maxStats.defense = stats.defense;
-    if (stats.defense < minStats.defense) minStats.defense = stats.defense;
-    if (stats.agility > maxStats.agility) maxStats.agility = stats.agility;
-    if (stats.agility < minStats.agility) minStats.agility = stats.agility;
+    if (stats.HP > maxStats.HP) maxStats.HP = stats.HP;
+    if (stats.HP < minStats.HP) minStats.HP = stats.HP;
+    if (stats.SKL > maxStats.SKL) maxStats.SKL = stats.SKL;
+    if (stats.SKL < minStats.SKL) minStats.SKL = stats.SKL;
+    if (stats.ATK > maxStats.ATK) maxStats.ATK = stats.ATK;
+    if (stats.ATK < minStats.ATK) minStats.ATK = stats.ATK;
+    if (stats.DEF > maxStats.DEF) maxStats.DEF = stats.DEF;
+    if (stats.DEF < minStats.DEF) minStats.DEF = stats.DEF;
+    if (stats.SKL > maxStats.SKL) maxStats.SKL = stats.SKL;
+    if (stats.SKL < minStats.SKL) minStats.SKL = stats.SKL;
 });
-if (minStats.hp === Infinity) minStats.hp = 0;
-if (minStats.mp === Infinity) minStats.mp = 0;
-if (minStats.attack === Infinity) minStats.attack = 0;
-if (minStats.defense === Infinity) minStats.defense = 0;
-if (minStats.agility === Infinity) minStats.agility = 0;
+if (minStats.HP === Infinity) minStats.HP = 0;
+if (minStats.SKL === Infinity) minStats.SKL = 0;
+if (minStats.ATK === Infinity) minStats.ATK = 0;
+if (minStats.DEF === Infinity) minStats.DEF = 0;
+if (minStats.SKL === Infinity) minStats.SKL = 0;
 }
 
 function updateCostDisplay() {
@@ -961,7 +950,7 @@ function updateCostDisplay() {
 }
 
 // 当前选中的配置ID
-var currentConfigId = 1;
+var currentConfigId = 5;
 
 // 加载配置列表
 function loadConfigList() {
@@ -1061,25 +1050,35 @@ function loadData() {
         var costText = '消耗 ' + drawCost + ' ' + currencyName;
         var cost10Text = '消耗 ' + Math.floor(drawCost * 10 * 0.9) + ' ' + currencyName + ' (9折)';
     }).catch(e => console.error('加载失败:', e));
-    // 加载稀有度配置
-    fetch('data/sys_config/rarity_config.json').then(function(res) { return res.json(); }).then(function(config) {
-        rarityConfig = config;
+    // 加载稀有度配置 - 从数据库读取
+    fetch('game_api.php?action=get_rarity').then(function(res) { return res.json(); }).then(function(data) {
+        rarityConfig = data.rarity || [];
         populateRarityFilter();
     }).catch(function(e) {
         console.error('加载稀有度配置失败:', e);
         rarityConfig = [];
     });
     
-    // 加载卡池数据 - 使用 get_all API 获取统一的卡牌数据
-    fetch('game_api.php?action=get_all&user_id=' + userId).then(function(res) { return res.json(); }).then(function(data) {
-        // get_all 返回包含 settings/rarity/config/characters，只取 characters
-        gameData = data;
-        allCharacters = data.characters || [];
-        calcMaxStats();
-        // 抽卡消耗已在loadData中更新
+    // 先获取图鉴数据，然后加载卡牌数据，一起完成后渲染
+    Promise.all([
+        fetch('game_api.php?action=get_user_album&user_id=' + userId).then(r => r.json()),
+        fetch('game_api.php?action=get_all&user_id=' + userId).then(r => r.json())
+    ]).then(function(results) {
+        var albumData = results[0];
+        var cardsData = results[1];
+        
+        if (albumData.code === 200 && albumData.album) {
+            userAlbum = albumData.album;
+        }
+        
+        if (cardsData.code === 200) {
+            gameData = cardsData;
+            allCharacters = cardsData.characters || [];
+            calcMaxStats();
+        }
+        
         renderMyCards();
         renderAlbum();
-        // drawConfig 已在 loadData 中通过 get_config API 设置好了
     }).catch(function(e) { 
         console.error(e); 
     });
@@ -1089,8 +1088,10 @@ loadConfigList();
 
 async function showResult10(cards) {
 var container = document.getElementById('resultCard10');
+console.log('showResult10 cards:', cards);
 var rarityColors = getRarityColorsFromConfig();
 var rarityNames = getRarityNamesFromConfig();
+console.log(' rarityColors:', rarityColors, ' rarityNames:', rarityNames);
 
 function getRarityColorsFromConfig() {
     if (rarityConfig && rarityConfig.length > 0) {
@@ -1149,7 +1150,9 @@ layout.forEach(function(count, rowIdx) {
       firstSeen[card.id] = true;
     }
     var newTag = showNew ? '<span class="new-tag">新！</span>' : '';
-    html += '<div class="card-item rarity-'+card.rarity+'"><div class="thumb"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div><h4 class="card-name-'+card.rarity+'">'+card.name+'</h4><div class="stars" style="color:'+rarityColors[card.rarity]+'">'+'⭐'.repeat(card.rarity)+'</div>'+newTag+'</div>';
+    var rname = rarityNames[card.rarity] || '';
+    var stars = '⭐'.repeat(card.rarity);
+    html += '<div class="card-item rarity-'+card.rarity+'"><div class="thumb"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div><h4 class="card-name-'+card.rarity+'">'+card.name+'</h4><div class="stars" style="color:'+rarityColors[card.rarity]+';text-align:center;">'+stars+'</div><div style="color:'+rarityColors[card.rarity]+';text-align:center;font-size:10px;">'+rname+'</div>'+newTag+'</div>';
   }
   html += '</div>';
 });
