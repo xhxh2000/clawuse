@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>战斗模拟</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; padding: 20px; }
+        h1 { color: #e94560; text-align: center; margin-bottom: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        /* 选择区域 */
+        .select-area { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 30px; }
+        .select-box { flex: 1; text-align: center; }
+        .select-box label { display: block; margin-bottom: 10px; font-size: 18px; color: #aaa; }
+        .select-box select { width: 100%; padding: 10px; font-size: 16px; border-radius: 8px; border: 2px solid #0f3460; background: #16213e; color: #eee; }
+        
+        /* 卡牌图片 */
+        .card-display { display: flex; justify-content: space-around; gap: 20px; margin: 30px 0; }
+        .card-img { width: 150px; height: 200px; border-radius: 10px; object-fit: cover; border: 3px solid #0f3460; }
+        .card-img.grayscale { filter: grayscale(100%); }
+        
+        /* 稀有度颜色 */
+        .rarity-1 { color: #888; }
+        .rarity-2 { color: #4CAF50; }
+        .rarity-3 { color: #2196F3; }
+        .rarity-4 { color: #9C27B0; }
+        .rarity-5 { color: #FFD700; }
+        
+        /* 按钮 */
+        .btn-area { text-align: center; margin: 20px 0; }
+        .btn { padding: 15px 40px; font-size: 18px; border-radius: 10px; border: none; cursor: pointer; transition: 0.3s; }
+        .btn-fight { background: #e94560; color: white; }
+        .btn-fight:hover { background: #ff6b6b; }
+        .btn-fight:disabled { background: #666; cursor: not-allowed; }
+        
+        .btn-restart { background: #0f3460; color: white; display: none; }
+        .btn-restart:hover { background: #1a5ad4; }
+        
+        /* 战斗日志 */
+        .battle-log { background: #16213e; border-radius: 10px; padding: 20px; max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 14px; line-height: 1.8; margin-top: 20px; display: none; }
+        .battle-log.show { display: block; }
+        .battle-log .round { color: #e94560; font-weight: bold; }
+        .battle-log .hit { color: #4CAF50; }
+        .battle-log .miss { color: #FF5722; }
+        .battle-log .dodge { color: #2196F3; }
+        .battle-log .crit { color: #FFD700; font-weight: bold; }
+        .battle-log .result { color: #e94560; font-size: 18px; text-align: center; margin-top: 10px; }
+        
+        /* 结果显示 */
+        .result-info { display: flex; justify-content: space-around; margin-top: 20px; font-size: 24px; font-weight: bold; }
+        .win { color: #4CAF50; }
+        .lose { color: #888; }
+        
+        .back-link { text-align: center; margin-top: 30px; }
+        .back-link a { color: #aaa; text-decoration: none; }
+        .back-link a:hover { color: #e94560; }
+    </style>
+</head>
+<body>
+    <h1>⚔️ 战斗模拟</h1>
+    <div class="container">
+        <!-- 选择区域 -->
+        <div class="select-area">
+            <div class="select-box">
+                <label>我方角色</label>
+                <select id="selectA"></select>
+            </div>
+            <div class="select-box">
+                <label>敌方角色</label>
+                <select id="selectB"></select>
+            </div>
+        </div>
+        
+        <!-- 显示区域 -->
+        <div class="card-display">
+            <div><img id="imgA" class="card-img" src="" alt=""></div>
+            <div><img id="imgB" class="card-img" src="" alt=""></div>
+        </div>
+        
+        <!-- 结果区域 -->
+        <div class="result-info" id="resultInfo" style="display:none"></div>
+        
+        <!-- 按钮 -->
+        <div class="btn-area">
+            <button id="btnFight" class="btn btn-fight" onclick="startBattle()">⚔️ 开始对战</button>
+            <button id="btnRestart" class="btn btn-restart" onclick="restart()">🔄 重来一局</button>
+        </div>
+        
+        <!-- 战斗日志 -->
+        <div id="battleLog" class="battle-log"></div>
+        
+        <div class="back-link">
+            <a href="index.html">← 返回主页</a>
+        </div>
+    </div>
+
+    <script>
+        let userCards = [];
+        let allCards = {};
+        
+        // 稀有度颜色
+        const rarityColors = {1:'#888',2:'#4CAF50',3:'#2196F3',4:'#9C27B0',5:'#FFD700'};
+        
+        // 检查登录
+        const userId = localStorage.getItem('user_id');
+        if (!userId) {
+            alert('请先登录');
+            window.location.href = 'login.html';
+        }
+        
+        // 加载数据
+        async function loadData() {
+            // 加载用户卡牌
+            const resp1 = await fetch('user_api.php?action=get_cards&user_id=' + userId);
+            const data1 = await resp1.json();
+            userCards = data1.code === 200 ? data1.cards || [] : [];
+            
+            // 加载所有卡牌数据
+            const resp2 = await fetch('game_api.php?action=get_all');
+            const data2 = await resp2.json();
+            if (data2.code === 200) {
+                data2.characters.forEach(c => {
+                    allCards[c.id] = c;
+                });
+            }
+            
+            // 填充下拉菜单
+            populateSelects();
+        }
+        
+        function populateSelects() {
+            const selectA = document.getElementById('selectA');
+            const selectB = document.getElementById('selectB');
+            selectA.innerHTML = '<option value="">-- 选择卡牌 --</option>';
+            selectB.innerHTML = '<option value="">-- 选择卡牌 --</option>';
+            
+            userCards.forEach(uc => {
+                const card = allCards[uc.card_id];
+                if (!card) return;
+                
+                const level = uc.level || 1;
+                const rarity = card.rarity;
+                const color = rarityColors[rarity] || '#888';
+                const text = `${card.name} Lv${level}`;
+                
+                const optA = new Option(text, uc.card_id);
+                const optB = new Option(text, uc.card_id);
+                optA.style.color = color;
+                optB.style.color = color;
+                
+                selectA.add(optA);
+                selectB.add(optB);
+            });
+            
+            // 默认选择第一张
+            if (userCards.length > 0) {
+                selectA.value = userCards[0].card_id;
+                selectB.value = userCards.length > 1 ? userCards[1].card_id : userCards[0].card_id;
+                updateImages();
+            }
+        }
+        
+        function updateImages() {
+            const imgA = document.getElementById('imgA');
+            const imgB = document.getElementById('imgB');
+            const cardA = allCards[selectA.value];
+            const cardB = allCards[selectB.value];
+            
+            imgA.src = cardA?.image || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="200"><rect fill="%230f3460" width="150" height="200"/><text fill="%23fff" x="75" y="100" text-anchor="middle">?</text></svg>';
+            imgB.src = cardB?.image || imgA.src;
+            
+            // 更新边框颜色
+            imgA.style.borderColor = rarityColors[cardA?.rarity] || '#0f3460';
+            imgB.style.borderColor = rarityColors[cardB?.rarity] || '#0f3460';
+        }
+        
+        document.getElementById('selectA').addEventListener('change', updateImages);
+        document.getElementById('selectB').addEventListener('change', updateImages);
+        
+        // 战斗
+        async function startBattle() {
+            const cardIdA = parseInt(document.getElementById('selectA').value);
+            const cardIdB = parseInt(document.getElementById('selectB').value);
+            
+            if (!cardIdA || !cardIdB) {
+                alert('请选择两个角色');
+                return;
+            }
+            
+            document.getElementById('btnFight').disabled = true;
+            document.getElementById('battleLog').classList.add('show');
+            document.getElementById('battleLog').innerHTML = '⚔️ 战斗进行中...';
+            
+            try {
+                const resp = await fetch('battle.php?action=fight&idA=' + cardIdA + '&idB=' + cardIdB);
+                const data = await resp.json();
+                
+                if (data.code === 200) {
+                    showBattleResult(data.data);
+                } else {
+                    alert(data.msg || '战斗失败');
+                }
+            } catch(e) {
+                // PHP不可用，用JS模拟战斗
+                const result = await simulateBattleJS(cardIdA, cardIdB);
+                showBattleResult(result);
+            }
+            
+            document.getElementById('btnFight').style.display = 'none';
+            document.getElementById('btnRestart').style.display = 'inline';
+        }
+        
+        function showBattleResult(result) {
+            const logDiv = document.getElementById('battleLog');
+            let html = '';
+            
+            result.logs.forEach((line, i) => {
+                if (line.includes('回合') || line.includes('=== ')) {
+                    html += `<div class="round">${line}</div>`;
+                } else if (line.includes('闪避')) {
+                    html += `<div class="dodge">${line}</div>`;
+                } else if (line.includes('未命中') || line.includes('miss')) {
+                    html += `<div class="miss">${line}</div>`;
+                } else if (line.includes('暴击')) {
+                    html += `<div class="crit">${line}</div>`;
+                } else if (line.includes('造成') || line.includes('damage')) {
+                    html += `<div class="hit">${line}</div>`;
+                } else if (line.includes('胜利')) {
+                    html += `<div class="result">${line}</div>`;
+                } else {
+                    html += `<div>${line}</div>`;
+                }
+            });
+            
+            logDiv.innerHTML = html;
+            
+            // 显示结果
+            const resultInfo = document.getElementById('resultInfo');
+            resultInfo.style.display = 'flex';
+            
+            const cardA = allCards[selectA.value];
+            const cardB = allCards[selectB.value];
+            
+            if (result.result.includes(cardA.name + '胜利')) {
+                document.getElementById('imgA').classList.remove('grayscale');
+                document.getElementById('imgB').classList.add('grayscale');
+                resultInfo.innerHTML = `<span class="win">${cardA.name} 胜利!</span><span class="lose">${cardB.name} 失败</span>`;
+            } else if (result.result.includes(cardB.name + '胜利')) {
+                document.getElementById('imgA').classList.add('grayscale');
+                document.getElementById('imgB').classList.remove('grayscale');
+                resultInfo.innerHTML = `<span class="lose">${cardA.name} 失败</span><span class="win">${cardB.name} 胜利!</span>`;
+            } else {
+                document.getElementById('imgA').classList.add('grayscale');
+                document.getElementById('imgB').classList.add('grayscale');
+                resultInfo.innerHTML = `<span>平手</span>`;
+            }
+        }
+        
+        function restart() {
+            document.getElementById('battleLog').classList.remove('show');
+            document.getElementById('battleLog').innerHTML = '';
+            document.getElementById('resultInfo').style.display = 'none';
+            document.getElementById('btnFight').style.display = 'inline';
+            document.getElementById('btnFight').disabled = false;
+            document.getElementById('btnRestart').style.display = 'none';
+            document.getElementById('imgA').classList.remove('grayscale');
+            document.getElementById('imgB').classList.remove('grayscale');
+        }
+        
+        // JS模拟战斗（当PHP不可用时）
+        async function simulateBattleJS(idA, idB) {
+            const cardA = allCards[idA];
+            const cardB = allCards[idB];
+            
+            const calcMax = (base, growth, level=100) => Math.floor(base + growth * (level - 1));
+            
+            const baseA = cardA.baseStats;
+            const growthA = cardA.growthStats;
+            const baseB = cardB.baseStats;
+            const growthB = cardB.growthStats;
+            
+            const charA = {
+                name: cardA.name,
+                hp: calcMax(baseA.HP, growthA.HP),
+                atk: calcMax(baseA.ATK, growthA.ATK),
+                def: calcMax(baseA.DEF, growthA.DEF),
+                skl: calcMax(baseA.SKL, growthA.SKL),
+                spd: calcMax(baseA.SPD, growthA.SPD),
+            };
+            const charB = {
+                name: cardB.name,
+                hp: calcMax(baseB.HP, growthB.HP),
+                atk: calcMax(baseB.ATK, growthB.ATK),
+                def: calcMax(baseB.DEF, growthB.DEF),
+                skl: calcMax(baseB.SKL, growthB.SKL),
+                spd: calcMax(baseB.SPD, growthB.SPD),
+            };
+            
+            const logs = [];
+            let hpA = charA.hp, hpB = charB.hp;
+            const round = 0;
+            
+            // 先手
+            const speedA = charA.spd + Math.floor(Math.random() * 40 - 20);
+            const speedB = charB.spd + Math.floor(Math.random() * 40 - 20);
+            const first = speedA >= speedB ? 'A' : 'B';
+            logs.push(`先手: ${charA.name}(SPD${charA.spd}) vs ${charB.name}(SPD${charB.spd}) - ${first === 'A' ? charA.name : charB.name]}先手`);
+            
+            for (let r = 1; r <= 10 && hpA > 0 && hpB > 0; r++) {
+                logs.push('');
+                logs.push(`=== 第${r}回合 ===`);
+                
+                const order = first === 'A' ? ['A', 'B'] : ['B', 'A'];
+                const doubleA = (charA.spd - charB.spd) > 100;
+                const doubleB = (charB.spd - charA.spd) > 100;
+                if (doubleA) logs.push(`${charA.name} 两动!`);
+                if (doubleB) logs.push(`${charB.name} 两动!`);
+                
+                // A攻击B
+                for (let i = 0; i < (doubleA ? 2 : 1) && hpB > 0; i++) {
+                    const hitRate = Math.min(95, Math.max(75, 75 + Math.max(0, charA.skl - charB.skl) * 0.8 + Math.max(0, charA.spd - charB.spd) * 0.2)));
+                    const dodgeRate = Math.min(35, Math.max(5, 5 + Math.max(0, charB.spd - charA.spd) * 0.8 + Math.max(0, charB.skl - charA.skl) * 0.2));
+                    const critRate = Math.min(50, Math.max(0, (charA.skl - charB.skl) / 2 + (charA.spd - charB.spd) / 4));
+                    
+                    const roll = Math.random() * 100;
+                    const isHit = roll < hitRate;
+                    const isDodge = roll > hitRate && roll < hitRate + dodgeRate;
+                    
+                    if (isDodge) {
+                        logs.push(`${charA.name} 攻击 → ${charB.name} 闪避! (命中率${hitRate.toFixed(1)}%, 闪避率${dodgeRate.toFixed(1)}%)`);
+                    } else if (!isHit) {
+                        logs.push(`${charA.name} 攻击 → 未命中! (命中率${hitRate.toFixed(1)}%)`);
+                    } else {
+                        const critRoll = Math.random() * 100;
+                        const isCrit = critRoll < critRate;
+                        let damage = Math.max(1, charA.atk - charB.def);
+                        if (isCrit) damage = Math.max(1, Math.floor(charA.atk * 1.5) - charB.def);
+                        hpB -= damage;
+                        const critText = isCrit ? ' 暴击!' : '';
+                        logs.push(`${charA.name} 攻击 → ${charB.name} 造成${damage}伤害!${critText} (HP: ${hpB}+${damage}=${hpB})`);
+                    }
+                }
+                
+                // B攻击A
+                for (let i = 0; i < (doubleB ? 2 : 1) && hpA > 0; i++) {
+                    const hitRate = Math.min(95, Math.max(75, 75 + Math.max(0, charB.skl - charA.skl) * 0.8 + Math.max(0, charB.spd - charA.spd) * 0.2));
+                    const dodgeRate = Math.min(35, Math.max(5, 5 + Math.max(0, charA.spd - charB.spd) * 0.8 + Math.max(0, charA.skl - charB.skl) * 0.2));
+                    const critRate = Math.min(50, Math.max(0, (charB.skl - charA.skl) / 2 + (charB.spd - charA.spd) / 4));
+                    
+                    const roll = Math.random() * 100;
+                    const isHit = roll < hitRate;
+                    const isDodge = roll > hitRate && roll < hitRate + dodgeRate;
+                    
+                    if (isDodge) {
+                        logs.push(`${charB.name} 攻击 → ${charA.name} 闪避! (命中率${hitRate.toFixed(1)}%, 闪避率${dodgeRate.toFixed(1)}%)`);
+                    } else if (!isHit) {
+                        logs.push(`${charB.name} 攻击 → 未命中! (命中率${hitRate.toFixed(1)}%)`);
+                    } else {
+                        const critRoll = Math.random() * 100;
+                        const isCrit = critRoll < critRate;
+                        let damage = Math.max(1, charB.atk - charA.def);
+                        if (isCrit) damage = Math.max(1, Math.floor(charB.atk * 1.5) - charA.def);
+                        hpA -= damage;
+                        const critText = isCrit ? ' 暴击!' : '';
+                        logs.push(`${charB.name} 攻击 → ${charA.name} 造成${damage}伤害!${critText} (HP: ${hpA}+${damage}=${hpA})`);
+                    }
+                }
+                
+                logs.push(`第${r}回合结束: ${charA.name} HP${hpA} vs ${charB.name} HP${hpB}`);
+            }
+            
+            logs.push('');
+            logs.push('=== 战斗结束 ===');
+            
+            let result;
+            if (hpA <= 0 && hpB <= 0) result = '平手 (双输)';
+            else if (hpA <= 0) result = `${charB.name} 胜利!`;
+            else if (hpB <= 0) result = `${charA.name} 胜利!`;
+            else if (hpA > hpB) result = `平手 - ${charA.name} 总HP剩余${hpA}`;
+            else if (hpB > hpA) result = `平手 - ${charB.name} 总HP剩余${hpB}`;
+            else result = '平手';
+            logs.push(result);
+            
+            return { cardA: charA.name, cardB: charB.name, result, logs };
+        }
+        
+        // 初始化
+        loadData();
+    </script>
+</body>
+</html>
