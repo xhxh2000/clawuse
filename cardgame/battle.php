@@ -6,7 +6,7 @@
 
 $db = new SQLite3(__DIR__ . '/data/game.sqlite');
 
-// 读取角色数据
+// 读取角色数据 (使用 cards 表，默认等级1)
 function getCard($db, $id) {
     $stmt = $db->prepare('SELECT * FROM cards WHERE id = :id');
     $stmt->bindValue(':id', $id);
@@ -14,11 +14,11 @@ function getCard($db, $id) {
     $row = $result->fetchArray(SQLITE3_ASSOC);
     if (!$row) return null;
     
-    $base = json_decode($row['base_stats'], true);
-    $growth = json_decode($row['growth_stats'], true);
+    $base = json_decode($row['base_stats'] ?? '{"HP":0,"ATK":0,"DEF":0,"SKL":0,"SPD":0}', true);
+    $growth = json_decode($row['growth_stats'] ?? '{"HP":0,"ATK":0,"DEF":0,"SKL":0,"SPD":0}', true);
     
-    // 满级100级数值
-    $level = 100;
+    // 默认1级
+    $level = 1;
     return [
         'id' => $row['id'],
         'name' => $row['name'],
@@ -145,7 +145,7 @@ function battle($cardA, $cardB) {
                 $damage = calcDamage($cardA, $cardB, $isCrit);
                 $hpB -= $damage;
                 $critText = $isCrit ? " 暴击!" : "";
-                $logs[] = "{$cardA['name']} 攻击 → {$cardB['name']} 造成{$damage}伤害!{$critText} (HP: {$hpB}+{$damage}={$hpB})";
+                $logs[] = "{$cardA['name']} 攻击 → {$cardB['name']} 造成{$damage}伤害!{$critText} (HP: {$hpB})";
             }
         }
         
@@ -169,7 +169,7 @@ function battle($cardA, $cardB) {
                 $damage = calcDamage($cardB, $cardA, $isCrit);
                 $hpA -= $damage;
                 $critText = $isCrit ? " 暴击!" : "";
-                $logs[] = "{$cardB['name']} 攻击 → {$cardA['name']} 造成{$damage}伤害!{$critText} (HP: {$hpA}+{$damage}={$hpA})";
+                $logs[] = "{$cardB['name']} 攻击 → {$cardA['name']} 造成{$damage}伤害!{$critText} (HP: {$hpA})";
             }
         }
         
@@ -240,5 +240,5 @@ if ($action === 'fight') {
         echo json_encode(['code'=>404, 'msg'=>'角色不存在']); 
     }
 } else {
-    echo json_encode(['code'=>400, 'msg'=>'未知动作']]);
+    echo json_encode(['code'=>400, 'msg'=>'未知动作']);
 }
