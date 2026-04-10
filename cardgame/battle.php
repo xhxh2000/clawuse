@@ -99,6 +99,15 @@ function battle($cardA, $cardB) {
         $logs[] = "";
         $logs[] = "=== 第{$round}回合 ===";
         
+        // 每回合重新计算先手
+        $speedA = $cardA['spd'] + rand(-20, 20);
+        $speedB = $cardB['spd'] + rand(-20, 20);
+        if ($speedA >= $speedB) {
+            $first = 'A';
+        } else {
+            $first = 'B';
+        }
+        
         // 两动判断
         $doubleA = canDoubleAction($cardA, $cardB);
         $doubleB = canDoubleAction($cardB, $cardA);
