@@ -57,13 +57,19 @@ function calcCritRate($atk, $def) {
 }
 
 // 伤害计算
-function calcDamage($atk, $def, $isCrit) {
-    $baseDmg = $atk['atk'] * 2 - $def['def'];
-    $baseDmg = max(1, $baseDmg);
-    if ($isCrit) {
-        $baseDmg = intval($baseDmg * 1.5);
+function calcDamage($atk, $def, $isCrit, $isCritHit = false) {
+    $baseDmg = $atk['atk'] - $def['def'];
+    
+    if ($isCrit && $isCritHit) {
+        // 暴击伤害：(ATK-DEF)×1.5，和对方满血20%比较取大
+        $critDmg = $baseDmg * 1.5;
+        $minDmg = $def['hp'] * 0.2;
+        $damage = max($critDmg, $minDmg);
+    } else {
+        $damage = max(1, $baseDmg);
     }
-    return max(1, $baseDmg);
+    
+    return max(1, intval($damage));
 }
 
 // 能否两动
@@ -145,7 +151,7 @@ function battle($cardA, $cardB) {
                 } else {
                     $critRoll = rand(1, 100);
                     $isCrit = $critRoll <= $critRate;
-                    $damage = calcDamage($cardA, $cardB, $isCrit);
+                    $damage = calcDamage($cardA, $cardB, $isCrit, $isCrit);
                     $hpB -= $damage;
                     $critText = $isCrit ? " 暴击!" : "";
                     $logs[] = "{$cardA['name']} 攻击 → {$cardB['name']} 造成{$damage}伤害!{$critText} (HP: {$hpB})";
@@ -173,7 +179,7 @@ function battle($cardA, $cardB) {
                 } else {
                     $critRoll = rand(1, 100);
                     $isCrit = $critRoll <= $critRate;
-                    $damage = calcDamage($cardB, $cardA, $isCrit);
+                    $damage = calcDamage($cardB, $cardA, $isCrit, $isCrit);
                     $hpA -= $damage;
                     $critText = $isCrit ? " 暴击!" : "";
                     $logs[] = "{$cardB['name']} 攻击 → {$cardA['name']} 造成{$damage}伤害!{$critText} (HP: {$hpA})";
@@ -202,7 +208,7 @@ function battle($cardA, $cardB) {
                 } else {
                     $critRoll = rand(1, 100);
                     $isCrit = $critRoll <= $critRate;
-                    $damage = calcDamage($cardB, $cardA, $isCrit);
+                    $damage = calcDamage($cardB, $cardA, $isCrit, $isCrit);
                     $hpA -= $damage;
                     $critText = $isCrit ? " 暴击!" : "";
                     $logs[] = "{$cardB['name']} 攻击 → {$cardA['name']} 造成{$damage}伤害!{$critText} (HP: {$hpA})";
@@ -230,7 +236,7 @@ function battle($cardA, $cardB) {
                 } else {
                     $critRoll = rand(1, 100);
                     $isCrit = $critRoll <= $critRate;
-                    $damage = calcDamage($cardA, $cardB, $isCrit);
+                    $damage = calcDamage($cardA, $cardB, $isCrit, $isCrit);
                     $hpB -= $damage;
                     $critText = $isCrit ? " 暴击!" : "";
                     $logs[] = "{$cardA['name']} 攻击 → {$cardB['name']} 造成{$damage}伤害!{$critText} (HP: {$hpB})";
