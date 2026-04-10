@@ -128,6 +128,27 @@ elseif ($action === 'update_user') {
     response(200, '更新成功');
 }
 
+// 批量更新用户卡牌等级
+elseif ($action === 'batch_update_card_level') {
+    $userId = intval(getParam('user_id', 0));
+    $rarity = intval(getParam('rarity', 0));
+    $level = intval(getParam('level', 1));
+    
+    if ($userId <= 0 || $rarity <= 0 || $level <= 0) {
+        response(400, '参数错误');
+    }
+    
+    // 通过cards表关联更新
+    $stmt = $db->prepare('UPDATE user_cards SET level = :level WHERE user_id = :user_id AND card_id IN (SELECT id FROM cards WHERE rarity >= :rarity)');
+    $stmt->bindValue(':level', $level);
+    $stmt->bindValue(':user_id', $userId);
+    $stmt->bindValue(':rarity', $rarity);
+    $result = $stmt->execute();
+    
+    $count = $db->changes();
+    response(200, "已更新{$count}张卡牌到Lv{$level}");
+}
+
 // 删除用户
 elseif ($action === 'delete') {
     $userId = intval(getParam('user_id', 0));

@@ -284,7 +284,29 @@ if ($action === 'get_all') {
     }
     
     echo json_encode(['code'=>200,'album'=>$album], JSON_UNESCAPED_UNICODE);
+} elseif ($action === 'batch_update_growth') {
+    $field = $_GET['field'] ?? $_POST['field'] ?? '';
+    $multiplier = floatval($_GET['multiplier'] ?? $_POST['multiplier'] ?? 1.0);
+    
+    if (!in_array($field, ['ATK', 'DEF', 'HP', 'SKL', 'SPD'])) {
+        echo json_encode(['code'=>400,'msg'=>'无效字段']); exit;
+    }
+    
+    $stmt = $db->prepare('SELECT id, growth_stats FROM cards');
+    $result = $stmt->execute();
+    $count = 0;
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        $growth = json_decode($row['growth_stats'], true);
+        if (isset($growth[$field])) {
+            $growth[$field] = round($growth[$field] * $multiplier, 2);
+            $stmt2 = $db->prepare('UPDATE cards SET growth_stats = :growth WHERE id = :id');
+            $stmt2->bindValue(':growth', json_encode($growth));
+            $stmt2->bindValue(':id', $row['id']);
+            $stmt2->execute();
+            $count++;
+        }
+    }
+    echo json_encode(['code'=>200,'msg'=>"更新{$count}张卡的{$field}成长，倍数:{$multiplier}"], JSON_UNESCAPED_UNICODE);
 } else {
     echo json_encode(['code'=>400,'msg'=>'未知操作: ' . $action]);
 }
-$db->close();
