@@ -216,66 +216,119 @@
                 return `<span style="color:${color}">${name}:${roundStat(valA)}</span>`;
             };
             
-            // 显示卡牌属性
+            // 生成星星字符串
+            const stars = (n) => '⭐'.repeat(Math.max(1, n || 1));
+            // 对齐函数
+            const pad = (s, len) => String(s).padStart(len, ' ');
+            
+            // 显示卡牌属性 - 2行：星星+等级 和 3属性×2行
             if (cardA) {
-                const rarity = cardA.rarity || '?';
+                const rarity = cardA.rarity || 1;
                 const levelA = cardA.level || 1;
                 const levelB = cardB ? (cardB.level || 1) : 1;
                 const levelColor = cmpColor(levelA, levelB);
                 
-                const hpA = calcStat(cardA.baseStats?.HP, cardA.growthStats?.HP, levelA);
-                const atkA = calcStat(cardA.baseStats?.ATK, cardA.growthStats?.ATK, levelA);
-                const defA = calcStat(cardA.baseStats?.DEF, cardA.growthStats?.DEF, levelA);
-                const sklA = calcStat(cardA.baseStats?.SKL, cardA.growthStats?.SKL, levelA);
-                const spdA = calcStat(cardA.baseStats?.SPD, cardA.growthStats?.SPD, levelA);
+                const hpA = roundStat(calcStat(cardA.baseStats?.HP, cardA.growthStats?.HP, levelA));
+                const atkA = roundStat(calcStat(cardA.baseStats?.ATK, cardA.growthStats?.ATK, levelA));
+                const defA = roundStat(calcStat(cardA.baseStats?.DEF, cardA.growthStats?.DEF, levelA));
+                const sklA = roundStat(calcStat(cardA.baseStats?.SKL, cardA.growthStats?.SKL, levelA));
+                const spdA = roundStat(calcStat(cardA.baseStats?.SPD, cardA.growthStats?.SPD, levelA));
                 
-                const hpB = cardB ? calcStat(cardB.baseStats?.HP, cardB.growthStats?.HP, levelB) : 0;
-                const atkB = cardB ? calcStat(cardB.baseStats?.ATK, cardB.growthStats?.ATK, levelB) : 0;
-                const defB = cardB ? calcStat(cardB.baseStats?.DEF, cardB.growthStats?.DEF, levelB) : 0;
-                const sklB = cardB ? calcStat(cardB.baseStats?.SKL, cardB.growthStats?.SKL, levelB) : 0;
-                const spdB = cardB ? calcStat(cardB.baseStats?.SPD, cardB.growthStats?.SPD, levelB) : 0;
+                const hpB = cardB ? roundStat(calcStat(cardB.baseStats?.HP, cardB.growthStats?.HP, levelB)) : 0;
+                const atkB = cardB ? roundStat(calcStat(cardB.baseStats?.ATK, cardB.growthStats?.ATK, levelB)) : 0;
+                const defB = cardB ? roundStat(calcStat(cardB.baseStats?.DEF, cardB.growthStats?.DEF, levelB)) : 0;
+                const sklB = cardB ? roundStat(calcStat(cardB.baseStats?.SKL, cardB.growthStats?.SKL, levelB)) : 0;
+                const spdB = cardB ? roundStat(calcStat(cardB.baseStats?.SPD, cardB.growthStats?.SPD, levelB)) : 0;
                 
-                statsA.innerHTML = `⭐${rarity} <span style="color:${levelColor}">Lv${levelA}</span><br>` +
-                    formatStat('HP', hpA, hpB) + ' ' +
-                    formatStat('ATK', atkA, atkB) + ' ' +
-                    formatStat('DEF', defA, defB) + '<br>' +
-                    formatStat('SKL', sklA, sklB) + ' ' +
-                    formatStat('SPD', spdA, spdB);
+                // 第1行：星星 + 等级
+                // 第2行：HP ATK
+                // 第3行：DEF SKL SPD
+                statsA.innerHTML = `<div>${stars(rarity)}</div>` +
+                    `<div><span style="color:${levelColor}">Lv:${levelA}</span> <span style="color:${cmpColor(hpA,hpB)}">HP:${pad(hpA,3)}</span> <span style="color:${cmpColor(atkA,atkB)}">ATK:${pad(atkA,3)}</span></div>` +
+                    `<div><span style="color:${cmpColor(defA,defB)}">DEF:${pad(defA,3)}</span> <span style="color:${cmpColor(sklA,sklB)}">SKL:${pad(sklA,3)}</span> <span style="color:${cmpColor(spdA,spdB)}">SPD:${pad(spdA,3)}</span></div>`;
             } else {
                 statsA.innerHTML = '';
             }
             
             if (cardB) {
-                const rarity = cardB.rarity || '?';
+                const rarity = cardB.rarity || 1;
                 const levelA = cardA ? (cardA.level || 1) : 1;
                 const levelB = cardB.level || 1;
                 const levelColor = cmpColor(levelB, levelA);
                 
-                const hpA = cardA ? calcStat(cardA.baseStats?.HP, cardA.growthStats?.HP, levelA) : 0;
-                const atkA = cardA ? calcStat(cardA.baseStats?.ATK, cardA.growthStats?.ATK, levelA) : 0;
-                const defA = cardA ? calcStat(cardA.baseStats?.DEF, cardA.growthStats?.DEF, levelA) : 0;
-                const sklA = cardA ? calcStat(cardA.baseStats?.SKL, cardA.growthStats?.SKL, levelA) : 0;
-                const spdA = cardA ? calcStat(cardA.baseStats?.SPD, cardA.growthStats?.SPD, levelA) : 0;
+                const hpA = cardA ? roundStat(calcStat(cardA.baseStats?.HP, cardA.growthStats?.HP, levelA)) : 0;
+                const atkA = cardA ? roundStat(calcStat(cardA.baseStats?.ATK, cardA.growthStats?.ATK, levelA)) : 0;
+                const defA = cardA ? roundStat(calcStat(cardA.baseStats?.DEF, cardA.growthStats?.DEF, levelA)) : 0;
+                const sklA = cardA ? roundStat(calcStat(cardA.baseStats?.SKL, cardA.growthStats?.SKL, levelA)) : 0;
+                const spdA = cardA ? roundStat(calcStat(cardA.baseStats?.SPD, cardA.growthStats?.SPD, levelA)) : 0;
                 
-                const hpB = calcStat(cardB.baseStats?.HP, cardB.growthStats?.HP, levelB);
-                const atkB = calcStat(cardB.baseStats?.ATK, cardB.growthStats?.ATK, levelB);
-                const defB = calcStat(cardB.baseStats?.DEF, cardB.growthStats?.DEF, levelB);
-                const sklB = calcStat(cardB.baseStats?.SKL, cardB.growthStats?.SKL, levelB);
-                const spdB = calcStat(cardB.baseStats?.SPD, cardB.growthStats?.SPD, levelB);
+                const hpB = roundStat(calcStat(cardB.baseStats?.HP, cardB.growthStats?.HP, levelB));
+                const atkB = roundStat(calcStat(cardB.baseStats?.ATK, cardB.growthStats?.ATK, levelB));
+                const defB = roundStat(calcStat(cardB.baseStats?.DEF, cardB.growthStats?.DEF, levelB));
+                const sklB = roundStat(calcStat(cardB.baseStats?.SKL, cardB.growthStats?.SKL, levelB));
+                const spdB = roundStat(calcStat(cardB.baseStats?.SPD, cardB.growthStats?.SPD, levelB));
                 
-                statsB.innerHTML = `⭐${rarity} <span style="color:${levelColor}">Lv${levelB}</span><br>` +
-                    formatStat('HP', hpB, hpA) + ' ' +
-                    formatStat('ATK', atkB, atkA) + ' ' +
-                    formatStat('DEF', defB, defA) + '<br>' +
-                    formatStat('SKL', sklB, sklA) + ' ' +
-                    formatStat('SPD', spdB, spdA);
+                statsB.innerHTML = `<div>${stars(rarity)}</div>` +
+                    `<div><span style="color:${levelColor}">Lv:${levelB}</span> <span style="color:${cmpColor(hpB,hpA)}">HP:${pad(hpB,3)}</span> <span style="color:${cmpColor(atkB,atkA)}">ATK:${pad(atkB,3)}</span></div>` +
+                    `<div><span style="color:${cmpColor(defB,defA)}">DEF:${pad(defB,3)}</span> <span style="color:${cmpColor(sklB,sklA)}">SKL:${pad(sklB,3)}</span> <span style="color:${cmpColor(spdB,spdA)}">SPD:${pad(spdB,3)}</span></div>`;
             } else {
                 statsB.innerHTML = '';
             }
         }
         
-        document.getElementById('selectA').addEventListener('change', () => { updateImages(); });
-        document.getElementById('selectB').addEventListener('change', () => { updateImages(); });
+        document.getElementById('selectA').addEventListener('change', () => { filterSelectB(); updateImages(); });
+        document.getElementById('selectB').addEventListener('change', () => { filterSelectA(); updateImages(); });
+        
+        // 过滤已选中的卡牌
+        function filterSelectB() {
+            const selectA = document.getElementById('selectA');
+            const selectB = document.getElementById('selectB');
+            const valA = selectA.value;
+            const valB = selectB.value;
+            
+            // 如果A选择了卡牌，从B的下拉列表中禁用该选项
+            for (let opt of selectB.options) {
+                if (valA && opt.value === valA) {
+                    opt.disabled = true;
+                    opt.text = opt.text + ' (已选)';
+                } else {
+                    opt.disabled = false;
+                    opt.text = opt.text.replace(' (已选)', '');
+                }
+            }
+            
+            // 如果当前B的值被禁用了，清空B的选择
+            if (valB) {
+                const selectedOpt = selectB.options[selectB.selectedIndex];
+                if (selectedOpt && selectedOpt.disabled) {
+                    selectB.value = '';
+                }
+            }
+        }
+        
+        function filterSelectA() {
+            const selectA = document.getElementById('selectA');
+            const selectB = document.getElementById('selectB');
+            const valB = selectB.value;
+            const valA = selectA.value;
+            
+            for (let opt of selectA.options) {
+                if (valB && opt.value === valB) {
+                    opt.disabled = true;
+                    opt.text = opt.text + ' (已选)';
+                } else {
+                    opt.disabled = false;
+                    opt.text = opt.text.replace(' (已选)', '');
+                }
+            }
+            
+            if (valA) {
+                const selectedOpt = selectA.options[selectA.selectedIndex];
+                if (selectedOpt && selectedOpt.disabled) {
+                    selectA.value = '';
+                }
+            }
+        }
         
         // 战斗
         async function startBattle() {
@@ -356,18 +409,14 @@
             logDiv.innerHTML = html;
             
             // 显示结果在角色图片下方
-            const resultText = result.result || '';
-            // PHP返回 "角色名 胜利!" 有空格
-            const isAWin = resultText.includes('胜利') && !resultText.includes(cardB.name) && resultText.includes(cardA.name);
-            const isBWin = resultText.includes('胜利') && !resultText.includes(cardA.name) && resultText.includes(cardB.name);
-            const isDraw = resultText === '平手' || resultText === '平手 (双输)';
+            const winner = result.winner;
             
-            if (isAWin && !isBWin) {
+            if (winner === 'A') {
                 document.getElementById('imgA').classList.remove('grayscale');
                 document.getElementById('imgB').classList.add('grayscale');
                 statsA.innerHTML += '<div class="win" style="font-size:14px;font-weight:bold;">胜利!</div>';
                 statsB.innerHTML += '<div class="lose" style="font-size:14px;">失败</div>';
-            } else if (isBWin && !isAWin) {
+            } else if (winner === 'B') {
                 document.getElementById('imgA').classList.add('grayscale');
                 document.getElementById('imgB').classList.remove('grayscale');
                 statsA.innerHTML += '<div class="lose" style="font-size:14px;">失败</div>';

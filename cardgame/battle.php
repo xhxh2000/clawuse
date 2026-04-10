@@ -267,10 +267,24 @@ function battle($cardA, $cardB) {
     }
     $logs[] = $result;
     
+    // 确定winner: 'A', 'B', or 'draw'
+    if ($hpA <= 0 && $hpB <= 0) {
+        $winner = 'draw';
+    } elseif ($hpA <= 0) {
+        $winner = 'B';
+    } elseif ($hpB <= 0) {
+        $winner = 'A';
+    } else {
+        $winner = 'draw';
+    }
+    
     return [
         'cardA' => $cardA['name'],
         'cardB' => $cardB['name'],
+        'levelA' => $cardA['level'],
+        'levelB' => $cardB['level'],
         'result' => $result,
+        'winner' => $winner,
         'logs' => $logs
     ];
 }
