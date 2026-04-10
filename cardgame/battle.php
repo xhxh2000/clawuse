@@ -100,12 +100,20 @@ function battle($cardA, $cardB) {
         $logs[] = "=== 第{$round}回合 ===";
         
         // 每回合重新计算先手
-        $speedA = $cardA['spd'] + rand(-20, 20);
-        $speedB = $cardB['spd'] + rand(-20, 20);
-        if ($speedA >= $speedB) {
-            $first = 'A';
+        $spdA = $cardA['spd'];
+        $spdB = $cardB['spd'];
+        
+        if ($spdA == $spdB) {
+            // 相等时50%反转
+            $first = rand(0, 1) ? 'A' : 'B';
         } else {
-            $first = 'B';
+            $higher = ($spdA > $spdB) ? 'A' : 'B';
+            $lower = ($higher === 'A') ? 'B' : 'A';
+            $spdDiff = abs($spdA - $spdB);
+            
+            // 差>=100时0%反转（触发两动），差0时50%反转
+            $reverseChance = max(0, 50 - $spdDiff * 0.5);
+            $first = (rand(1, 100) <= $reverseChance) ? $lower : $higher;
         }
         
         // 两动判断
