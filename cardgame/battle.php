@@ -6,8 +6,8 @@
 
 $db = new SQLite3(__DIR__ . '/data/game.sqlite');
 
-// 读取角色数据 (使用 cards 表，默认等级1)
-function getCard($db, $id) {
+// 读取角色数据 (使用 cards 表)
+function getCard($db, $id, $level = 1) {
     $stmt = $db->prepare('SELECT * FROM cards WHERE id = :id');
     $stmt->bindValue(':id', $id);
     $result = $stmt->execute();
@@ -17,8 +17,6 @@ function getCard($db, $id) {
     $base = json_decode($row['base_stats'] ?? '{"HP":0,"ATK":0,"DEF":0,"SKL":0,"SPD":0}', true);
     $growth = json_decode($row['growth_stats'] ?? '{"HP":0,"ATK":0,"DEF":0,"SKL":0,"SPD":0}', true);
     
-    // 默认1级
-    $level = 1;
     return [
         'id' => $row['id'],
         'name' => $row['name'],
@@ -29,6 +27,7 @@ function getCard($db, $id) {
         'def' => intval($base['DEF'] + $growth['DEF'] * ($level - 1)),
         'skl' => intval($base['SKL'] + $growth['SKL'] * ($level - 1)),
         'spd' => intval($base['SPD'] + $growth['SPD'] * ($level - 1)),
+        'level' => $level,
     ];
 }
 
@@ -216,13 +215,15 @@ $action = $_GET['action'] ?? $_POST['action'] ?? '';
 if ($action === 'fight') {
     $idA = intval($_GET['idA'] ?? $_POST['idA'] ?? 0);
     $idB = intval($_GET['idB'] ?? $_POST['idB'] ?? 0);
+    $levelA = intval($_GET['levelA'] ?? $_POST['levelA'] ?? 1);
+    $levelB = intval($_GET['levelB'] ?? $_POST['levelB'] ?? 1);
     
     if (!$idA || !$idB) {
         echo json_encode(['code'=>400, 'msg'=>'缺少角色ID']); exit;
     }
     
-    $cardA = getCard($db, $idA);
-    $cardB = getCard($db, $idB);
+    $cardA = getCard($db, $idA, $levelA);
+    $cardB = getCard($db, $idB, $levelB);
     
     if (!$cardA || !$cardB) {
         echo json_encode(['code'=>404, 'msg'=>'角色不存在']); exit;

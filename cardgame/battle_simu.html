@@ -279,7 +279,7 @@
         
         // 战斗
         async function startBattle() {
-            // 使用 card_id (cards表的id) 而不是 instance_id
+            // 使用 card_id (cards表的id) 和当前等级
             const selectA = document.getElementById('selectA');
             const selectB = document.getElementById('selectB');
             const cardA = userCards.find(uc => (uc.instance_id||uc.card_id)==selectA.value);
@@ -287,11 +287,8 @@
             
             const cardIdA = cardA ? cardA.id : parseInt(selectA.value);
             const cardIdB = cardB ? cardB.id : parseInt(selectB.value);
-            
-            if (!cardIdA || !cardIdB) {
-                alert('请选择两个角色');
-                return;
-            }
+            const levelA = cardA ? cardA.level : 1;
+            const levelB = cardB ? cardB.level : 1;
             
             if (!cardIdA || !cardIdB) {
                 alert('请选择两个角色');
@@ -312,7 +309,8 @@
             }
             
             try {
-                const resp = await fetch('battle.php?action=fight&idA=' + cardIdA + '&idB=' + cardIdB);
+                // 传递等级参数
+                const resp = await fetch(`battle.php?action=fight&idA=${cardIdA}&idB=${cardIdB}&levelA=${levelA}&levelB=${levelB}`);
                 const data = await resp.json();
                 
                 if (data.code === 200) {
