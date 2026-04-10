@@ -122,7 +122,7 @@ function battle($cardA, $cardB) {
         $attacksA = $doubleA ? 2 : 1;
         $attacksB = $doubleB ? 2 : 1;
         
-        // A攻击B
+        // A攻击B (如果B死了就停止)
         for ($i = 0; $i < $attacksA && $hpB > 0; $i++) {
             $hitRate = calcHitRate($cardA, $cardB);
             $dodgeRate = calcDodgeRate($cardA, $cardB);
@@ -146,9 +146,15 @@ function battle($cardA, $cardB) {
                 $critText = $isCrit ? " 暴击!" : "";
                 $logs[] = "{$cardA['name']} 攻击 → {$cardB['name']} 造成{$damage}伤害!{$critText} (HP: {$hpB})";
             }
+            
+            // A把B打死了，立即结束战斗
+            if ($hpB <= 0) {
+                $logs[] = "{$cardB['name']} 倒下!";
+                break 2; // 跳出攻击循环和回合循环
+            }
         }
         
-        // B攻击A
+        // B攻击A (只有B还活着才能还击)
         for ($i = 0; $i < $attacksB && $hpA > 0; $i++) {
             $hitRate = calcHitRate($cardB, $cardA);
             $dodgeRate = calcDodgeRate($cardB, $cardA);
@@ -169,6 +175,12 @@ function battle($cardA, $cardB) {
                 $hpA -= $damage;
                 $critText = $isCrit ? " 暴击!" : "";
                 $logs[] = "{$cardB['name']} 攻击 → {$cardA['name']} 造成{$damage}伤害!{$critText} (HP: {$hpA})";
+            }
+            
+            // B把A打死了，立即结束战斗
+            if ($hpA <= 0) {
+                $logs[] = "{$cardA['name']} 倒下!";
+                break 2; // 跳出攻击循环和回合循环
             }
         }
         
