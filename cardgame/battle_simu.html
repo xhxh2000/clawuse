@@ -206,14 +206,15 @@
             
             // 比较颜色函数：己方>对方=绿色，对方>己方=橙色，相等=白色
             const cmpColor = (valA, valB) => {
-                if (valA > valB) return '#4CAF50';
+                if (valA > valB) return '#4CAF50'; // 绿色加粗
                 if (valA < valB) return '#FF9800';
                 return '#fff';
             };
             
             const formatStat = (name, valA, valB) => {
                 const color = cmpColor(valA, valB);
-                return `<span style="color:${color}">${name}:${roundStat(valA)}</span>`;
+                const weight = valA > valB ? 'font-weight:bold;' : '';
+                return `<span style="color:${color};${weight}">${name}${roundStat(valA)}</span>`;
             };
             
             // 生成星星字符串
@@ -244,8 +245,8 @@
                 // 第2行：HP ATK
                 // 第3行：DEF SKL SPD
                 statsA.innerHTML = `<div>${stars(rarity)}</div>` +
-                    `<div><span style="color:${levelColor}">Lv:${levelA}</span> <span style="color:${cmpColor(hpA,hpB)}">HP:${pad(hpA,3)}</span> <span style="color:${cmpColor(atkA,atkB)}">ATK:${pad(atkA,3)}</span></div>` +
-                    `<div><span style="color:${cmpColor(defA,defB)}">DEF:${pad(defA,3)}</span> <span style="color:${cmpColor(sklA,sklB)}">SKL:${pad(sklA,3)}</span> <span style="color:${cmpColor(spdA,spdB)}">SPD:${pad(spdA,3)}</span></div>`;
+                    `<div><span style="color:${levelColor};font-weight:bold;">Lv:${levelA}</span> <span style="color:${cmpColor(hpA,hpB)};font-weight:bold;">HP:${pad(hpA,3)}</span> <span style="color:${cmpColor(atkA,atkB)};font-weight:bold;">ATK:${pad(atkA,3)}</span></div>` +
+                    `<div><span style="color:${cmpColor(defA,defB)};font-weight:bold;">DEF:${pad(defA,3)}</span> <span style="color:${cmpColor(sklA,sklB)};font-weight:bold;">SKL:${pad(sklA,3)}</span> <span style="color:${cmpColor(spdA,spdB)};font-weight:bold;">SPD:${pad(spdA,3)}</span></div>`;
             } else {
                 statsA.innerHTML = '';
             }
@@ -269,8 +270,8 @@
                 const spdB = roundStat(calcStat(cardB.baseStats?.SPD, cardB.growthStats?.SPD, levelB));
                 
                 statsB.innerHTML = `<div>${stars(rarity)}</div>` +
-                    `<div><span style="color:${levelColor}">Lv:${levelB}</span> <span style="color:${cmpColor(hpB,hpA)}">HP:${pad(hpB,3)}</span> <span style="color:${cmpColor(atkB,atkA)}">ATK:${pad(atkB,3)}</span></div>` +
-                    `<div><span style="color:${cmpColor(defB,defA)}">DEF:${pad(defB,3)}</span> <span style="color:${cmpColor(sklB,sklA)}">SKL:${pad(sklB,3)}</span> <span style="color:${cmpColor(spdB,spdA)}">SPD:${pad(spdB,3)}</span></div>`;
+                    `<div><span style="color:${levelColor};font-weight:bold;">Lv:${levelB}</span> <span style="color:${cmpColor(hpB,hpA)};font-weight:bold;">HP:${pad(hpB,3)}</span> <span style="color:${cmpColor(atkB,atkA)};font-weight:bold;">ATK:${pad(atkB,3)}</span></div>` +
+                    `<div><span style="color:${cmpColor(defB,defA)};font-weight:bold;">DEF:${pad(defB,3)}</span> <span style="color:${cmpColor(sklB,sklA)};font-weight:bold;">SKL:${pad(sklB,3)}</span> <span style="color:${cmpColor(spdB,spdA)};font-weight:bold;">SPD:${pad(spdB,3)}</span></div>`;
             } else {
                 statsB.innerHTML = '';
             }
@@ -279,30 +280,25 @@
         document.getElementById('selectA').addEventListener('change', () => { filterSelectB(); updateImages(); });
         document.getElementById('selectB').addEventListener('change', () => { filterSelectA(); updateImages(); });
         
-        // 过滤已选中的卡牌
+        // 过滤已选卡牌
         function filterSelectB() {
             const selectA = document.getElementById('selectA');
             const selectB = document.getElementById('selectB');
             const valA = selectA.value;
-            const valB = selectB.value;
             
-            // 如果A选择了卡牌，从B的下拉列表中禁用该选项
             for (let opt of selectB.options) {
                 if (valA && opt.value === valA) {
                     opt.disabled = true;
-                    opt.text = opt.text + ' (已选)';
+                    opt.text = opt.text.replace(' (已选)', '') + ' (已选)';
                 } else {
                     opt.disabled = false;
                     opt.text = opt.text.replace(' (已选)', '');
                 }
             }
             
-            // 如果当前B的值被禁用了，清空B的选择
-            if (valB) {
-                const selectedOpt = selectB.options[selectB.selectedIndex];
-                if (selectedOpt && selectedOpt.disabled) {
-                    selectB.value = '';
-                }
+            // 如果当前选中的被禁用了，清空
+            if (selectB.value && selectB.options[selectB.selectedIndex]?.disabled) {
+                selectB.value = '';
             }
         }
         
@@ -310,23 +306,19 @@
             const selectA = document.getElementById('selectA');
             const selectB = document.getElementById('selectB');
             const valB = selectB.value;
-            const valA = selectA.value;
             
             for (let opt of selectA.options) {
                 if (valB && opt.value === valB) {
                     opt.disabled = true;
-                    opt.text = opt.text + ' (已选)';
+                    opt.text = opt.text.replace(' (已选)', '') + ' (已选)';
                 } else {
                     opt.disabled = false;
                     opt.text = opt.text.replace(' (已选)', '');
                 }
             }
             
-            if (valA) {
-                const selectedOpt = selectA.options[selectA.selectedIndex];
-                if (selectedOpt && selectedOpt.disabled) {
-                    selectA.value = '';
-                }
+            if (selectA.value && selectA.options[selectA.selectedIndex]?.disabled) {
+                selectA.value = '';
             }
         }
         
@@ -409,14 +401,18 @@
             logDiv.innerHTML = html;
             
             // 显示结果在角色图片下方
-            const winner = result.winner;
+            const resultText = result.result || '';
+            // PHP返回 "角色名 胜利!" 有空格
+            const isAWin = resultText.includes('胜利') && !resultText.includes(cardB.name) && resultText.includes(cardA.name);
+            const isBWin = resultText.includes('胜利') && !resultText.includes(cardA.name) && resultText.includes(cardB.name);
+            const isDraw = resultText === '平手' || resultText === '平手 (双输)';
             
-            if (winner === 'A') {
+            if (isAWin && !isBWin) {
                 document.getElementById('imgA').classList.remove('grayscale');
                 document.getElementById('imgB').classList.add('grayscale');
                 statsA.innerHTML += '<div class="win" style="font-size:14px;font-weight:bold;">胜利!</div>';
                 statsB.innerHTML += '<div class="lose" style="font-size:14px;">失败</div>';
-            } else if (winner === 'B') {
+            } else if (isBWin && !isAWin) {
                 document.getElementById('imgA').classList.add('grayscale');
                 document.getElementById('imgB').classList.remove('grayscale');
                 statsA.innerHTML += '<div class="lose" style="font-size:14px;">失败</div>';
