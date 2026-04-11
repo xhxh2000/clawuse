@@ -168,7 +168,6 @@ var currentView = 'my';
 var myCards = {};
 var allCards = [];
 var rarityConfig = [];
-var rarityNames = ['', '普通', '稀有', '杰出', '史诗', '传说', '远古'];
 
 // 加载稀有度配置（从数据库）
 function loadRarityConfig() {
@@ -242,7 +241,11 @@ function loadRarityConfig() {
 // 基础颜色
 // 基础颜色 - 按稀有度(1-6)排列
 var rarityBgColors = ['', '#aaaaaa', '#4caf50', '#2196f3', '#9c27b0', '#ff9800', '#f32b2b'];
-var rarityColors = ['', '#ffffff', '#00e676', '#448aff', '#e040fb', '#ffab00', '#ff1744'];
+// 从数据库动态获取颜色
+function getRarityColor(rarity) { 
+    var cfg = rarityConfig.find(function(r) { return r.rarity === rarity; });
+    return cfg && cfg.color ? cfg.color : '#fff'; 
+}
 
 // 淡化颜色函数 - 用于卡牌背景
 function lightenColor(hex, factor) {
@@ -306,8 +309,14 @@ function getImageUrl(card) {
     return card.image;
 }
 
-function getRarityColor(rarity) { return rarityColors[rarity] || '#fff'; }
-function getRarityName(rarity) { return rarityNames[rarity] || rarity + '星'; }
+function getRarityColor(rarity) { 
+    var cfg = rarityConfig.find(function(r) { return r.rarity === rarity; });
+    return cfg && cfg.color ? cfg.color : '#fff'; 
+}
+function getRarityName(rarity) { 
+    var cfg = rarityConfig.find(function(r) { return r.rarity === rarity; });
+    return cfg && cfg.name ? cfg.name : rarity + '星'; 
+}
 
 function showFullImage(src) {
     document.getElementById('fullImage').src = src;
@@ -424,9 +433,9 @@ function renderMyCards() {
         var level = card.level || 1;
         html += '<div class="album-card rarity-'+card.rarity+'" onclick="showMyCardPopup('+card.instance_id+')" style="background:'+card._bgColor+';">';
         html += '<div class="card-thumb" style="background:'+card._bgColor+';"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div>';
-        html += '<h4 style="color:'+rarityColors[card.rarity]+';">'+card.name+'</h4>';
-        html += '<div style="font-size:10px;color:'+rarityColors[card.rarity]+';">'+stars+'</div>';
-        html += '<div class="count" style="color:'+rarityColors[card.rarity]+';">Lv.'+level+'</div></div>';
+        html += '<h4 style="color:'+getRarityColor(card.rarity)+';">'+card.name+'</h4>';
+        html += '<div style="font-size:10px;color:'+getRarityColor(card.rarity)+';">'+stars+'</div>';
+        html += '<div class="count" style="color:'+getRarityColor(card.rarity)+';">Lv.'+level+'</div></div>';
     });
     container.innerHTML = html;
 }
@@ -478,8 +487,8 @@ function renderAlbum() {
             // 已解锁（图鉴点亮）- 使用淡化背景色
             html += '<div class="album-card rarity-'+card.rarity+'" onclick="showAlbumPopup('+card.id+')" style="background:'+card._bgColor+';">';
             html += '<div class="card-thumb" style="background:'+card._bgColor+';"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div>';
-            html += '<h4 style="color:'+rarityColors[card.rarity]+';">'+card.name+'</h4>';
-            html += '<div style="font-size:10px;color:'+rarityColors[card.rarity]+';">'+stars+'</div>';
+            html += '<h4 style="color:'+getRarityColor(card.rarity)+';">'+card.name+'</h4>';
+            html += '<div style="font-size:10px;color:'+getRarityColor(card.rarity)+';">'+stars+'</div>';
             if (ownedCount > 0) {
                 html += '<div class="count">x'+ownedCount+'</div></div>';
             } else {
@@ -489,8 +498,8 @@ function renderAlbum() {
             // 未解锁 - 使用 locked 样式
             html += '<div class="album-card locked">';
             html += '<div class="card-thumb"><img src="'+getImageUrl(card)+'" alt="'+card.name+'" style="filter:grayscale(100%) brightness(0.7);"></div>';
-            html += '<h4 style="color:'+rarityColors[card.rarity]+';">'+card.name+'</h4>';
-            html += '<div style="font-size:10px;color:'+rarityColors[card.rarity]+';">'+stars+'</div>';
+            html += '<h4 style="color:'+getRarityColor(card.rarity)+';">'+card.name+'</h4>';
+            html += '<div style="font-size:10px;color:'+getRarityColor(card.rarity)+';">'+stars+'</div>';
             html += '<div class="count">未拥有</div></div>';
         }
     });
@@ -545,8 +554,8 @@ function showMyCardPopup(instanceId) {
     
     document.getElementById('popupImage').src = getImageUrl(card);
     document.getElementById('popupName').textContent = card.name + ' Lv.' + level;
-    document.getElementById('popupName').style.color = rarityColors[card.rarity];
-    document.getElementById('popupRarity').innerHTML =  '⭐'.repeat(card.rarity) + ' <span style="color:'+rarityColors[card.rarity]+'">' + rarityNames[card.rarity] + '</span>' + 
+    document.getElementById('popupName').style.color = getRarityColor(card.rarity);
+    document.getElementById('popupRarity').innerHTML =  '⭐'.repeat(card.rarity) + ' <span style="color:'+getRarityColor(card.rarity)+'">' + getRarityName(card.rarity) + '</span>' + 
         '<div style="color:#888;font-size:14px;margin:5px 0;">经验：' + exp + '</div>';
     // 移除描述文字（我的卡牌弹窗不显示）
     
@@ -608,8 +617,8 @@ function showAlbumPopup(cardId) {
     
     document.getElementById('popupImage').src = getImageUrl(card);
     document.getElementById('popupName').textContent = card.name;
-    document.getElementById('popupName').style.color = rarityColors[card.rarity];
-    document.getElementById('popupRarity').innerHTML =  '⭐'.repeat(card.rarity) + ' <span style="color:'+rarityColors[card.rarity]+'">' + rarityNames[card.rarity] + '</span>';
+    document.getElementById('popupName').style.color = getRarityColor(card.rarity);
+    document.getElementById('popupRarity').innerHTML =  '⭐'.repeat(card.rarity) + ' <span style="color:'+getRarityColor(card.rarity)+'">' + getRarityName(card.rarity) + '</span>';
     document.getElementById('popupDesc').textContent = card.description || '';
     
     // 显示图鉴的基础属性（带颜色和动态字体大小）
