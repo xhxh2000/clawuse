@@ -192,6 +192,10 @@
             const cardA = userCards.find(uc => (uc.instance_id||uc.card_id)==selectA.value);
             const cardB = userCards.find(uc => (uc.instance_id||uc.card_id)==selectB.value);
             
+            // 选择新卡牌时移除之前的滤镜效果
+            imgA.classList.remove('grayscale');
+            imgB.classList.remove('grayscale');
+            
             imgA.src = cardA && cardA.image || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="200"><rect fill="%230f3460" width="150" height="200"/><text fill="%23fff" x="75" y="100" text-anchor="middle">?</text></svg>';
             imgB.src = cardB && cardB.image || imgA.src;
             
