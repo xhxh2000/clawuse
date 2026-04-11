@@ -92,6 +92,37 @@ if ($action === 'get_all') {
     $rarity = [];
     while($row = $result->fetchArray(SQLITE3_ASSOC)) $rarity[] = $row;
     echo json_encode(['code'=>200,'rarity'=>$rarity], JSON_UNESCAPED_UNICODE);
+} elseif ($action === 'save_rarity') {
+    $rarityData = $_POST['rarity'] ?? '';
+    if (!$rarityData) {
+        echo json_encode(['code'=>400,'msg'=>'数据不能为空']);
+        exit;
+    }
+    $rarityList = json_decode($rarityData, true);
+    if (!$rarityList) {
+        echo json_encode(['code'=>400,'msg'=>'数据格式错误']);
+        exit;
+    }
+    foreach ($rarityList as $r) {
+        $id = intval($r['rarity']);
+        $name = $r['name'] ?? '';
+        $color = $r['color'] ?? '#888888';
+        
+        $stmt = $db->prepare("SELECT rarity FROM rarity WHERE rarity=:id");
+        $stmt->bindValue(':id', $id);
+        $exists = $stmt->execute()->fetchArray();
+        
+        if ($exists) {
+            $stmt = $db->prepare("UPDATE rarity SET name=:n, color=:c WHERE rarity=:id");
+        } else {
+            $stmt = $db->prepare("INSERT INTO rarity (rarity, name, color) VALUES (:id, :n, :c)");
+        }
+        $stmt->bindValue(':id', $id);
+        $stmt->bindValue(':n', $name);
+        $stmt->bindValue(':c', $color);
+        $stmt->execute();
+    }
+    echo json_encode(['code'=>200,'msg'=>'保存成功']);
 } elseif ($action === 'get_pools') {
     $stmt = $db->prepare('SELECT DISTINCT pool_name FROM cards ORDER BY pool_name');
     $result = $stmt->execute();
