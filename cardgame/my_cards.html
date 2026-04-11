@@ -410,8 +410,8 @@ function renderMyCards() {
         switch(sortOrder) {
             case 'rarity-desc': return b.rarity - a.rarity;
             case 'rarity-asc': return a.rarity - b.rarity;
-            case 'time-desc': return new Date(b.unlocked_at || 0) - new Date(a.unlocked_at || 0);
-            case 'time-asc': return new Date(a.unlocked_at || 0) - new Date(b.unlocked_at || 0);
+            case 'time-desc': return new Date(b.obtained_at || 0) - new Date(a.obtained_at || 0);
+            case 'time-asc': return new Date(a.obtained_at || 0) - new Date(b.obtained_at || 0);
             default: return b.rarity - a.rarity;
         }
     });

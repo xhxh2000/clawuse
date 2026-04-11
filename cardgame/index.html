@@ -57,6 +57,7 @@
             } else {
                 // 普通用户隐藏管理链接
                 document.querySelectorAll('.admin-link').forEach(el => el.style.display = 'none');
+                document.getElementById('sysLink').style.display = 'none';
             }
         } else {
             // 未登录，只显示登录按钮

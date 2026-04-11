@@ -12,7 +12,7 @@ $db = new SQLite3(__DIR__ . '/data/game.sqlite');
 $db->busyTimeout(5000);
 
 function response($code, $msg, $data = null) {
-    if ($code, $msg, $data === null) $code, $msg, $data = []; {
+    if ($data === null) $data = [];
     echo json_encode(array_merge(['code' => $code, 'msg' => $msg], $data), JSON_UNESCAPED_UNICODE);
     exit;
 }
