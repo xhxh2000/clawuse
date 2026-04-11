@@ -750,7 +750,7 @@ let rarityConfig = [];
             
             document.getElementById('detailImage').src = getImageUrl(card);
             document.getElementById('detailName').textContent = card.name;
-            document.getElementById('detailName').className = 'popup-name card-name-' + card.rarity;
+            document.getElementById('detailName').style.color = getRarityColor(card.rarity);
             var rarityName = getRarityName(card.rarity);
             var rarityColor = getRarityColor(card.rarity);
             document.getElementById('detailRarity').innerHTML = '<span style="color:' + rarityColor + '">' + '⭐'.repeat(card.rarity) + ' ' + rarityName + '</span>';
