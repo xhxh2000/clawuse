@@ -5,13 +5,14 @@ header('Access-Control-Allow-Origin: *');
 $db = new SQLite3(__DIR__ . '/data/game.sqlite');
 $db->busyTimeout(5000);
 
-function response($code, $msg, $data = []) {
+function response($code, $msg, $data = null) {
+    if ($data === null) $data = [];
     echo json_encode(array_merge(['code' => $code, 'msg' => $msg], $data), JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 function getParam($key, $default = '') {
-    return $_POST[$key] ?? ($_GET[$key] ?? $default);
+    return isset($_POST[$key]) ? $_POST[$key] : (isset($_GET[$key]) ? $_GET[$key] : $default);
 }
 
 $action = getParam('action', '');

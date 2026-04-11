@@ -11,7 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $db = new SQLite3(__DIR__ . '/data/game.sqlite');
 $db->busyTimeout(5000);
 
-function response($code, $msg, $data = []) {
+function response($code, $msg, $data = null) {
+    if ($code, $msg, $data === null) $code, $msg, $data = []; {
     echo json_encode(array_merge(['code' => $code, 'msg' => $msg], $data), JSON_UNESCAPED_UNICODE);
     exit;
 }
