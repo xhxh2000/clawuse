@@ -129,6 +129,12 @@ if ($action === 'get_all') {
     $pools = [];
     while($row = $result->fetchArray(SQLITE3_ASSOC)) $pools[] = $row['pool_name'];
     echo json_encode(['code'=>200,'pools'=>$pools], JSON_UNESCAPED_UNICODE);
+} elseif ($action === 'check_rarity_cards') {
+    $rarity = intval($_GET['rarity'] ?? $_POST['rarity'] ?? 0);
+    $stmt = $db->prepare('SELECT COUNT(*) as cnt FROM cards WHERE rarity = :r');
+    $stmt->bindValue(':r', $rarity);
+    $result = $stmt->execute()->fetchArray();
+    echo json_encode(['code'=>200,'count'=>intval($result[0])], JSON_UNESCAPED_UNICODE);
 } elseif ($action === 'save_card') {
     $id = intval($_POST['id'] ?? 0);
     $name = $_POST['name'] ?? '';
