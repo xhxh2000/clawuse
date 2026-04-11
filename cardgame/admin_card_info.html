@@ -167,81 +167,52 @@
                         <label>卡池</label>
                         <select id="filterPool" onchange="applyFilter()">
                             <option value="">ALL</option>
-                            <!-- 由 loadData() 动态加载 -->
                         </select>
                     </div>
                     <div class="filter-item filter-item-name">
-                        <label>名字（模糊）</label>
-                        <input type="text" id="filterName" placeholder="输入名字..." oninput="applyFilter()">
+                        <label>名字</label>
+                        <input type="text" id="filterName" placeholder="模糊搜索..." oninput="applyFilter()">
+                    </div>
+                    <div class="filter-item filter-item-name">
+                        <label>标签</label>
+                        <input type="text" id="filterTag" placeholder="标签..." oninput="applyFilter()">
                     </div>
                     <div class="filter-item">
                         <label>稀有度</label>
                         <select id="filterRarity" onchange="applyFilter()">
-                            <!-- 由 renderFilterRaritySelect() 动态加载 -->
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-row" style="margin-top:10px;">
+                    <div class="filter-item">
+                        <label>属性</label>
+                        <select id="filterStat" onchange="applyFilter()">
+                            <option value="">--</option>
+                            <option value="HP">HP(基础)</option>
+                            <option value="ATK">ATK(基础)</option>
+                            <option value="DEF">DEF(基础)</option>
+                            <option value="SKL">SKL(基础)</option>
+                            <option value="SPD">SPD(基础)</option>
+                            <option value="g_HP">HP(成长)</option>
+                            <option value="g_ATK">ATK(成长)</option>
+                            <option value="g_DEF">DEF(成长)</option>
+                            <option value="g_SKL">SKL(成长)</option>
+                            <option value="g_SPD">SPD(成长)</option>
                         </select>
                     </div>
                     <div class="filter-item">
-                        <label>HP</label>
-                        <div style="display:flex;gap:5px;">
-                            <select id="filterHpOp" onchange="applyFilter()" style="width:60px;">
-                                <option value="">=</option>
-                                <option value=">=">≥</option>
-                                <option value="<=">≤</option>
-                            </select>
-                            <input type="number" id="filterHp" placeholder="值" oninput="applyFilter()">
-                        </div>
-                    </div>
-                    <!-- MP过滤器已删除 -->
-                    <div class="filter-item">
-                        <label>ATK</label>
-                        <div style="display:flex;gap:5px;">
-                            <select id="filterAttackOp" onchange="applyFilter()" style="width:60px;">
-                                <option value="">=</option>
-                                <option value=">=">≥</option>
-                                <option value="<=">≤</option>
-                            </select>
-                            <input type="number" id="filterAttack" placeholder="值" oninput="applyFilter()">
-                        </div>
+                        <label>运算</label>
+                        <select id="filterOp" onchange="applyFilter()" style="width:60px;">
+                            <option value="">=</option>
+                            <option value=">=">≥</option>
+                            <option value="<=">≤</option>
+                            <option value=">">></option>
+                            <option value="<"><</option>
+                        </select>
                     </div>
                     <div class="filter-item">
-                        <label>DEF</label>
-                        <div style="display:flex;gap:5px;">
-                            <select id="filterDefenseOp" onchange="applyFilter()" style="width:60px;">
-                                <option value="">=</option>
-                                <option value=">=">≥</option>
-                                <option value="<=">≤</option>
-                            </select>
-                            <input type="number" id="filterDefense" placeholder="值" oninput="applyFilter()">
-                        </div>
-                    </div>
-                    <div class="filter-item">
-                        <label>SKL</label>
-                        <div style="display:flex;gap:5px;">
-                            <select id="filterSklOp" onchange="applyFilter()" style="width:60px;">
-                                <option value="">=</option>
-                                <option value=">=">≥</option>
-                                <option value="<=">≤</option>
-                            </select>
-                            <input type="number" id="filterSkl" placeholder="值" oninput="applyFilter()">
-                        </div>
-                    </div>
-                    <div class="filter-item">
-                        <label>SPD</label>
-                        <div style="display:flex;gap:5px;">
-                            <select id="filterSpdOp" onchange="applyFilter()" style="width:60px;">
-                                <option value="">=</option>
-                                <option value=">=">≥</option>
-                                <option value="<=">≤</option>
-                            </select>
-                            <input type="number" id="filterSpd" placeholder="值" oninput="applyFilter()">
-                        </div>
-                    </div>
-                    <div class="filter-item filter-item-name">
-                        <label>标签</label>
-                        <input type="text" id="filterTag" placeholder="输入标签..." oninput="applyFilter()">
-                    </div>
-                    <div class="filter-actions">
-                        <button class="btn btn-reset" onclick="resetFilter()">重置</button>
+                        <label>数值</label>
+                        <input type="number" id="filterValue" placeholder="值" oninput="applyFilter()" style="width:80px;">
                     </div>
                 </div>
             </div>
@@ -269,10 +240,15 @@
                                 <th onclick="sortTable('name')">名字</th>
                                 <th onclick="sortTable('rarity')">稀有度</th>
                                 <th onclick="sortTable('HP')">HP</th>
+                                <th onclick="sortTable('g_HP')">成长HP</th>
                                 <th onclick="sortTable('ATK')">ATK</th>
+                                <th onclick="sortTable('g_ATK')">成长ATK</th>
                                 <th onclick="sortTable('DEF')">DEF</th>
+                                <th onclick="sortTable('g_DEF')">成长DEF</th>
                                 <th onclick="sortTable('SKL')">SKL</th>
+                                <th onclick="sortTable('g_SKL')">成长SKL</th>
                                 <th onclick="sortTable('SPD')">SPD</th>
+                                <th onclick="sortTable('g_SPD')">成长SPD</th>
                                 <th onclick="sortTable('draw_weight')">权重</th>
                                 <th>标签</th>
                                 <th>操作</th>
@@ -390,11 +366,9 @@ let rarityConfig = [];
             pool: '',
             name: '',
             rarity: '',
-            HP: { op: '', value: '' },
-            ATK: { op: '', value: '' },
-            DEF: { op: '', value: '' },
-            SKL: { op: '', value: '' },
-            SPD: { op: '', value: '' },
+            stat: '',
+            op: '',
+            value: '',
             tag: ''
         };
         
@@ -409,27 +383,24 @@ let rarityConfig = [];
             filterState.pool = document.getElementById('filterPool').value;
             filterState.name = document.getElementById('filterName').value.trim().toLowerCase();
             filterState.rarity = document.getElementById('filterRarity').value;
-            filterState.HP.op = document.getElementById('filterHpOp').value;
-            filterState.HP.value = document.getElementById('filterHp').value;
-            filterState.ATK.op = document.getElementById('filterAttackOp').value;
-            filterState.ATK.value = document.getElementById('filterAttack').value;
-            filterState.DEF.op = document.getElementById('filterDefenseOp').value;
-            filterState.DEF.value = document.getElementById('filterDefense').value;
-            filterState.SKL.op = document.getElementById('filterSklOp').value;
-            filterState.SKL.value = document.getElementById('filterSkl').value;
-            filterState.SPD.op = document.getElementById('filterSpdOp').value;
-            filterState.SPD.value = document.getElementById('filterSpd').value;
+            filterState.stat = document.getElementById('filterStat').value;
+            filterState.op = document.getElementById('filterOp').value;
+            filterState.value = document.getElementById('filterValue').value;
             filterState.tag = document.getElementById('filterTag').value.trim().toLowerCase();
             
             filteredCharacters = gameData.characters.filter(card => {
                 if (filterState.name && !card.name.toLowerCase().includes(filterState.name)) return false;
                 if (filterState.pool && card.pool_name !== filterState.pool) return false;
                 if (filterState.rarity && card.rarity !== parseInt(filterState.rarity)) return false;
-                if (!filterByStat(card.baseStats.HP, filterState.HP)) return false;
-                if (!filterByStat(card.baseStats.ATK, filterState.ATK)) return false;
-                if (!filterByStat(card.baseStats.DEF, filterState.DEF)) return false;
-                if (!filterByStat(card.baseStats.SKL, filterState.SKL)) return false;
-                if (!filterByStat(card.baseStats.SPD, filterState.SPD)) return false;
+                if (filterState.stat && filterState.value) {
+                    let statValue;
+                    if (filterState.stat.startsWith('g_')) {
+                        statValue = card.growthStats ? card.growthStats[filterState.stat.replace('g_', '')] : 0;
+                    } else {
+                        statValue = card.baseStats[filterState.stat];
+                    }
+                    if (!filterByStat(statValue, { op: filterState.op, value: filterState.value })) return false;
+                }
                 if (filterState.tag) {
                     const cardTags = card.tags || [];
                     if (!cardTags.some(t => t.toLowerCase().includes(filterState.tag))) return false;
@@ -455,25 +426,13 @@ let rarityConfig = [];
         function resetFilter() {
             document.getElementById('filterName').value = '';
             document.getElementById('filterRarity').value = '';
-            document.getElementById('filterHpOp').value = '';
-            document.getElementById('filterHp').value = '';
-            document.getElementById('filterAttackOp').value = '';
-            document.getElementById('filterAttack').value = '';
-            document.getElementById('filterDefenseOp').value = '';
-            document.getElementById('filterDefense').value = '';
-            document.getElementById('filterSklOp').value = '';
-            document.getElementById('filterSkl').value = '';
-            document.getElementById('filterSpdOp').value = '';
-            document.getElementById('filterSpd').value = '';
+            document.getElementById('filterStat').value = '';
+            document.getElementById('filterOp').value = '';
+            document.getElementById('filterValue').value = '';
             document.getElementById('filterTag').value = '';
             
             filterState = {
-                name: '', rarity: '',
-                HP: { op: '', value: '' },
-                ATK: { op: '', value: '' },
-                DEF: { op: '', value: '' },
-                SKL: { op: '', value: '' },
-                SPD: { op: '', value: '' }, tag: ''
+                name: '', rarity: '', stat: '', op: '', value: '', tag: ''
             };
             filteredCharacters = [...gameData.characters];
             currentPage = 1;
@@ -483,10 +442,9 @@ let rarityConfig = [];
         
         function getDisplayCharacters() {
             const hasFilter = filterState.name || filterState.rarity || 
-                filterState.HP.op || filterState.ATK.op || filterState.DEF.op || 
-                filterState.SKL.op || filterState.SPD.op || filterState.tag ||
-                filterState.HP.value || filterState.ATK.value || filterState.DEF.value || 
-                filterState.SKL.value || filterState.SPD.value;
+                (filterState.stat && filterState.value) || 
+                filterState.tag ||
+                filterState.pool;
             return hasFilter ? filteredCharacters : gameData.characters;
         }
         
@@ -523,17 +481,23 @@ let rarityConfig = [];
         const maxStats = { HP: 0, ATK: 0, DEF: 0, SKL: 0, SPD: 0 };
         const minStats = { HP: Infinity, ATK: Infinity, DEF: Infinity, SKL: Infinity, SPD: Infinity };
         const maxGrowthStats = { HP: 0, ATK: 0, DEF: 0, SKL: 0, SPD: 0 };
+        const minGrowthStats = { HP: Infinity, ATK: Infinity, DEF: Infinity, SKL: Infinity, SPD: Infinity };
         
-        // 动态计算成长最大值
+        // 动态计算成长最大值和最小值
         function calcMaxGrowthStats() { console.log('calcMaxGrowthStats called, maxGrowthStats:', maxGrowthStats);
             if (!gameData || !gameData.characters) return;
             gameData.characters.forEach(function(c) {
                 if (c.growthStats) {
                     if (c.growthStats.HP > maxGrowthStats.HP) maxGrowthStats.HP = c.growthStats.HP;
+                    if (c.growthStats.HP < minGrowthStats.HP) minGrowthStats.HP = c.growthStats.HP;
                     if (c.growthStats.ATK > maxGrowthStats.ATK) maxGrowthStats.ATK = c.growthStats.ATK;
+                    if (c.growthStats.ATK < minGrowthStats.ATK) minGrowthStats.ATK = c.growthStats.ATK;
                     if (c.growthStats.DEF > maxGrowthStats.DEF) maxGrowthStats.DEF = c.growthStats.DEF;
+                    if (c.growthStats.DEF < minGrowthStats.DEF) minGrowthStats.DEF = c.growthStats.DEF;
                     if (c.growthStats.SKL > maxGrowthStats.SKL) maxGrowthStats.SKL = c.growthStats.SKL;
+                    if (c.growthStats.SKL < minGrowthStats.SKL) minGrowthStats.SKL = c.growthStats.SKL;
                     if (c.growthStats.SPD > maxGrowthStats.SPD) maxGrowthStats.SPD = c.growthStats.SPD;
+                    if (c.growthStats.SPD < minGrowthStats.SPD) minGrowthStats.SPD = c.growthStats.SPD;
                 }
             });
         }
@@ -665,18 +629,34 @@ let rarityConfig = [];
             return '#aaa';
         }
         
-        // 获取成长属性颜色
+        // 获取成长属性颜色 - 用实际最小值和最大值计算
         function getGrowthColor(value, statName, maxStatsg) {
-            const max = maxStatsg[statName];
-            if (max === 0) return '#aaa';
-            const percent = value / max * 100;
-            if (percent >= 100) return '#ff0000';
-            if (percent >= 80) return '#ffd700';
-            if (percent >= 60) return '#9400d3';
-            if (percent >= 40) return '#4169e1';
-            if (percent >= 20) return '#00ff00';
-            if (percent >= 0) return '#ffffff';
-            return '#aaa';
+            if (!value || value <= 0) return '#ffffff';  // 无数据或0显示白色
+            
+            // 获取该属性的最大值和最小值
+            let maxVal, minVal;
+            if (statName) {
+                maxVal = maxStatsg ? maxStatsg[statName] : maxGrowthStats[statName];
+                minVal = minGrowthStats[statName];
+                // 如果 minVal 是 Infinity，用 0 代替
+                if (minVal === Infinity) minVal = 0;
+            } else {
+                maxVal = Math.max(...Object.values(maxGrowthStats));
+                minVal = 0;
+            }
+            
+            if (!maxVal || maxVal === 0) return '#aaa';
+            const range = maxVal - minVal;
+            if (range === 0) return '#aaa';
+            
+            const percent = (value - minVal) / range * 100;
+            
+            if (percent >= 100) return '#ff0000';  // 100% 红色
+            if (percent >= 80) return '#ffd700'; // 80%-100% 金色
+            if (percent >= 60) return '#9400d3'; // 60%-80% 紫色
+            if (percent >= 40) return '#4169e1'; // 40%-60% 蓝色
+            if (percent >= 20) return '#00ff00'; // 20%-40% 绿色
+            return '#ffffff'; // 20% 及以下白色
         }
         
         // 获取图片URL
@@ -933,8 +913,20 @@ let rarityConfig = [];
                     valA = a.draw_weight || 100;
                     valB = b.draw_weight || 100;
                 } else {
-                    var statKey = sortColumn; if(sortColumn==='HP')statKey='HP';else if(sortColumn==='ATK')statKey='ATK';else if(sortColumn==='DEF')statKey='DEF';else if(sortColumn==='SKL')statKey='SKL';else if(sortColumn==='SPD')statKey='SPD'; valA = a.baseStats[statKey] || 0;
-                    var statKey2 = sortColumn; if(sortColumn==='HP')statKey2='HP';else if(sortColumn==='ATK')statKey2='ATK';else if(sortColumn==='DEF')statKey2='DEF';else if(sortColumn==='SKL')statKey2='SKL';else if(sortColumn==='SPD')statKey2='SPD'; valB = b.baseStats[statKey2] || 0;
+                    // 排序支持基础和成长属性 (g_HP, g_ATK 等)
+                    var statKey = sortColumn;
+                    var isGrowth = sortColumn.startsWith('g_');
+                    if (isGrowth) {
+                        statKey = sortColumn.replace('g_', '');
+                        valA = a.growthStats ? a.growthStats[statKey] || 0 : 0;
+                        valB = b.growthStats ? b.growthStats[statKey] || 0 : 0;
+                    } else if (['HP','ATK','DEF','SKL','SPD'].includes(sortColumn)) {
+                        valA = a.baseStats[statKey] || 0;
+                        valB = b.baseStats[statKey] || 0;
+                    } else {
+                        valA = 0;
+                        valB = 0;
+                    }
                 }
                 if (typeof valA === 'string') {
                     return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
@@ -961,10 +953,15 @@ let rarityConfig = [];
                     '<td style="color:'+rColor+'">'+c.name+'</td>' +
                     '<td style="color:'+rColor+'">'+rName+'</td>' +
                     '<td style="color:'+getStatColor(c.baseStats.HP, 'HP')+'">'+c.baseStats.HP+'</td>' +
+                    '<td class="growth" style="color:'+(c.growthStats ? getGrowthColor(c.growthStats.HP, 'HP') : '#666')+'">'+(c.growthStats ? c.growthStats.HP + '+' : '-')+'</td>' +
                     '<td style="color:'+getStatColor(c.baseStats.ATK, 'ATK')+'">'+c.baseStats.ATK+'</td>' +
+                    '<td class="growth" style="color:'+(c.growthStats ? getGrowthColor(c.growthStats.ATK, 'ATK') : '#666')+'">'+(c.growthStats ? c.growthStats.ATK + '+' : '-')+'</td>' +
                     '<td style="color:'+getStatColor(c.baseStats.DEF, 'DEF')+'">'+c.baseStats.DEF+'</td>' +
+                    '<td class="growth" style="color:'+(c.growthStats ? getGrowthColor(c.growthStats.DEF, 'DEF') : '#666')+'">'+(c.growthStats ? c.growthStats.DEF + '+' : '-')+'</td>' +
                     '<td style="color:'+getStatColor(c.baseStats.SKL, 'SKL')+'">'+c.baseStats.SKL+'</td>' +
+                    '<td class="growth" style="color:'+(c.growthStats ? getGrowthColor(c.growthStats.SKL, 'SKL') : '#666')+'">'+(c.growthStats ? c.growthStats.SKL + '+' : '-')+'</td>' +
                     '<td style="color:'+getStatColor(c.baseStats.SPD, 'SPD')+'">'+c.baseStats.SPD+'</td>' +
+                    '<td class="growth" style="color:'+(c.growthStats ? getGrowthColor(c.growthStats.SPD, 'SPD') : '#666')+'">'+(c.growthStats ? c.growthStats.SPD + '+' : '-')+'</td>' +
                     '<td>'+(c.draw_weight || 100)+'</td>' +
                     '<td style="font-size:11px;color:#aaa;">'+(c.tags ? c.tags.join('<br>') : '-')+'</td>' +
                     '<td class="actions-cell" onclick="event.stopPropagation()">' +
