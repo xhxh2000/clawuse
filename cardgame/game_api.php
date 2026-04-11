@@ -103,20 +103,14 @@ if ($action === 'get_all') {
         echo json_encode(['code'=>400,'msg'=>'数据格式错误']);
         exit;
     }
+    // 先清空表，再重新插入（支持删除稀有度）
+    $db->exec('DELETE FROM rarity');
     foreach ($rarityList as $r) {
         $id = intval($r['rarity']);
         $name = $r['name'] ?? '';
         $color = $r['color'] ?? '#888888';
         
-        $stmt = $db->prepare("SELECT rarity FROM rarity WHERE rarity=:id");
-        $stmt->bindValue(':id', $id);
-        $exists = $stmt->execute()->fetchArray();
-        
-        if ($exists) {
-            $stmt = $db->prepare("UPDATE rarity SET name=:n, color=:c WHERE rarity=:id");
-        } else {
-            $stmt = $db->prepare("INSERT INTO rarity (rarity, name, color) VALUES (:id, :n, :c)");
-        }
+        $stmt = $db->prepare("INSERT INTO rarity (rarity, name, color) VALUES (:id, :n, :c)");
         $stmt->bindValue(':id', $id);
         $stmt->bindValue(':n', $name);
         $stmt->bindValue(':c', $color);
