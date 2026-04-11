@@ -26,7 +26,7 @@
         <a href="login.html" id="loginLink">🔑 登录</a>
         <a href="admin_users.html" class="admin-link">👥 用户管理</a>
         <a href="admin_sys.html" id="sysLink">⚙️ 系统配置</a>
-        <a href="battle_simu.html">⚔️ 战斗模拟</a>
+        <a href="battle_simu.html" id="battleLink">⚔️ 战斗模拟</a>
         <a href="#" id="logoutLink" onclick="logout()">🚪 登出</a>
     </div>
 
@@ -59,11 +59,15 @@
                 document.querySelectorAll('.admin-link').forEach(el => el.style.display = 'none');
             }
         } else {
-            // 未登录，只显示登录链接
+            // 未登录，只显示登录按钮
             document.getElementById('loginLink').style.display = 'inline';
             document.getElementById('logoutLink').style.display = 'none';
+            // 隐藏所有其他按钮
             document.querySelectorAll('.admin-link').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.user-link').forEach(el => el.style.display = 'none');
+            document.getElementById('sysLink').style.display = 'none';
+            // 隐藏战斗模拟链接
+            document.getElementById('battleLink').style.display = 'none';
         }
     </script>
 </body>
