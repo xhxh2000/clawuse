@@ -51,6 +51,13 @@
     </div>
     
     <script>
+        // 检查是否为管理员
+        const userRole = localStorage.getItem('role');
+        if (userRole !== 'admin') {
+            alert('只有管理员才能访问此页面');
+            window.location.href = 'index.html';
+        }
+        
         let rarityConfig = [];
         
         async function loadConfig() {
