@@ -741,8 +741,15 @@ var userId = localStorage.getItem('user_id');
 if (!userId) {
     location.href = 'login.html';
 } else {
-    loadRarityConfig().then(function() {
-        loadMyCards();
+    // 页面加载时先获取所有卡牌数据，计算最大最小值
+    fetch('game_api.php?action=get_all&user_id=' + userId).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.characters && d.characters.length > 0) {
+            allCards = d.characters;
+            calcMaxStats(allCards);
+        }
+        loadRarityConfig().then(function() {
+            loadMyCards();
+        });
     });
 }
 </script>
