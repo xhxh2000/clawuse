@@ -344,7 +344,10 @@ function loadMyCards() {
                 myCards[card.instance_id] = card;
             });
             console.log('myCards loaded, maxStats before:', maxStats);
-            calcMaxStats(Object.values(myCards));
+            // 使用 allCards 计算最大最小值，不是 myCards
+            if (allCards && allCards.length > 0) {
+                calcMaxStats(allCards);
+            }
             console.log('maxStats after:', maxStats);
             renderMyCards();
         }
