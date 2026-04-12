@@ -338,6 +338,15 @@ if ($action === 'get_all') {
         }
     }
     echo json_encode(['code'=>200,'msg'=>"更新{$count}张卡的{$field}成长，倍数:{$multiplier}"], JSON_UNESCAPED_UNICODE);
+} elseif ($action === 'update_favorite') {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $instance_id = intval($data['instance_id'] ?? 0);
+    $is_favorite = intval($data['is_favorite'] ?? 0);
+    $stmt = $db->prepare('UPDATE user_cards SET is_favorite = :f WHERE id = :id');
+    $stmt->bindValue(':f', $is_favorite);
+    $stmt->bindValue(':id', $instance_id);
+    $stmt->execute();
+    echo json_encode(['code'=>200,'msg'=>'OK']);
 } else {
     echo json_encode(['code'=>400,'msg'=>'未知操作: ' . $action]);
 }
