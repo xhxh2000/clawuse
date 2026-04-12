@@ -265,12 +265,14 @@ var filterState = { name: '', rarity: '', favorite: '', sort: 'rarity-desc' };
 var albumFilterState = { name: '', rarity: '', owned: '', sort: 'rarity-desc' };
 var currentCardInstanceId = null;
 var maxStats = {HP:0, ATK:0, DEF:0, SKL:0, SPD:0};
+var minStats = {HP:0, ATK:0, DEF:0, SKL:0, SPD:0};
 
-// 根据全局最大属性计算颜色 - 百分比颜色
+// 根据全局最大/最小属性计算颜色 - 百分比颜色
 function getStatColor(value, statName) {
     var max = maxStats[statName];
-    if (!max || max === 0) return '#aaa';
-    var percent = (value / max) * 100;
+    var min = minStats[statName];
+    if (!max || max === min) return '#aaa';
+    var percent = ((value - min) / (max - min)) * 100;
     if (percent >= 100) return '#ff0000';  // 红色 100%
     if (percent >= 80) return '#ffd700';  // 黄色 80-99%
     if (percent >= 60) return '#9400d3';  // 紫色 60-79%
@@ -279,7 +281,7 @@ function getStatColor(value, statName) {
     return '#ffffff';  // 白色 0-19%
 }
 
-// 从所有卡牌计算最大属性值
+// 从所有卡牌计算最大和最小属性值
 function calcMaxStats(cards) {
     if (!cards) return;
     cards.forEach(function(c) {
@@ -288,6 +290,12 @@ function calcMaxStats(cards) {
         if (c.baseStats.ATK > maxStats.ATK) maxStats.ATK = c.baseStats.ATK;
         if (c.baseStats.DEF > maxStats.DEF) maxStats.DEF = c.baseStats.DEF;
         if (c.baseStats.SPD > maxStats.SPD) maxStats.SPD = c.baseStats.SPD;
+        
+        if (minStats.HP === 0 || c.baseStats.HP < minStats.HP) minStats.HP = c.baseStats.HP || 0;
+        if (minStats.SKL === 0 || c.baseStats.SKL < minStats.SKL) minStats.SKL = c.baseStats.SKL || 0;
+        if (minStats.ATK === 0 || c.baseStats.ATK < minStats.ATK) minStats.ATK = c.baseStats.ATK || 0;
+        if (minStats.DEF === 0 || c.baseStats.DEF < minStats.DEF) minStats.DEF = c.baseStats.DEF || 0;
+        if (minStats.SPD === 0 || c.baseStats.SPD < minStats.SPD) minStats.SPD = c.baseStats.SPD || 0;
     });
 }
 
