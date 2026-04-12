@@ -125,7 +125,6 @@
         
         <div class="tabs">
             <div class="tab active" onclick="switchTab('login')" id="tab-login">登录</div>
-            <div class="tab" onclick="switchTab('register')" id="tab-register">注册</div>
         </div>
         
         <div id="form-login">
@@ -138,22 +137,6 @@
                 <input type="password" id="login-password" placeholder="请输入密码">
             </div>
             <button class="btn btn-primary" onclick="doLogin()">登录</button>
-        </div>
-        
-        <div id="form-register" style="display:none;">
-            <div class="form-group">
-                <label>用户名</label>
-                <input type="text" id="reg-username" placeholder="2-20字符">
-            </div>
-            <div class="form-group">
-                <label>密码</label>
-                <input type="password" id="reg-password" placeholder="至少6位">
-            </div>
-            <div class="form-group">
-                <label>确认密码</label>
-                <input type="password" id="reg-password2" placeholder="再次输入密码">
-            </div>
-            <button class="btn btn-primary" onclick="doRegister()">注册</button>
         </div>
         
         <div id="loading" class="loading">处理中...</div>
@@ -169,9 +152,6 @@
         function switchTab(tab) {
             currentTab = tab;
             document.getElementById('form-login').style.display = tab === 'login' ? 'block' : 'none';
-            document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
-            document.getElementById('tab-login').className = 'tab' + (tab === 'login' ? ' active' : '');
-            document.getElementById('tab-register').className = 'tab' + (tab === 'register' ? ' active' : '');
             document.getElementById('message').style.display = 'none';
         }
         
