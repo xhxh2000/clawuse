@@ -1,7 +1,17 @@
-# 备份文件
+﻿# 备份文件
 *backup*.html
 *.bak
 
 # 临时文件
 *.tmp
 *.log
+*.lock
+
+# Node依赖
+node_modules/
+
+# 浏览器/工具临时目录
+org.chromium.Chromium.*/
+pulse-*/
+node-compile-cache/
+sync_from/
