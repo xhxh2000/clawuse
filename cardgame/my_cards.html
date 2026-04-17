@@ -267,6 +267,10 @@ var currentCardInstanceId = null;
 var maxStats = {HP:0, ATK:0, DEF:0, SKL:0, SPD:0};
 var minStats = {HP:0, ATK:0, DEF:0, SKL:0, SPD:0};
 
+// 100级满级属性的最大最小值（用于雷达图）
+var maxStatsLv100 = {HP:0, ATK:0, DEF:0, SKL:0, SPD:0};
+var minStatsLv100 = {HP:0, ATK:0, DEF:0, SKL:0, SPD:0};
+
 // 根据全局最大/最小属性计算颜色 - 百分比颜色
 function getStatColor(value, statName) {
     var max = maxStats[statName];
@@ -347,6 +351,10 @@ function loadMyCards() {
             // 使用 allCards 计算最大最小值，不是 myCards
             if (allCards && allCards.length > 0) {
                 calcMaxStats(allCards);
+                // 计算满级属性的最大最小值
+                var lv100Result = calcMaxStatsAtLevel(allCards, 100);
+                maxStatsLv100 = lv100Result.maxStats;
+                minStatsLv100 = lv100Result.minStats;
             }
             console.log('maxStats after:', maxStats);
             renderMyCards();
@@ -399,6 +407,11 @@ function loadAlbum() {
         console.log('allCards loaded, maxStats before:', maxStats);
         calcMaxStats(allCards);
         console.log('maxStats after:', maxStats);
+        // 计算满级属性的最大最小值
+        var lv100Result = calcMaxStatsAtLevel(allCards, 100);
+        maxStatsLv100 = lv100Result.maxStats;
+        minStatsLv100 = lv100Result.minStats;
+        console.log('100级属性范围:', minStatsLv100, '-', maxStatsLv100);
         renderAlbum();
     });
 }
@@ -664,17 +677,24 @@ function drawRadar(card) {
     var cy = h / 2;
     var r = Math.min(w, h) / 2 - 30;
     var labels = ['HP', 'ATK', 'DEF', 'SKL', 'SPD'];
-    var baseStats = card.baseStats || {};
+    
+    // 计算该角色100级时的属性值
+    var statsLv100 = calcStatsAtLevel(card, 100);
+    
+    // 计算百分比（基于满级属性范围）
     var stats = [
-        maxStats.HP > 0 ? Math.round(baseStats.HP / maxStats.HP * 100) : 0,
-        maxStats.ATK > 0 ? Math.round(baseStats.ATK / maxStats.ATK * 100) : 0,
-        maxStats.DEF > 0 ? Math.round(baseStats.DEF / maxStats.DEF * 100) : 0,
-        maxStats.SKL > 0 ? Math.round(baseStats.SKL / maxStats.SKL * 100) : 0,
-        maxStats.SPD > 0 ? Math.round(baseStats.SPD / maxStats.SPD * 100) : 0
+        calcStatPercent(statsLv100.HP, minStatsLv100.HP, maxStatsLv100.HP),
+        calcStatPercent(statsLv100.ATK, minStatsLv100.ATK, maxStatsLv100.ATK),
+        calcStatPercent(statsLv100.DEF, minStatsLv100.DEF, maxStatsLv100.DEF),
+        calcStatPercent(statsLv100.SKL, minStatsLv100.SKL, maxStatsLv100.SKL),
+        calcStatPercent(statsLv100.SPD, minStatsLv100.SPD, maxStatsLv100.SPD)
     ];
+    
     var maxVal = 100;
     var angleStep = (Math.PI * 2) / 5;
+    
     ctx.clearRect(0, 0, w, h);
+    
     // 画背景圆
     for (var i = 1; i <= 5; i++) {
         ctx.beginPath();
@@ -682,21 +702,24 @@ function drawRadar(card) {
         ctx.strokeStyle = '#333';
         ctx.stroke();
     }
+    
     // 画轴线
     for (var i = 0; i < 5; i++) {
+        var angle = i * angleStep - Math.PI / 2;
         ctx.beginPath();
         ctx.moveTo(cx, cy);
-        var angle = i * angleStep - Math.PI / 2;
         ctx.lineTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
         ctx.strokeStyle = '#333';
         ctx.stroke();
+        
         // 标签
         ctx.fillStyle = '#aaa';
         ctx.font = '12px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(labels[i], cx + Math.cos(angle) * (r + 20), cy + Math.sin(angle) * (r + 20));
     }
-    // 画数据多边形
+    
+    // 画数据区域
     ctx.beginPath();
     for (var i = 0; i < 5; i++) {
         var angle = i * angleStep - Math.PI / 2;
@@ -712,6 +735,7 @@ function drawRadar(card) {
     ctx.strokeStyle = '#e94560';
     ctx.lineWidth = 2;
     ctx.stroke();
+    
 }
 
 function closePopup() {
@@ -746,6 +770,10 @@ if (!userId) {
         if (d.characters && d.characters.length > 0) {
             allCards = d.characters;
             calcMaxStats(allCards);
+            // 计算满级属性的最大最小值
+            var lv100Result = calcMaxStatsAtLevel(allCards, 100);
+            maxStatsLv100 = lv100Result.maxStats;
+            minStatsLv100 = lv100Result.minStats;
         }
         loadRarityConfig().then(function() {
             loadMyCards();
@@ -753,5 +781,7 @@ if (!userId) {
     });
 }
 </script>
+<!-- 公共属性统计函数 -->
+<script src="stats_utils.js"></script>
 </body>
 </html>
