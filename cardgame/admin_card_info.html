@@ -490,6 +490,10 @@ let rarityConfig = [];
         const maxGrowthStats = { HP: 0, ATK: 0, DEF: 0, SKL: 0, SPD: 0 };
         const minGrowthStats = { HP: Infinity, ATK: Infinity, DEF: Infinity, SKL: Infinity, SPD: Infinity };
         
+        // 100级满级属性的最大最小值（用于雷达图）
+        var maxStatsLv100 = { HP: 0, ATK: 0, DEF: 0, SKL: 0, SPD: 0 };
+        var minStatsLv100 = { HP: 0, ATK: 0, DEF: 0, SKL: 0, SPD: 0 };
+        
         // 动态计算成长最大值和最小值
         function calcMaxGrowthStats() { console.log('calcMaxGrowthStats called, maxGrowthStats:', maxGrowthStats);
             if (!gameData || !gameData.characters) return;
@@ -682,13 +686,19 @@ let rarityConfig = [];
             var cy = h / 2;
             var r = Math.min(w, h) / 2 - 30;
             var labels = ['HP', 'ATK', 'DEF', 'SKL', 'SPD'];
+            
+            // 计算该角色100级时的属性值
+            var statsLv100 = calcStatsAtLevel(card, 100);
+            
+            // 计算百分比（基于满级属性范围）
             var stats = [
-                Math.round(card.baseStats.HP / maxStats.HP * 100),
-                Math.round(card.baseStats.ATK / maxStats.ATK * 100),
-                Math.round(card.baseStats.DEF / maxStats.DEF * 100),
-                Math.round(card.baseStats.SKL / maxStats.SKL * 100),
-                Math.round(card.baseStats.SPD / maxStats.SPD * 100)
+                calcStatPercent(statsLv100.HP, minStatsLv100.HP, maxStatsLv100.HP),
+                calcStatPercent(statsLv100.ATK, minStatsLv100.ATK, maxStatsLv100.ATK),
+                calcStatPercent(statsLv100.DEF, minStatsLv100.DEF, maxStatsLv100.DEF),
+                calcStatPercent(statsLv100.SKL, minStatsLv100.SKL, maxStatsLv100.SKL),
+                calcStatPercent(statsLv100.SPD, minStatsLv100.SPD, maxStatsLv100.SPD)
             ];
+            
             var maxVal = 100;
             var angleStep = (Math.PI * 2) / 5;
             
@@ -704,24 +714,27 @@ let rarityConfig = [];
             
             // 画轴线
             for (var i = 0; i < 5; i++) {
+                var angle = i * angleStep - Math.PI / 2;
                 ctx.beginPath();
                 ctx.moveTo(cx, cy);
-                ctx.lineTo(cx + Math.cos(i * angleStep - Math.PI/2) * r, cy + Math.sin(i * angleStep - Math.PI/2) * r);
+                ctx.lineTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
                 ctx.strokeStyle = '#333';
                 ctx.stroke();
                 
                 // 标签
                 ctx.fillStyle = '#aaa';
-                ctx.font = '12px Arial';
+                ctx.font = '12px sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText(labels[i], cx + Math.cos(i * angleStep - Math.PI/2) * (r + 20), cy + Math.sin(i * angleStep - Math.PI/2) * (r + 20));
+                ctx.fillText(labels[i], cx + Math.cos(angle) * (r + 20), cy + Math.sin(angle) * (r + 20));
             }
             
             // 画数据区域
             ctx.beginPath();
             for (var i = 0; i < 5; i++) {
-                var x = cx + Math.cos(i * angleStep - Math.PI/2) * (r * stats[i] / maxVal);
-                var y = cy + Math.sin(i * angleStep - Math.PI/2) * (r * stats[i] / maxVal);
+                var angle = i * angleStep - Math.PI / 2;
+                var stat = stats[i] / 100 * r;
+                var x = cx + Math.cos(angle) * stat;
+                var y = cy + Math.sin(angle) * stat;
                 if (i === 0) ctx.moveTo(x, y);
                 else ctx.lineTo(x, y);
             }
@@ -732,15 +745,6 @@ let rarityConfig = [];
             ctx.lineWidth = 2;
             ctx.stroke();
             
-            // 画数据点
-            for (var i = 0; i < 5; i++) {
-                var x = cx + Math.cos(i * angleStep - Math.PI/2) * (r * stats[i] / maxVal);
-                var y = cy + Math.sin(i * angleStep - Math.PI/2) * (r * stats[i] / maxVal);
-                ctx.beginPath();
-                ctx.arc(x, y, 5, 0, Math.PI * 2);
-                ctx.fillStyle = '#e94560';
-                ctx.fill();
-            }
         }
         
         // 显示卡片详情弹窗
@@ -850,6 +854,11 @@ let rarityConfig = [];
                 if (r.code === 200) {
                     gameData = { settings: {}, characters: r.characters || [], rarityWeights: {} };
                     renderCards(); renderListView(); calcMaxStats(); calcMaxGrowthStats(); switchView('list'); drawRarityPieChart();
+                    // 计算满级属性的最大最小值
+                    var lv100Result = calcMaxStatsAtLevel(gameData.characters, 100);
+                    maxStatsLv100 = lv100Result.maxStats;
+                    minStatsLv100 = lv100Result.minStats;
+                    console.log('100级属性范围:', minStatsLv100, '-', maxStatsLv100);
                 }
             } catch(e) { console.error('加载失败:', e); }
         }
@@ -1225,6 +1234,8 @@ let rarityConfig = [];
         
         loadData();
     </script>
+    <!-- 公共属性统计函数 -->
+    <script src="stats_utils.js"></script>
     <div style="text-align:center;margin:20px 0;">
         <a href="index.html" style="color:#aaa;text-decoration:none;padding:10px 20px;">🏠 返回主页</a>
     </div>
