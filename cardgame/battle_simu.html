@@ -2,11 +2,18 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>战斗模拟</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>战斗 - 卡牌游戏</title>
+    <link rel="stylesheet" href="app-common.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; padding: 20px; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+        .app-page-header { background: rgba(15,52,96,0.9); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .app-page-header h1 { color: #e94560; font-size: 20px; margin: 0; }
         h1 { color: #e94560; text-align: center; margin-bottom: 20px; }
         .container { max-width: 800px; margin: 0 auto; }
         
@@ -62,7 +69,10 @@
     </style>
 </head>
 <body>
-    <h1>⚔️ 战斗模拟</h1>
+    <div class="app-page-header">
+        <h1>⚔️ 战斗模拟</h1>
+        <button class="app-header-btn" onclick="AppCommon.openUserSheet()">👤</button>
+    </div>
     <div class="container">
         <!-- 选择区域 -->
         <div class="select-area">
@@ -98,10 +108,6 @@
         
         <!-- 战斗日志 -->
         <div id="battleLog" class="battle-log"></div>
-        
-        <div class="back-link">
-            <a href="index.html">← 返回主页</a>
-        </div>
     </div>
 
     <script>
@@ -559,5 +565,17 @@
         // 初始化
         loadData();
     </script>
+
+<!-- 底部 Tab Bar -->
+<nav class="app-tabbar">
+  <a href="draw_card.html" class="tab-item"><span class="tab-icon">🎲</span><span class="tab-label">抽卡</span></a>
+  <a href="my_cards.html" class="tab-item"><span class="tab-icon">📖</span><span class="tab-label">图鉴</span></a>
+  <a href="battle_simu.html" class="tab-item"><span class="tab-icon">⚔️</span><span class="tab-label">战斗</span></a>
+</nav>
+
+<!-- 用户菜单底部 Sheet -->
+<div class="sheet-overlay" id="sheetOverlay"></div>
+<div class="user-sheet" id="userSheet"></div>
+
+<script src="app-common.js"></script>
 </body>
-</html>

@@ -338,6 +338,213 @@ if ($action === 'get_all') {
         }
     }
     echo json_encode(['code'=>200,'msg'=>"更新{$count}张卡的{$field}成长，倍数:{$multiplier}"], JSON_UNESCAPED_UNICODE);
+} elseif ($action === 'delete_card') {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $instance_id = intval($data['instance_id'] ?? 0);
+    $user_id = intval($data['user_id'] ?? 0);
+    if (!$instance_id || !$user_id) { echo json_encode(['code'=>400,'msg'=>'参数错误']); exit; }
+    
+    // Verify card belongs to user
+    $stmt = $db->prepare('SELECT uc.id, uc.card_id, uc.is_favorite, c.name FROM user_cards uc JOIN cards c ON uc.card_id=c.id WHERE uc.id = :id AND uc.user_id = :uid');
+    $stmt->bindValue(':id', $instance_id);
+    $stmt->bindValue(':uid', $user_id);
+    $result = $stmt->execute();
+    $cardRow = $result->fetchArray(SQLITE3_ASSOC);
+    if (!$cardRow) { echo json_encode(['code'=>404,'msg'=>'卡牌不存在或不属于该用户']); exit; }
+    
+    $card_id = intval($cardRow['card_id']);
+    $card_name = $cardRow['name'];
+    $was_favorite = intval($cardRow['is_favorite']);
+    
+    // Count how many of this card the user owns
+    $stmt2 = $db->prepare('SELECT COUNT(*) as cnt FROM user_cards WHERE user_id = :uid AND card_id = :cid');
+    $stmt2->bindValue(':uid', $user_id);
+    $stmt2->bindValue(':cid', $card_id);
+    $cntResult = $stmt2->execute()->fetchArray();
+    $owned_count = intval($cntResult['cnt']);
+    $is_last = ($owned_count <= 1);
+    
+    // Delete the card instance
+    $stmt3 = $db->prepare('DELETE FROM user_cards WHERE id = :id AND user_id = :uid');
+    $stmt3->bindValue(':id', $instance_id);
+    $stmt3->bindValue(':uid', $user_id);
+    $stmt3->execute();
+    
+    // Give currency reward (default: 100 元宝, currency_id=2)
+    $reward_currency_id = intval($data['currency_id'] ?? 2);
+    $reward_amount = intval($data['reward_amount'] ?? 100);
+    
+    // Get currency name
+    $stmt4 = $db->prepare('SELECT name FROM currency WHERE id = :cid');
+    $stmt4->bindValue(':cid', $reward_currency_id);
+    $currResult = $stmt4->execute()->fetchArray();
+    $currency_name = $currResult ? $currResult['name'] : '元宝';
+    
+    // Update user wallet
+    $stmt5 = $db->prepare('SELECT amount FROM user_wallet WHERE user_id = :uid AND currency_id = :cid');
+    $stmt5->bindValue(':uid', $user_id);
+    $stmt5->bindValue(':cid', $reward_currency_id);
+    $walletResult = $stmt5->execute()->fetchArray();
+    if ($walletResult) {
+        $db->exec("UPDATE user_wallet SET amount = amount + $reward_amount WHERE user_id = $user_id AND currency_id = $reward_currency_id");
+    } else {
+        $db->exec("INSERT INTO user_wallet (user_id, currency_id, amount) VALUES ($user_id, $reward_currency_id, $reward_amount)");
+    }
+    
+    // Get new wallet amount
+    $stmt6 = $db->prepare('SELECT amount FROM user_wallet WHERE user_id = :uid AND currency_id = :cid');
+    $stmt6->bindValue(':uid', $user_id);
+    $stmt6->bindValue(':cid', $reward_currency_id);
+    $newWalletResult = $stmt6->execute()->fetchArray();
+    $new_amount = $newWalletResult ? intval($newWalletResult['amount']) : $reward_amount;
+    
+    // Note: user_album is NOT affected - album stays lit even after deleting last card
+    
+    echo json_encode([
+        'code' => 200,
+        'msg' => '删除成功',
+        'card_name' => $card_name,
+        'was_favorite' => $was_favorite,
+        'is_last' => $is_last,
+        'reward' => [
+            'currency_id' => $reward_currency_id,
+            'currency_name' => $currency_name,
+            'amount' => $reward_amount
+        ],
+        'new_wallet_amount' => $new_amount
+    ], JSON_UNESCAPED_UNICODE);
+} elseif ($action === 'level_up_card') {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $target_instance_id = intval($data['target_instance_id'] ?? 0);
+    $material_instance_ids = $data['material_instance_ids'] ?? [];
+    $user_id = intval($data['user_id'] ?? 0);
+    
+    if (!$target_instance_id || !$material_instance_ids || !$user_id) {
+        echo json_encode(['code'=>400,'msg'=>'参数错误']); exit;
+    }
+    if (!is_array($material_instance_ids) || count($material_instance_ids) === 0) {
+        echo json_encode(['code'=>400,'msg'=>'请选择材料卡牌']); exit;
+    }
+    // Prevent feeding the card to itself
+    if (in_array($target_instance_id, $material_instance_ids)) {
+        echo json_encode(['code'=>400,'msg'=>'不能吃自己']); exit;
+    }
+    
+    // Load game config
+    $cfg = [];
+    $cfgResult = $db->query('SELECT key, value FROM game_config');
+    while ($cfgRow = $cfgResult->fetchArray(SQLITE3_ASSOC)) {
+        $cfg[$cfgRow['key']] = $cfgRow['value'];
+    }
+    $max_level = intval($cfg['max_level'] ?? 100);
+    $exp_per_level = intval($cfg['exp_per_level'] ?? 100);
+    $material_base_exp = floatval($cfg['material_base_exp'] ?? 5);
+    $material_rarity_factor = floatval($cfg['material_rarity_factor'] ?? 1.3);
+    
+    // Get target card
+    $stmt = $db->prepare('SELECT uc.id, uc.card_id, uc.level, uc.exp, c.rarity, c.name FROM user_cards uc JOIN cards c ON uc.card_id=c.id WHERE uc.id=:id AND uc.user_id=:uid');
+    $stmt->bindValue(':id', $target_instance_id);
+    $stmt->bindValue(':uid', $user_id);
+    $targetRow = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+    if (!$targetRow) { echo json_encode(['code'=>404,'msg'=>'目标卡牌不存在']); exit; }
+    if (intval($targetRow['level']) >= $max_level) { echo json_encode(['code'=>400,'msg'=>'已达最高等级']); exit; }
+    
+    $target_rarity = intval($targetRow['rarity']);
+    $target_level = intval($targetRow['level']);
+    $target_exp = intval($targetRow['exp']);
+    $target_name = $targetRow['name'];
+    
+    // Calculate total exp from materials
+    $total_exp_gained = 0;
+    $material_details = [];
+    $duplicate_check = [];
+    
+    foreach ($material_instance_ids as $mid) {
+        $mid = intval($mid);
+        if ($mid <= 0) continue;
+        if (isset($duplicate_check[$mid])) { echo json_encode(['code'=>400,'msg'=>'材料卡重复']); exit; }
+        $duplicate_check[$mid] = true;
+        
+        $stmt = $db->prepare('SELECT uc.id, uc.card_id, uc.level, uc.is_favorite, c.rarity, c.name FROM user_cards uc JOIN cards c ON uc.card_id=c.id WHERE uc.id=:id AND uc.user_id=:uid');
+        $stmt->bindValue(':id', $mid);
+        $stmt->bindValue(':uid', $user_id);
+        $matRow = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+        if (!$matRow) { echo json_encode(['code'=>404,'msg'=>'材料卡 '.$mid.' 不存在']); exit; }
+        if (intval($matRow['is_favorite'])) { echo json_encode(['code'=>400,'msg'=>'收藏的卡牌不能作为材料：'.$matRow['name']]); exit; }
+        
+        $mat_level = intval($matRow['level']);
+        $mat_rarity = intval($matRow['rarity']);
+        $rarity_diff = $mat_rarity - $target_rarity;
+        
+        // exp = base × material_level × factor^(diff)
+        $exp_gained = $material_base_exp * $mat_level * pow($material_rarity_factor, $rarity_diff);
+        $exp_gained = max(1, intval(round($exp_gained))); // at least 1 exp
+        
+        $total_exp_gained += $exp_gained;
+        $material_details[] = [
+            'instance_id' => $mid,
+            'name' => $matRow['name'],
+            'rarity' => $mat_rarity,
+            'level' => $mat_level,
+            'exp_gained' => $exp_gained
+        ];
+    }
+    
+    // Apply exp to target card, handle level ups
+    $new_exp = $target_exp + $total_exp_gained;
+    $new_level = $target_level;
+    $levels_gained = 0;
+    
+    while ($new_exp >= $exp_per_level && $new_level < $max_level) {
+        $new_exp -= $exp_per_level;
+        $new_level++;
+        $levels_gained++;
+    }
+    // If max level, cap exp at 0
+    if ($new_level >= $max_level) {
+        $new_exp = 0;
+    }
+    
+    // Update target card
+    $stmt = $db->prepare('UPDATE user_cards SET level=:lv, exp=:exp WHERE id=:id AND user_id=:uid');
+    $stmt->bindValue(':lv', $new_level);
+    $stmt->bindValue(':exp', $new_exp);
+    $stmt->bindValue(':id', $target_instance_id);
+    $stmt->bindValue(':uid', $user_id);
+    $stmt->execute();
+    
+    // Delete material cards
+    $id_placeholders = implode(',', array_fill(0, count($material_instance_ids), '?'));
+    $stmt = $db->prepare('DELETE FROM user_cards WHERE id IN (' . $id_placeholders . ') AND user_id = ?');
+    $i = 1;
+    foreach ($material_instance_ids as $mid) {
+        $stmt->bindValue($i++, intval($mid));
+    }
+    $stmt->bindValue($i, $user_id);
+    $stmt->execute();
+    
+    echo json_encode([
+        'code' => 200,
+        'msg' => '升级成功',
+        'card_name' => $target_name,
+        'old_level' => $target_level,
+        'new_level' => $new_level,
+        'levels_gained' => $levels_gained,
+        'exp_gained' => $total_exp_gained,
+        'exp_current' => $new_exp,
+        'exp_per_level' => $exp_per_level,
+        'materials_consumed' => count($material_details),
+        'material_details' => $material_details
+    ], JSON_UNESCAPED_UNICODE);
+
+} elseif ($action === 'get_game_config') {
+    $cfg = [];
+    $result = $db->query('SELECT key, value FROM game_config');
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        $cfg[$row['key']] = $row['value'];
+    }
+    echo json_encode(['code'=>200, 'config'=>$cfg], JSON_UNESCAPED_UNICODE);
+
 } elseif ($action === 'update_favorite') {
     $data = json_decode(file_get_contents('php://input'), true);
     $instance_id = intval($data['instance_id'] ?? 0);

@@ -2,8 +2,13 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>卡牌游戏</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="mobile-web-app-capable" content="yes">
+<title>抽卡 - 卡牌游戏</title>
+<link rel="stylesheet" href="app-common.css">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #eee; min-height: 100vh; }
@@ -134,12 +139,14 @@ body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: linear-gra
 </head>
 <body>
 <div class="header">
-<h1>🎮 卡牌游戏</h1>
-
-        <select id="configSelect" onchange="changeConfig(this.value)" style="margin-left:15px;padding:5px;background:#1a1a2e;color:#eee;border:1px solid #0f3460;border-radius:5px;">
+<h1>🎲 抽卡</h1>
+<div style="display:flex;align-items:center;gap:8px;">
+        <select id="configSelect" onchange="changeConfig(this.value)" style="padding:5px;background:#1a1a2e;color:#eee;border:1px solid #0f3460;border-radius:5px;font-size:12px;max-width:140px;">
             <option value="">加载中...</option>
         </select>
-        <button onclick="previewProbability()" style="margin-left:10px;padding:5px 10px;background:#2196f3;color:white;border:none;border-radius:5px;cursor:pointer;font-size:12px;">📊 概率</button>
+        <button onclick="previewProbability()" style="padding:5px 10px;background:#2196f3;color:white;border:none;border-radius:5px;cursor:pointer;font-size:12px;">📊</button>
+        <button class="app-header-btn" onclick="AppCommon.openUserSheet()">👤</button>
+</div>
 </div>
 <div class="container">
 <div class="top-draw-area">
@@ -1162,9 +1169,7 @@ container.classList.add('show');
 renderMyCards();
 }
 </script>
-    <div style="text-align:center;margin:20px 0;">
-        <a href="index.html" style="color:#aaa;text-decoration:none;padding:10px 20px;">🏠 返回主页</a>
-    </div>
+    <!-- 返回主页链接已移除，由底部Tab Bar替代 -->
 
 <!-- 概率预览弹窗 -->
 <div class="modal" id="probabilityPopup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:2000;overflow-y:auto;justify-content:center;padding:20px;">
@@ -1190,5 +1195,18 @@ renderMyCards();
 .prob-item.zero-prob { opacity: 0.5; }
 .prob-item.zero-prob .card-prob { color: #666; }
 </style>
+
+<!-- 底部 Tab Bar -->
+<nav class="app-tabbar">
+  <a href="draw_card.html" class="tab-item"><span class="tab-icon">🎲</span><span class="tab-label">抽卡</span></a>
+  <a href="my_cards.html" class="tab-item"><span class="tab-icon">📖</span><span class="tab-label">图鉴</span></a>
+  <a href="battle_simu.html" class="tab-item"><span class="tab-icon">⚔️</span><span class="tab-label">战斗</span></a>
+</nav>
+
+<!-- 用户菜单底部 Sheet -->
+<div class="sheet-overlay" id="sheetOverlay"></div>
+<div class="user-sheet" id="userSheet"></div>
+
+<script src="app-common.js"></script>
 </body>
 </html>
