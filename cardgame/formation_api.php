@@ -11,6 +11,16 @@ $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
 // ---- 编队相关 ----
 
+// 获取稀有度列表
+if ($action === 'get_rarity_list') {
+    $result = $db->query('SELECT rarity, name, color FROM rarity ORDER BY rarity');
+    $rarities = [];
+    while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        $rarities[] = $row;
+    }
+    echo json_encode(['code'=>200,'rarities'=>$rarities], JSON_UNESCAPED_UNICODE);
+}
+
 // 获取用户所有编队（带卡牌信息）
 if ($action === 'get_formations') {
     $user_id = intval($_GET['user_id'] ?? $_POST['user_id'] ?? 0);
@@ -57,6 +67,7 @@ if ($action === 'get_formations') {
     $user_id = intval($data['user_id'] ?? 0);
     $slot = intval($data['formation_slot'] ?? 1);
     $name = trim($data['name'] ?? '');
+    if ($name === '') { $name = '编队' . $slot; }
     $card_ids = $data['card_ids'] ?? []; // array of {instance_id, position}
 
     if (!$user_id) { echo json_encode(['code'=>400,'msg'=>'user_id required']); exit; }
@@ -149,6 +160,7 @@ if ($action === 'get_formations') {
     $user_id = intval($_GET['user_id'] ?? $_POST['user_id'] ?? 0);
     $current_slot = intval($_GET['current_slot'] ?? 0);
     $filter = $_GET['filter'] ?? 'favorite'; // 'all' or 'favorite'
+    $rarity = isset($_GET['rarity']) ? intval($_GET['rarity']) : 0;
     if (!$user_id) { echo json_encode(['code'=>400,'msg'=>'user_id required']); exit; }
 
     // 收集所有已在其他编队中的 instance_id
@@ -160,12 +172,14 @@ if ($action === 'get_formations') {
     $res = $stmt->execute();
     $used_ids = [];
     while ($row = $res->fetchArray()) $used_ids[] = intval($row['user_card_id']);
-    $used_str = count($used_ids) > 0 ? implode(',', $used_ids) : '0';
 
     // 根据 filter 参数决定是否只返回收藏的卡
     $where = 'uc.user_id = :uid';
     if ($filter === 'favorite') {
         $where .= ' AND uc.is_favorite = 1';
+    }
+    if ($rarity > 0) {
+        $where .= ' AND c.rarity = :rarity';
     }
 
     $stmt = $db->prepare("SELECT uc.id as instance_id, uc.card_id, uc.level, uc.exp, uc.is_favorite,
@@ -175,6 +189,9 @@ if ($action === 'get_formations') {
         WHERE $where
         ORDER BY c.rarity DESC, uc.level DESC, c.name");
     $stmt->bindValue(':uid', $user_id);
+    if ($rarity > 0) {
+        $stmt->bindValue(':rarity', $rarity);
+    }
     $res = $stmt->execute();
     $cards = [];
     while ($row = $res->fetchArray(SQLITE3_ASSOC)) {

@@ -95,10 +95,7 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif;
     white-space: nowrap; text-overflow: ellipsis; }
 .picker-card .plevel { text-align: center; font-size: 9px; color: #666; padding: 0 2px 4px; }
                       text-overflow: ellipsis; white-space: nowrap; color: #aaa; }
-.picker-card .pin-formation-tag { position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
-    font-size: 9px; color: #888; display: none; }
-.picker-card.in-formation .pin-formation-tag { display: flex; }
+
 
 /* Toast */
 .toast { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%);
@@ -174,16 +171,21 @@ body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif;
         <button class="picker-modal-close" onclick="closePicker()">&times;</button>
       </div>
       <div class="picker-controls">
-        <select id="filterFavorite" onchange="applyFilterSort()">
+        <select id="filterFavorite" onchange="reloadPickerCards()">
           <option value="all">全部卡牌</option>
           <option value="favorite" selected>仅收藏</option>
         </select>
+        <select id="filterRarity" onchange="reloadPickerCards()">
+          <option value="0">全部稀有度</option>
+        </select>
         <select id="sortSelect" onchange="applyFilterSort()">
-          <option value="">默认排序</option>
           <option value="rarity-desc">稀有度↓</option>
-          <option value="rarity-asc">稀有度↑</option>
           <option value="level-desc">等级↓</option>
-          <option value="level-asc">等级↑</option>
+          <option value="hp-desc">HP↓</option>
+          <option value="atk-desc">ATK↓</option>
+          <option value="def-desc">DEF↓</option>
+          <option value="skl-desc">SKL↓</option>
+          <option value="spd-desc">SPD↓</option>
         </select>
       </div>
       <div class="picker-modal-body">
@@ -324,7 +326,7 @@ function switchSlot(slot) {
 // ---- Render view mode ----
 function renderCurrentFormation() {
     var f = formations.find(function(x) { return x.formation_slot === currentSlot; }) || {};
-    var name = f.name || '';
+    var name = f.name || ('编队' + currentSlot);
     var cards = f.cards || [];
 
     document.getElementById('formationName').value = name;
@@ -391,7 +393,7 @@ function startEdit() {
         editSelected[c.position] = c;
     });
 
-    document.getElementById('formationNameEdit').value = f.name || '';
+    document.getElementById('formationNameEdit').value = f.name || ('编队' + currentSlot);
     document.getElementById('viewMode').style.display = 'none';
     document.getElementById('editMode').style.display = '';
 
@@ -401,13 +403,36 @@ function startEdit() {
 
 function loadPickerCards() {
     openPicker();
+    // 加载稀有度列表
+    fetch('game_api.php?action=get_rarity')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        var sel = document.getElementById('filterRarity');
+        sel.innerHTML = '<option value="0">全部稀有度</option>';
+        if (d.rarity && d.rarity.length > 0) {
+            d.rarity.forEach(function(r) {
+                if (r.rarity && r.name) {
+                    var opt = document.createElement('option');
+                    opt.value = r.rarity;
+                    opt.textContent = '⭐'.repeat(r.rarity) + ' ' + r.name;
+                    sel.appendChild(opt);
+                }
+            });
+        }
+    }).catch(function(e) { console.error('[DEBUG] rarity load error:', e); });
+    // 加载卡牌
+    reloadPickerCards();
+}
+
+function reloadPickerCards() {
     var filter = document.getElementById('filterFavorite').value || 'favorite';
-    fetch('formation_api.php?action=get_formation_cards&user_id=' + userId + '&current_slot=' + currentSlot + '&filter=' + filter)
+    var rarity = document.getElementById('filterRarity').value || '0';
+    fetch('formation_api.php?action=get_formation_cards&user_id=' + userId + '&current_slot=' + currentSlot + '&filter=' + filter + '&rarity=' + rarity)
     .then(function(r) { return r.json(); })
     .then(function(d) {
         allAvailableCards = d.cards || [];
         availableCards = allAvailableCards;
-        applyFilterSort(); // 应用当前的排序规则
+        applyFilterSort();
     }).catch(function() { showToast('加载卡牌失败'); });
 }
 
@@ -459,30 +484,31 @@ function focusPicker() {
 
 // ---- Filter & Sort ----
 function applyFilterSort() {
-    var filter = document.getElementById('filterFavorite').value || 'favorite';
     var sort = document.getElementById('sortSelect').value || '';
 
-    // Reload with new filter (the API handles the filter)
-    fetch('formation_api.php?action=get_formation_cards&user_id=' + userId + '&current_slot=' + currentSlot + '&filter=' + filter)
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-        allAvailableCards = d.cards || [];
+    var sorted = allAvailableCards.slice();
+    var statMap = {
+        'rarity-desc': 'rarity', 'level-desc': 'level',
+        'hp-desc': 'hp', 'atk-desc': 'ATK', 'def-desc': 'DEF', 'skl-desc': 'SKL', 'spd-desc': 'SPD'
+    };
+    var stat = statMap[sort] || 'rarity';
 
-        // Sort locally
-        var sorted = allAvailableCards.slice();
-        if (sort === 'rarity-asc') {
-            sorted.sort(function(a, b) { return a.rarity - b.rarity; });
-        } else if (sort === 'rarity-desc') {
-            sorted.sort(function(a, b) { return b.rarity - a.rarity; });
-        } else if (sort === 'level-asc') {
-            sorted.sort(function(a, b) { return a.level - b.level; });
-        } else if (sort === 'level-desc') {
-            sorted.sort(function(a, b) { return b.level - a.level; });
+    sorted.sort(function(a, b) {
+        var va, vb;
+        if (stat === 'rarity' || stat === 'level') {
+            va = a[stat] || 0;
+            vb = b[stat] || 0;
+        } else {
+            var sa = calcStats(a), sb = calcStats(b);
+            va = sa[stat] || 0;
+            vb = sb[stat] || 0;
         }
+        if (vb !== va) return vb - va;
+        return (a.name || '').localeCompare(b.name || '');
+    });
 
-        availableCards = sorted;
-        renderPickerCards();
-    }).catch(function() { showToast('加载卡牌失败'); });
+    availableCards = sorted;
+    renderPickerCards();
 }
 
 function renderPickerCards() {
@@ -505,9 +531,6 @@ function renderPickerCards() {
         html += '<img src="' + getImageUrl(card) + '" alt="' + card.name + '">';
         html += '<div class="pname" style="color:' + rc + ';">' + card.name + '</div>';
         html += '<div class="plevel">Lv.' + card.level + '</div>';
-        if (inOther) {
-            html += '<div class="pin-formation-tag">已在其他编队</div>';
-        }
         html += '</div>';
     });
 
