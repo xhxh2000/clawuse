@@ -549,6 +549,20 @@ if ($action === 'get_all') {
     $data = json_decode(file_get_contents('php://input'), true);
     $instance_id = intval($data['instance_id'] ?? 0);
     $is_favorite = intval($data['is_favorite'] ?? 0);
+
+    // 如果要取消收藏，检查是否在编队中
+    if ($is_favorite === 0) {
+        $stmt = $db->prepare('SELECT ufc.id FROM user_formation_cards ufc
+            JOIN user_formations uf ON ufc.formation_id = uf.id
+            WHERE ufc.user_card_id = :uid LIMIT 1');
+        $stmt->bindValue(':uid', $instance_id);
+        $inFormation = $stmt->execute()->fetchArray();
+        if ($inFormation) {
+            echo json_encode(['code'=>400,'msg'=>'该卡牌已在编队中，无法取消收藏，请先从编队移除'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+    }
+
     $stmt = $db->prepare('UPDATE user_cards SET is_favorite = :f WHERE id = :id');
     $stmt->bindValue(':f', $is_favorite);
     $stmt->bindValue(':id', $instance_id);

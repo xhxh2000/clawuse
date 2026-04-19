@@ -55,7 +55,6 @@
       '<div class="user-sheet-avatar">' + (isAdmin ? '👑' : '👤') + '</div>' +
       '<div class="user-sheet-info">' +
         '<h3>' + username + (isAdmin ? ' <span style="font-size:12px;color:#ffd700;">管理员</span>' : '') + '</h3>' +
-        '<p>💰 ' + gold + ' 元宝</p>' +
       '</div>' +
     '</div>' +
     '<div class="user-sheet-menu">';

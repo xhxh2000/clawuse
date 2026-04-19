@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a1a">
+<title>编队管理</title>
+<link rel="stylesheet" href="app-common.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0a0a1a; color: #fff; font-family: system-ui, sans-serif;
+       padding: 16px; padding-bottom: 80px; min-height: 100vh; }
+
+/* Header */
+.f-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.f-back { background: none; border: none; color: #e94560; font-size: 20px; cursor: pointer;
+         padding: 4px 8px; border-radius: 8px; }
+.f-back:active { background: rgba(233,69,96,0.15); }
+.f-title { font-size: 18px; color: #eee; flex: 1; text-align: center; }
+
+/* Formation slot tabs */
+.slot-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+.slot-tab { flex: 1; padding: 10px 8px; background: #1a1a2e; border: 2px solid #1a1a2e;
+            border-radius: 10px; color: #888; font-size: 14px; text-align: center;
+            cursor: pointer; transition: all 0.2s; }
+.slot-tab.active { border-color: #e94560; color: #e94560; background: rgba(233,69,96,0.12); }
+.slot-tab .slot-num { font-size: 18px; display: block; }
+.slot-tab .slot-count { font-size: 11px; color: #666; display: block; margin-top: 2px; }
+.slot-tab.active .slot-count { color: #e94560; }
+
+/* Formation name input */
+.formation-name-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.formation-name-row label { color: #888; font-size: 14px; }
+#formationName { flex: 1; background: #1a1a2e; border: 1px solid #0f3460; border-radius: 8px;
+                  color: #fff; padding: 8px 12px; font-size: 15px; }
+
+/* 6 slots grid */
+.slots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+.slot-card { aspect-ratio: 0.7; border-radius: 10px; overflow: hidden; display: flex;
+             flex-direction: column; align-items: center; justify-content: center;
+             cursor: pointer; transition: transform 0.15s; position: relative; }
+.slot-card:active { transform: scale(0.96); }
+.slot-card.empty { border: 2px dashed #333; background: #0d0d20; color: #444; font-size: 28px; }
+.slot-card.filled { border: 2px solid; }
+.slot-card .slot-level { position: absolute; bottom: 4px; right: 4px;
+                         background: rgba(0,0,0,0.65); color: #ffd700; font-size: 10px;
+                         padding: 1px 5px; border-radius: 4px; font-weight: bold; }
+.slot-card .slot-rarity { position: absolute; top: 4px; left: 4px; font-size: 10px; }
+.slot-card .slot-img { width: 100%; height: 100%; object-fit: contain; padding: 6px; }
+.slot-card .slot-empty-icon { font-size: 32px; color: #333; }
+
+/* Action buttons */
+.action-row { display: flex; gap: 10px; margin-bottom: 20px; }
+.btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 15px;
+       cursor: pointer; font-weight: 600; transition: transform 0.1s; }
+.btn:active { transform: scale(0.95); }
+.btn-save { background: #e94560; color: #fff; }
+.btn-clear { background: #2a2a4a; color: #aaa; }
+.btn-cancel { background: #2a2a4a; color: #ccc; }
+
+/* Card picker modal overlay */
+.picker-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                   background: rgba(0,0,0,0.6); z-index: 1000; align-items: flex-end;
+                   justify-content: center; }
+.picker-overlay.show { display: flex; }
+.picker-modal { background: #0f0f24; border-radius: 16px 16px 0 0; width: 100%;
+                max-height: 65vh; display: flex; flex-direction: column; overflow: hidden; }
+.picker-modal-header { display: flex; align-items: center; justify-content: space-between;
+                       padding: 14px 16px 10px; flex-shrink: 0; }
+.picker-modal-header .picker-title { color: #fff; font-size: 15px; font-weight: 600; }
+.picker-modal-header .picker-count { color: #e94560; font-size: 13px; }
+.picker-modal-close { background: none; border: none; color: #888; font-size: 22px;
+                      cursor: pointer; padding: 0 4px; line-height: 1; }
+.picker-modal-close:active { color: #e94560; }
+
+/* Filter and sort controls */
+.picker-controls { display: flex; gap: 8px; padding: 0 16px 10px; flex-shrink: 0; }
+.picker-controls select { background: #1a1a2e; border: 1px solid #0f3460; border-radius: 6px;
+                         color: #ccc; padding: 6px 8px; font-size: 12px; flex: 1; min-width: 80px; }
+.picker-controls select:focus { outline: none; border-color: #e94560; }
+
+.picker-modal-body { flex: 1; overflow-y: auto; padding: 0 16px 16px; -webkit-overflow-scrolling: touch; }
+.picker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.picker-card { border-radius: 8px; overflow: hidden; cursor: pointer; transition: transform 0.15s;
+               position: relative; border: 2px solid transparent; }
+.picker-card:active { transform: scale(0.94); }
+.picker-card.selected { border-color: #e94560; }
+.picker-card.in-formation { opacity: 0.45; cursor: not-allowed; }
+.picker-card .pcount { position: absolute; bottom: 2px; right: 3px; background: rgba(0,0,0,0.7);
+                        color: #fff; font-size: 9px; padding: 0 3px; border-radius: 3px; }
+.picker-card img { width: 100%; aspect-ratio: 0.7; object-fit: contain; padding: 4px; display: block; }
+.picker-card .pname { text-align: center; font-size: 10px; padding: 2px 2px 0; overflow: hidden;
+    white-space: nowrap; text-overflow: ellipsis; }
+.picker-card .plevel { text-align: center; font-size: 9px; color: #666; padding: 0 2px 4px; }
+                      text-overflow: ellipsis; white-space: nowrap; color: #aaa; }
+.picker-card .pin-formation-tag { position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: #888; display: none; }
+.picker-card.in-formation .pin-formation-tag { display: flex; }
+
+/* Toast */
+.toast { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%);
+         background: rgba(20,20,40,0.95); color: #fff; padding: 10px 20px;
+         border-radius: 20px; font-size: 14px; z-index: 9999; opacity: 0;
+         transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
+.toast.show { opacity: 1; }
+
+/* Hint text */
+.hint { color: #555; font-size: 12px; text-align: center; margin-top: 8px; }
+
+/* Formation stats summary */
+.formation-summary { background: #0d0d20; border-radius: 10px; padding: 12px; margin-bottom: 16px; }
+.formation-summary .sum-label { color: #666; font-size: 12px; margin-bottom: 8px; }
+.formation-summary .sum-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; text-align: center; }
+.formation-summary .sum-stat .sv { font-size: 13px; font-weight: bold; color: #ffd700; }
+.formation-summary .sum-stat .sl { font-size: 10px; color: #666; }
+
+/* Edit toolbar */
+.edit-toolbar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
+.edit-toolbar label { color: #888; font-size: 13px; }
+#formationNameEdit { flex: 1; background: #1a1a2e; border: 1px solid #0f3460; border-radius: 8px;
+                     color: #fff; padding: 8px 12px; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="f-header">
+  <button class="f-back" onclick="goBack()">←</button>
+  <div class="f-title">🛡️ 编队管理</div>
+  <div style="width:36px;"></div>
+</div>
+
+<!-- 编队槽位切换 -->
+<div class="slot-tabs" id="slotTabs"></div>
+
+<!-- 查看模式 -->
+<div id="viewMode">
+  <div class="formation-name-row">
+    <label>编队名称</label>
+    <input type="text" id="formationName" placeholder="默认名称" maxlength="20">
+  </div>
+  <div class="slots-grid" id="slotsGrid"></div>
+  <div class="formation-summary" id="formationSummary">
+    <div class="sum-label">队伍总评</div>
+    <div class="sum-stats" id="sumStats"></div>
+  </div>
+  <div class="action-row">
+    <button class="btn btn-clear" onclick="clearFormation()">🗑 清空</button>
+    <button class="btn btn-save" onclick="startEdit()">✏️ 编辑</button>
+  </div>
+</div>
+
+<!-- 编辑模式 -->
+<div id="editMode" style="display:none;">
+  <div class="edit-toolbar">
+    <label>名称</label>
+    <input type="text" id="formationNameEdit" placeholder="默认名称" maxlength="20">
+  </div>
+  <div class="slots-grid" id="editSlotsGrid"></div>
+  <div class="hint" id="editHint">点击空槽位选择卡牌，点击已有卡牌移除</div>
+  <div class="action-row" style="margin-top:14px;">
+    <button class="btn btn-cancel" onclick="cancelEdit()">取消</button>
+    <button class="btn btn-save" onclick="saveFormation()">💾 保存</button>
+  </div>
+
+  <!-- 卡牌选择器弹出框 -->
+  <div class="picker-overlay" id="pickerOverlay" onclick="closePickerOnOverlay(event)">
+    <div class="picker-modal">
+      <div class="picker-modal-header">
+        <span class="picker-title">选择卡牌</span>
+        <span class="picker-count" id="pickerCount"></span>
+        <button class="picker-modal-close" onclick="closePicker()">&times;</button>
+      </div>
+      <div class="picker-controls">
+        <select id="filterFavorite" onchange="applyFilterSort()">
+          <option value="all">全部卡牌</option>
+          <option value="favorite" selected>仅收藏</option>
+        </select>
+        <select id="sortSelect" onchange="applyFilterSort()">
+          <option value="">默认排序</option>
+          <option value="rarity-desc">稀有度↓</option>
+          <option value="rarity-asc">稀有度↑</option>
+          <option value="level-desc">等级↓</option>
+          <option value="level-asc">等级↑</option>
+        </select>
+      </div>
+      <div class="picker-modal-body">
+        <div class="picker-grid" id="pickerGrid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- Config ----
+var userId = null;
+var rarityBgColors = ['', '#aaaaaa', '#4caf50', '#2196f3', '#9c27b0', '#ff9800', '#f32b2b'];
+var rarityColors = ['', '#ffffff', '#4caf50', '#2196f3', '#9c27b0', '#ff9800', '#f32b2b'];
+var rarityConfig = [];
+
+// ---- State ----
+var formations = []; // [{id, formation_slot, name, cards:[]}]
+var currentSlot = 1;
+var editSelected = {}; // position -> card instance
+var availableCards = [];
+var allAvailableCards = []; // 原始数据
+var inEditMode = false;
+
+// ---- Init ----
+(function init() {
+    // 优先从 localStorage 获取（与其他页面一致）
+    var uid = localStorage.getItem('user_id');
+    if (uid) {
+        userId = parseInt(uid);
+        loadAll();
+    } else {
+        // 回退：尝试 URL 参数
+        var params = new URLSearchParams(window.location.search);
+        var urlUid = params.get('user_id');
+        if (urlUid) {
+            userId = parseInt(urlUid);
+            localStorage.setItem('user_id', userId);
+            loadAll();
+        } else {
+            location.href = 'login.html';
+        }
+    }
+})();
+
+function loadAll() {
+    loadRarityConfig().then(function() {
+        loadFormations();
+    });
+}
+
+function loadRarityConfig() {
+    return fetch('game_api.php?action=get_rarity').then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.rarity) {
+            rarityConfig = d.rarity;
+            d.rarity.forEach(function(cfg) {
+                if (cfg.rarity) {
+                    rarityBgColors[cfg.rarity] = lightenColor(cfg.color || '#fff', 0.85);
+                    rarityColors[cfg.rarity] = cfg.color || '#fff';
+                }
+            });
+        }
+    }).catch(function() {});
+}
+
+function lightenColor(hex, factor) {
+    if (!hex || hex.length < 7) return '#333';
+    try {
+        var r = parseInt(hex.slice(1,3), 16);
+        var g = parseInt(hex.slice(3,5), 16);
+        var b = parseInt(hex.slice(5,7), 16);
+        r = Math.round(r + (255-r)*factor);
+        g = Math.round(g + (255-g)*factor);
+        b = Math.round(b + (255-b)*factor);
+        return '#' + (r<16?'0':'')+r.toString(16)+(g<16?'0':'')+g.toString(16)+(b<16?'0':'')+b.toString(16);
+    } catch(e) { return '#333'; }
+}
+
+function getRarityColor(r) { return rarityColors[r] || '#fff'; }
+function getImageUrl(card) { return card.image || 'data/images/default.png'; }
+function calcStats(card) {
+    var lv = card.level || 1;
+    var bs = card.baseStats || {};
+    var gs = card.growthStats || {};
+    return {
+        hp:  Math.round((bs.HP  || 0) + (lv-1)*(gs.HP  || 0)),
+        ATK: Math.round((bs.ATK || 0) + (lv-1)*(gs.ATK || 0)),
+        DEF: Math.round((bs.DEF || 0) + (lv-1)*(gs.DEF || 0)),
+        SKL: Math.round((bs.SKL || 0) + (lv-1)*(gs.SKL || 0)),
+        SPD: Math.round((bs.SPD || 0) + (lv-1)*(gs.SPD || 0))
+    };
+}
+
+// ---- Load formations ----
+function loadFormations() {
+    fetch('formation_api.php?action=get_formations&user_id=' + userId)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        formations = d.formations || [];
+        renderSlotTabs();
+        renderCurrentFormation();
+    }).catch(function(e) { showToast('加载失败'); console.error(e); });
+}
+
+// ---- Tab bar ----
+function renderSlotTabs() {
+    var html = '';
+    for (var i = 1; i <= 3; i++) {
+        var f = formations.find(function(x) { return x.formation_slot === i; });
+        var count = f ? f.cards.length : 0;
+        var active = i === currentSlot ? 'active' : '';
+        html += '<div class="slot-tab ' + active + '" onclick="switchSlot(' + i + ')">';
+        html += '<span class="slot-num">编队' + i + '</span>';
+        html += '<span class="slot-count">' + count + '/6</span>';
+        html += '</div>';
+    }
+    document.getElementById('slotTabs').innerHTML = html;
+}
+
+function switchSlot(slot) {
+    if (inEditMode) {
+        saveFormation(function() {
+            currentSlot = slot;
+            inEditMode = false;
+            renderSlotTabs();
+            renderCurrentFormation();
+        });
+    } else {
+        currentSlot = slot;
+        renderSlotTabs();
+        renderCurrentFormation();
+    }
+}
+
+// ---- Render view mode ----
+function renderCurrentFormation() {
+    var f = formations.find(function(x) { return x.formation_slot === currentSlot; }) || {};
+    var name = f.name || '';
+    var cards = f.cards || [];
+
+    document.getElementById('formationName').value = name;
+    document.getElementById('viewMode').style.display = '';
+    document.getElementById('editMode').style.display = 'none';
+
+    // 6 slots
+    var grid = document.getElementById('slotsGrid');
+    var html = '';
+    for (var i = 1; i <= 6; i++) {
+        var card = cards.find(function(c) { return c.position === i; });
+        if (card) {
+            var rc = getRarityColor(card.rarity);
+            var bg = lightenColor(rarityColors[card.rarity] || '#fff', 0.88);
+            html += '<div class="slot-card filled" style="background:' + bg + ';border-color:' + rc + ';">';
+            html += '<span class="slot-rarity">' + '⭐'.repeat(card.rarity) + '</span>';
+            html += '<img class="slot-img" src="' + getImageUrl(card) + '" alt="' + card.name + '">';
+            html += '<div class="slot-level">Lv.' + card.level + '</div>';
+            html += '</div>';
+        } else {
+            html += '<div class="slot-card empty" onclick="if(!inEditMode)startEdit()">';
+            html += '<div class="slot-empty-icon">+</div>';
+            html += '</div>';
+        }
+    }
+    grid.innerHTML = html;
+
+    // Summary stats
+    renderFormationSummary(cards);
+}
+
+function renderFormationSummary(cards) {
+    if (!cards || cards.length === 0) {
+        document.getElementById('formationSummary').style.display = 'none';
+        return;
+    }
+    document.getElementById('formationSummary').style.display = '';
+    var totals = {hp:0, ATK:0, DEF:0, SKL:0, SPD:0};
+    cards.forEach(function(c) {
+        var s = calcStats(c);
+        totals.hp  += s.hp;
+        totals.ATK += s.ATK;
+        totals.DEF += s.DEF;
+        totals.SKL += s.SKL;
+        totals.SPD += s.SPD;
+    });
+    var html = '';
+    ['hp','ATK','DEF','SKL','SPD'].forEach(function(k) {
+        html += '<div class="sum-stat"><div class="sv">' + totals[k] + '</div><div class="sl">' + k + '</div></div>';
+    });
+    document.getElementById('sumStats').innerHTML = html;
+}
+
+// ---- Edit mode ----
+function startEdit() {
+    inEditMode = true;
+    editSelected = {};
+
+    var f = formations.find(function(x) { return x.formation_slot === currentSlot; }) || {};
+    var cards = f.cards || [];
+
+    // Pre-fill from current formation
+    cards.forEach(function(c) {
+        editSelected[c.position] = c;
+    });
+
+    document.getElementById('formationNameEdit').value = f.name || '';
+    document.getElementById('viewMode').style.display = 'none';
+    document.getElementById('editMode').style.display = '';
+
+    renderEditSlots();
+    loadPickerCards();
+}
+
+function loadPickerCards() {
+    openPicker();
+    var filter = document.getElementById('filterFavorite').value || 'favorite';
+    fetch('formation_api.php?action=get_formation_cards&user_id=' + userId + '&current_slot=' + currentSlot + '&filter=' + filter)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        allAvailableCards = d.cards || [];
+        availableCards = allAvailableCards;
+        applyFilterSort(); // 应用当前的排序规则
+    }).catch(function() { showToast('加载卡牌失败'); });
+}
+
+function renderEditSlots() {
+    var grid = document.getElementById('editSlotsGrid');
+    var html = '';
+    for (var i = 1; i <= 6; i++) {
+        var card = editSelected[i];
+        if (card) {
+            var rc = getRarityColor(card.rarity);
+            var bg = lightenColor(rarityColors[card.rarity] || '#fff', 0.88);
+            html += '<div class="slot-card filled" style="background:' + bg + ';border-color:' + rc + ';" onclick="removeFromSlot(' + i + ')">';
+            html += '<span class="slot-rarity">' + '⭐'.repeat(card.rarity) + '</span>';
+            html += '<img class="slot-img" src="' + getImageUrl(card) + '" alt="' + card.name + '">';
+            html += '<div class="slot-level">Lv.' + card.level + '</div>';
+            html += '<div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;">×</div>';
+            html += '</div>';
+        } else {
+            html += '<div class="slot-card empty" onclick="focusPicker()">';
+            html += '<div class="slot-empty-icon">+</div>';
+            html += '</div>';
+        }
+    }
+    grid.innerHTML = html;
+}
+
+function removeFromSlot(pos) {
+    delete editSelected[pos];
+    renderEditSlots();
+}
+
+function openPicker() {
+    document.getElementById('pickerOverlay').classList.add('show');
+}
+
+function closePicker() {
+    document.getElementById('pickerOverlay').classList.remove('show');
+}
+
+function closePickerOnOverlay(e) {
+    if (e.target === document.getElementById('pickerOverlay')) {
+        closePicker();
+    }
+}
+
+function focusPicker() {
+    openPicker();
+}
+
+// ---- Filter & Sort ----
+function applyFilterSort() {
+    var filter = document.getElementById('filterFavorite').value || 'favorite';
+    var sort = document.getElementById('sortSelect').value || '';
+
+    // Reload with new filter (the API handles the filter)
+    fetch('formation_api.php?action=get_formation_cards&user_id=' + userId + '&current_slot=' + currentSlot + '&filter=' + filter)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        allAvailableCards = d.cards || [];
+
+        // Sort locally
+        var sorted = allAvailableCards.slice();
+        if (sort === 'rarity-asc') {
+            sorted.sort(function(a, b) { return a.rarity - b.rarity; });
+        } else if (sort === 'rarity-desc') {
+            sorted.sort(function(a, b) { return b.rarity - a.rarity; });
+        } else if (sort === 'level-asc') {
+            sorted.sort(function(a, b) { return a.level - b.level; });
+        } else if (sort === 'level-desc') {
+            sorted.sort(function(a, b) { return b.level - a.level; });
+        }
+
+        availableCards = sorted;
+        renderPickerCards();
+    }).catch(function() { showToast('加载卡牌失败'); });
+}
+
+function renderPickerCards() {
+    var grid = document.getElementById('pickerGrid');
+    var cardList = Object.values(editSelected);
+    var usedIds = cardList.map(function(c) { return c.instance_id; });
+
+    var html = '';
+    availableCards.forEach(function(card) {
+        var isSelected = usedIds.indexOf(card.instance_id) >= 0;
+        var inOther = card.in_other_formation;
+        var cls = 'picker-card';
+        if (isSelected) cls += ' selected';
+        if (inOther) cls += ' in-formation';
+        var rc = getRarityColor(card.rarity);
+        var bg = lightenColor(rarityColors[card.rarity] || '#fff', 0.88);
+
+        html += '<div class="' + cls + '" style="background:' + bg + ';" ';
+        html += 'onclick="togglePickerCard(' + card.instance_id + ',' + inOther + ',' + isSelected + ')">';
+        html += '<img src="' + getImageUrl(card) + '" alt="' + card.name + '">';
+        html += '<div class="pname" style="color:' + rc + ';">' + card.name + '</div>';
+        html += '<div class="plevel">Lv.' + card.level + '</div>';
+        if (inOther) {
+            html += '<div class="pin-formation-tag">已在其他编队</div>';
+        }
+        html += '</div>';
+    });
+
+    if (availableCards.length === 0) {
+        html = '<div style="grid-column:1/-1;color:#555;font-size:13px;text-align:center;padding:20px;">还没有收藏的卡牌</div>';
+    }
+
+    grid.innerHTML = html;
+    document.getElementById('pickerCount').textContent = availableCards.length + ' 张';
+}
+
+function togglePickerCard(instanceId, inOther, isSelected) {
+    if (inOther) { showToast('该卡已在其他编队'); return; }
+
+    if (isSelected) {
+        // Remove from editSelected
+        for (var pos in editSelected) {
+            if (editSelected[pos].instance_id === instanceId) {
+                delete editSelected[pos];
+                break;
+            }
+        }
+    } else {
+        // Find first empty slot
+        var placed = false;
+        for (var i = 1; i <= 6; i++) {
+            if (!editSelected[i]) {
+                var card = availableCards.find(function(c) { return c.instance_id === instanceId; });
+                if (card) {
+                    editSelected[i] = card;
+                    placed = true;
+                    break;
+                }
+            }
+        }
+        if (!placed) { showToast('编队已满！'); return; }
+    }
+
+    renderEditSlots();
+    renderPickerCards();
+}
+
+function cancelEdit() {
+    inEditMode = false;
+    editSelected = {};
+    closePicker();
+    renderSlotTabs();
+    renderCurrentFormation();
+}
+
+// ---- Save ----
+function saveFormation(cb) {
+    var name = document.getElementById('formationNameEdit').value.trim();
+    var cardIds = Object.keys(editSelected).map(function(pos) {
+        return { instance_id: editSelected[pos].instance_id, position: parseInt(pos) };
+    });
+
+    fetch('formation_api.php?action=save_formation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, formation_slot: currentSlot, name: name, card_ids: cardIds })
+    }).then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.code === 200) {
+            showToast('保存成功！');
+            inEditMode = false;
+            closePicker();
+            loadFormations();
+            if (cb) cb();
+        } else {
+            showToast(d.msg || '保存失败');
+        }
+    }).catch(function(e) { showToast('保存失败'); console.error(e); });
+}
+
+// ---- Clear ----
+function clearFormation() {
+    if (!confirm('确定要清空此编队吗？')) return;
+    fetch('formation_api.php?action=clear_formation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, slot: currentSlot })
+    }).then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.code === 200) {
+            showToast('已清空');
+            loadFormations();
+        } else {
+            showToast(d.msg || '清空失败');
+        }
+    }).catch(function() { showToast('清空失败'); });
+}
+
+// ---- Back ----
+function goBack() {
+    if (inEditMode) {
+        if (confirm('正在编辑，确定退出吗？')) {
+            window.location.href = 'my_cards.html';
+        }
+    } else {
+        window.location.href = 'my_cards.html';
+    }
+}
+
+// ---- Toast ----
+function showToast(msg) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(function() { el.classList.remove('show'); }, 2000);
+}
+</script>
+</body>
+</html>
