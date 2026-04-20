@@ -5,3 +5,5 @@
 # 临时文件
 *.tmp
 *.log
+  
+!battle_6v6.html  
