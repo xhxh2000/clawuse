@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>6v6 团战 - 卡牌游戏</title>
+    <link rel="stylesheet" href="app-common.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; padding-bottom: 70px; }
+        .app-page-header { background: rgba(15,52,96,0.9); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .app-page-header h1 { color: #e94560; font-size: 18px; margin: 0; }
+        .container { max-width: 900px; margin: 0 auto; padding: 10px; }
+
+        /* 模式切换 */
+        .mode-tabs { display: flex; gap: 8px; padding: 10px; justify-content: center; }
+        .mode-tab { padding: 6px 16px; border-radius: 20px; border: 1.5px solid #0f3460; background: transparent; color: #aaa; font-size: 14px; cursor: pointer; transition: 0.2s; }
+        .mode-tab.active { background: #e94560; border-color: #e94560; color: #fff; }
+
+        /* 队伍容器 */
+        .battle-arena { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 10px 0; }
+        .team-side { flex: 1; }
+        .team-label { text-align: center; font-size: 13px; color: #888; margin-bottom: 6px; font-weight: bold; }
+        .team-label.player { color: #4CAF50; }
+        .team-label.enemy { color: #e94560; }
+
+        /* 阵型布局 */
+        .formation-grid { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+        .row-back, .row-front { display: flex; gap: 6px; }
+        .row-label { font-size: 10px; color: #555; text-align: center; margin: 2px 0; }
+
+        /* 卡槽 */
+        .slot { width: 78px; border-radius: 10px; background: #16213e; border: 2px solid #0f3460; display: flex; flex-direction: column; align-items: center; padding: 5px 3px; cursor: pointer; transition: 0.2s; position: relative; min-height: 100px; }
+        .slot:hover { border-color: #e94560; }
+        .slot.empty { border-style: dashed; opacity: 0.5; cursor: default; }
+        .slot.empty:hover { border-color: #0f3460; }
+        .slot.dead { opacity: 0.3; filter: grayscale(100%); }
+        .slot.attacking { border-color: #FFD700; box-shadow: 0 0 12px #FFD700; }
+        .slot.defending { border-color: #e94560; box-shadow: 0 0 12px #e94560; }
+        .slot.current-turn { border-color: #4CAF50; box-shadow: 0 0 10px #4CAF50; }
+
+        .slot-pos { position: absolute; top: 2px; left: 4px; font-size: 9px; color: #555; font-weight: bold; }
+        .slot-empty-icon { font-size: 24px; color: #333; margin-top: 10px; }
+        .slot-empty-text { font-size: 10px; color: #444; margin-top: 4px; }
+
+        .slot-img { width: 50px; height: 66px; object-fit: contain; border-radius: 5px; background: transparent; }
+        .slot-name { font-size: 9px; color: #ccc; margin-top: 2px; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; width: 100%; }
+        .slot-level { font-size: 8px; color: #888; }
+
+        /* HP条 */
+        .hp-bar-wrap { width: 100%; margin-top: 3px; }
+        .hp-bar-bg { width: 100%; height: 5px; background: #333; border-radius: 3px; overflow: hidden; }
+        .hp-bar { height: 100%; background: linear-gradient(90deg, #4CAF50, #8BC34A); border-radius: 3px; transition: width 0.3s; }
+        .hp-bar.medium { background: linear-gradient(90deg, #FF9800, #FFC107); }
+        .hp-bar.low { background: linear-gradient(90deg, #e94560, #ff6b6b); }
+        .hp-text { font-size: 8px; color: #aaa; text-align: center; margin-top: 1px; font-family: monospace; }
+
+        /* VS分隔 */
+        .vs-divider { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 40px; }
+        .vs-text { font-size: 20px; font-weight: bold; color: #e94560; text-shadow: 0 0 10px rgba(233,69,96,0.5); }
+
+        /* 速度条指示 */
+        .spd-indicator { font-size: 9px; color: #2196F3; margin-top: 2px; }
+
+        /* 行动顺序条 */
+        .turn-order { background: #16213e; border-radius: 10px; padding: 8px 10px; margin: 8px 0; }
+        .turn-order-label { font-size: 11px; color: #888; margin-bottom: 6px; }
+        .turn-order-row { display: flex; flex-wrap: wrap; gap: 4px; }
+        .turn-badge { padding: 3px 8px; border-radius: 12px; font-size: 10px; background: #0f3460; color: #aaa; display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+        .turn-badge.player { background: rgba(76,175,80,0.2); color: #4CAF50; }
+        .turn-badge.enemy { background: rgba(233,69,96,0.2); color: #e94560; }
+        .turn-badge.current { background: #FFD700; color: #1a1a2e; font-weight: bold; }
+        .turn-badge.dead { opacity: 0.3; text-decoration: line-through; }
+
+        /* 行动日志 */
+        .battle-log { background: #16213e; border-radius: 10px; padding: 12px; max-height: 200px; overflow-y: auto; font-size: 12px; line-height: 1.8; display: none; margin-top: 10px; }
+        .battle-log.show { display: block; }
+        .battle-log .round { color: #e94560; font-weight: bold; }
+        .battle-log .action { color: #eee; }
+        .battle-log .hit { color: #4CAF50; }
+        .battle-log .crit { color: #FFD700; font-weight: bold; }
+        .battle-log .dodge { color: #2196F3; }
+        .battle-log .miss { color: #FF9800; }
+        .battle-log .ko { color: #e94560; font-weight: bold; }
+        .battle-log .dead-unit { color: #666; text-decoration: line-through; }
+        .battle-log .player-action { color: #4CAF50; }
+        .battle-log .enemy-action { color: #e94560; }
+        .battle-log .result { color: #FFD700; font-size: 14px; text-align: center; font-weight: bold; margin-top: 4px; }
+
+        /* 按钮 */
+        .btn-area { text-align: center; margin: 10px 0; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .btn { padding: 12px 28px; font-size: 16px; border-radius: 10px; border: none; cursor: pointer; transition: 0.3s; }
+        .btn-fight { background: #e94560; color: white; }
+        .btn-fight:hover { background: #ff6b6b; }
+        .btn-fight:disabled { background: #555; cursor: not-allowed; }
+        .btn-next { background: #2196F3; color: white; font-size: 14px; padding: 8px 20px; }
+        .btn-next:hover { background: #64b5f6; }
+        .btn-auto { background: #0f3460; color: #aaa; font-size: 13px; padding: 8px 16px; }
+        .btn-auto.active { background: #4CAF50; color: white; }
+        .btn-reset { background: #333; color: #aaa; font-size: 13px; padding: 8px 16px; }
+
+        /* 伤害飘字 */
+        .damage-pop { position: absolute; font-size: 16px; font-weight: bold; pointer-events: none; animation: popFade 1s forwards; z-index: 200; }
+        .damage-pop.dmg { color: #e94560; }
+        .damage-pop.crit { color: #FFD700; font-size: 20px; }
+        .damage-pop.heal { color: #4CAF50; }
+        .damage-pop.dodge { color: #2196F3; font-size: 13px; }
+        @keyframes popFade { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-30px); } }
+
+        /* 结果遮罩 */
+        .result-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 300; align-items: center; justify-content: center; }
+        .result-overlay.show { display: flex; }
+        .result-card { background: #16213e; border-radius: 16px; padding: 30px 40px; text-align: center; border: 2px solid #0f3460; }
+        .result-card .result-title { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
+        .result-card .result-title.win { color: #4CAF50; }
+        .result-card .result-title.lose { color: #e94560; }
+        .result-card .result-title.draw { color: #FF9800; }
+        .result-card .result-detail { color: #888; font-size: 14px; margin: 10px 0; line-height: 1.8; }
+        .result-card .btn { margin-top: 15px; }
+
+        /* 站位说明 */
+        .pos-legend { text-align: center; font-size: 11px; color: #555; margin-top: 6px; }
+        .pos-legend span { margin: 0 6px; }
+    </style>
+</head>
+<body>
+    <div class="app-page-header">
+        <h1>⚔️ 6v6 团战</h1>
+        <button class="app-header-btn" onclick="AppCommon.openUserSheet()">👤</button>
+    </div>
+    <div class="container">
+
+        <!-- 模式切换 -->
+        <div class="mode-tabs">
+            <button class="mode-tab active" onclick="setBattleMode('manual')">🎮 手动模式</button>
+            <button class="mode-tab" onclick="setBattleMode('auto')">🤖 自动战斗</button>
+        </div>
+
+        <!-- 队伍选择：玩家 -->
+        <div class="team-side">
+            <div class="team-label player">🛡️ 我方阵容</div>
+            <div style="display:flex;justify-content:center;margin-bottom:4px;">
+                <select id="selectFormation" onchange="loadFormation()" style="padding:5px 10px;border-radius:8px;background:#16213e;color:#eee;border:1px solid #0f3460;font-size:13px;max-width:200px;">
+                    <option value="">-- 选择编队 --</option>
+                </select>
+            </div>
+            <div class="formation-grid">
+                <div class="row-label">后排</div>
+                <div class="row-back" id="playerRowBack"></div>
+                <div class="row-label">前排</div>
+                <div class="row-front" id="playerRowFront"></div>
+            </div>
+            <div class="pos-legend">
+                <span>位置 1 2 3 为后排</span><span>4 5 6 为前排</span>
+            </div>
+        </div>
+
+        <!-- VS + 敌方 -->
+        <div class="battle-arena" style="margin: 12px 0;">
+            <div class="team-side">
+                <div class="team-label enemy">⚔️ 敌方阵容</div>
+                <div style="display:flex;justify-content:center;margin-bottom:4px;">
+                    <button class="btn btn-auto" id="btnRandomEnemy" onclick="randomizeEnemy()" style="padding:5px 14px;font-size:13px;">🎲 随机敌人</button>
+                </div>
+                <div class="formation-grid">
+                    <div class="row-label">后排</div>
+                    <div class="row-back" id="enemyRowBack"></div>
+                    <div class="row-label">前排</div>
+                    <div class="row-front" id="enemyRowFront"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 行动顺序 -->
+        <div class="turn-order" id="turnOrder">
+            <div class="turn-order-label">📋 行动顺序</div>
+            <div class="turn-order-row" id="turnOrderRow"></div>
+        </div>
+
+        <!-- 战斗日志 -->
+        <div id="battleLog" class="battle-log"></div>
+
+        <!-- 按钮 -->
+        <div class="btn-area" id="btnArea">
+            <button class="btn btn-fight" id="btnStartBattle" onclick="startBattle()">⚔️ 开始战斗</button>
+            <button class="btn btn-next" id="btnNextTurn" onclick="nextTurn()" style="display:none">▶️ 下一步</button>
+            <button class="btn btn-auto" id="btnAutoBattle" onclick="toggleAutoBattle()" style="display:none">🤖 自动播放</button>
+            <button class="btn btn-reset" onclick="resetBattle()">🔄 重置</button>
+        </div>
+
+        <!-- 结果 -->
+        <div class="result-overlay" id="resultOverlay">
+            <div class="result-card">
+                <div class="result-title" id="resultTitle">胜利!</div>
+                <div class="result-detail" id="resultDetail"></div>
+                <button class="btn btn-fight" onclick="resetBattle()">再来一局</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ===== 状态 =====
+        let userCards = [];
+        let allCards = {};
+        let rarityColors = {};
+        let formationData = null;
+        let battleState = null;
+        let autoBattleTimer = null;
+        let battleMode = 'manual'; // 'manual' | 'auto'
+        const rarityColorMap = {1:'#888',2:'#4CAF50',3:'#2196F3',4:'#9C27B0',5:'#FFD700'};
+
+        let userId = localStorage.getItem('user_id') || '1';
+
+        // ===== 初始化 =====
+        async function loadData() {
+            // 稀有度
+            const r = await fetch('game_api.php?action=get_rarity').then(r=>r.json()).catch(()=>null);
+            if (r && r.code===200 && r.rarity) {
+                r.rarity.forEach(item => rarityColors[item.rarity] = item.color || rarityColorMap[item.rarity] || '#888');
+            }
+            for (let i=1;i<=5;i++) if(!rarityColors[i]) rarityColors[i]=rarityColorMap[i];
+
+            // 用户卡牌
+            const uc = await fetch('game_api.php?action=get_my_cards&user_id='+userId).then(r=>r.json()).catch(()=>null);
+            userCards = (uc && uc.code===200) ? (uc.cards||[]) : [];
+
+            // 所有卡牌基础数据
+            const all = await fetch('game_api.php?action=get_all').then(r=>r.json()).catch(()=>null);
+            if (all && all.code===200) all.characters.forEach(c => allCards[c.id] = c);
+
+            // 加载编队
+            await loadFormationSelect();
+
+            // 渲染空槽
+            renderTeam('player', {});
+            renderTeam('enemy', {});
+        }
+
+        // ===== 加载编队下拉 =====
+        async function loadFormationSelect() {
+            const resp = await fetch('formation_api.php?action=get_formations&user_id='+userId).catch(()=>null);
+            if (!resp) return;
+            const data = await resp.json();
+            if (data.code !== 200) return;
+            const sel = document.getElementById('selectFormation');
+            data.formations.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f.id;
+                const cards = (f.cards||[]).length;
+                opt.textContent = `${f.name||'编队'+f.slot} (${cards}张)`;
+                sel.appendChild(opt);
+            });
+            if (data.formations.length > 0) {
+                sel.value = data.formations[0].id;
+                await loadFormation();
+            }
+        }
+
+        // ===== 加载编队数据 =====
+        async function loadFormation() {
+            const sel = document.getElementById('selectFormation');
+            if (!sel.value) return;
+            const resp = await fetch(`formation_api.php?action=get_formation_cards&formation_id=${sel.value}`).catch(()=>null);
+            if (!resp) return;
+            const data = await resp.json();
+            if (data.code !== 200) return;
+            formationData = data;
+            renderTeam('player', buildPlayerTeam(data.cards||[]));
+            updateTurnOrder();
+        }
+
+        // ===== 构建队伍数据 =====
+        function buildPlayerTeam(cards) {
+            const map = {};
+            cards.forEach(c => {
+                map[c.position] = c;
+            });
+            return map;
+        }
+
+        // ===== 渲染队伍 =====
+        function renderTeam(side, teamMap) {
+            // 位置映射: 1,2,3=后排  4,5,6=前排
+            for (let pos = 1; pos <= 6; pos++) {
+                const row = pos <= 3 ? 'RowBack' : 'RowFront';
+                const container = document.getElementById(side + row);
+                if (!container) continue;
+                let existing = container.querySelector(`[data-pos="${pos}"]`);
+                const card = teamMap[pos];
+
+                if (!existing) {
+                    existing = document.createElement('div');
+                    existing.className = 'slot' + (card ? '' : ' empty');
+                    existing.dataset.pos = pos;
+                    existing.dataset.side = side;
+                    existing.onclick = () => onSlotClick(side, pos);
+                    container.appendChild(existing);
+                }
+
+                existing.className = 'slot' + (card ? '' : ' empty');
+
+                if (!card) {
+                    existing.innerHTML = `
+                        <div class="slot-pos">${pos}</div>
+                        <div class="slot-empty-icon">+</div>
+                        <div class="slot-empty-text">选择</div>
+                    `;
+                } else {
+                    const level = card.level || 1;
+                    const baseStats = card.baseStats || {};
+                    const growthStats = card.growthStats || {};
+                    const maxHp = Math.round((baseStats.HP||0) + (level-1)*(growthStats.HP||0));
+                    const hp = card._hp || maxHp;
+                    const hpPct = Math.max(0, Math.min(100, hp/maxHp*100));
+                    const hpClass = hpPct > 50 ? '' : hpPct > 20 ? ' medium' : ' low';
+                    const color = rarityColors[card.rarity||1] || '#888';
+                    const imgSrc = card.image || `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='50' height='66'><rect fill='%230f3460' width='50' height='66'/><text fill='%23fff' x='25' y='38' text-anchor='middle' font-size='24'>?</text></svg>`;
+
+                    existing.innerHTML = `
+                        <div class="slot-pos">${pos}</div>
+                        <img class="slot-img" src="${imgSrc}" alt="${card.name||'?'}">
+                        <div class="slot-name" style="color:${color}">${card.name||'?'}</div>
+                        <div class="slot-level">Lv${level}</div>
+                        <div class="hp-bar-wrap">
+                            <div class="hp-bar-bg"><div class="hp-bar${hpClass}" style="width:${hpPct}%"></div></div>
+                            <div class="hp-text">${hp}/${maxHp}</div>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // ===== 点击卡槽 =====
+        function onSlotClick(side, pos) {
+            if (battleState) return; // 战斗中不能换人
+            if (side === 'player') {
+                // 弹出玩家卡牌选择
+                showCardPicker(side, pos);
+            } else {
+                // 敌方手动选择
+                showCardPicker(side, pos);
+            }
+        }
+
+        // ===== 简易卡牌选择器（弹层） =====
+        function showCardPicker(side, pos) {
+            const existing = document.getElementById('cardPicker');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'cardPicker';
+            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;display:flex;flex-direction:column;align-items:center;padding:20px;overflow-y:auto;';
+            overlay.onclick = (e) => { if (e.target===overlay) overlay.remove(); };
+
+            const title = document.createElement('div');
+            title.style.cssText = 'color:#eee;font-size:16px;margin-bottom:10px;';
+            title.textContent = side==='player' ? `🛡️ 我方位置${pos} - 选择卡牌` : `⚔️ 敌方位置${pos} - 选择卡牌`;
+            overlay.appendChild(title);
+
+            const grid = document.createElement('div');
+            grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:500px;';
+
+            const cards = side==='player' ? userCards : userCards; // 敌人也用同一个池演示
+            cards.forEach(card => {
+                const level = card.level || 1;
+                const baseStats = card.baseStats || {};
+                const growthStats = card.growthStats || {};
+                const maxHp = Math.round((baseStats.HP||0)+(level-1)*(growthStats.HP||0));
+                const color = rarityColors[card.rarity||1]||'#888';
+                const stars = '⭐'.repeat(card.rarity||1);
+                const imgSrc = card.image || `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='50' height='66'><rect fill='%230f3460' width='50' height='66'/><text fill='%23fff' x='25' y='38' text-anchor='middle' font-size='24'>?</text></svg>`;
+
+                const item = document.createElement('div');
+                item.style.cssText = `background:#16213e;border:2px solid #0f3460;border-radius:10px;padding:6px;cursor:pointer;width:90px;display:flex;flex-direction:column;align-items:center;transition:0.2s;`;
+                item.onmouseover = () => item.style.borderColor = color;
+                item.onmouseout = () => item.style.borderColor = '#0f3460';
+                item.onclick = () => {
+                    // 设置卡牌到槽位
+                    if (side==='player') {
+                        formationData = formationData || {cards:[]};
+                        formationData.cards = formationData.cards.filter(c=>c.position!==pos);
+                        formationData.cards.push({...card, position:pos, _hp:maxHp});
+                        renderTeam('player', buildPlayerTeam(formationData.cards));
+                    } else {
+                        if (!enemyTeam) enemyTeam = {};
+                        enemyTeam[pos] = {...card, _hp: maxHp};
+                        renderTeam('enemy', enemyTeam);
+                    }
+                    updateTurnOrder();
+                    overlay.remove();
+                };
+                item.innerHTML = `
+                    <div style="font-size:9px;color:${color};margin-bottom:2px;">${stars}</div>
+                    <img src="${imgSrc}" style="width:50px;height:66px;object-fit:contain;border-radius:5px;">
+                    <div style="font-size:10px;color:#ccc;margin-top:2px;text-align:center;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${card.name||'?'}</div>
+                    <div style="font-size:9px;color:#888;">Lv${level} HP${maxHp}</div>
+                `;
+                grid.appendChild(item);
+            });
+
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = '关闭';
+            closeBtn.style.cssText = 'margin-top:15px;padding:8px 24px;border-radius:8px;border:none;background:#333;color:#aaa;cursor:pointer;font-size:14px;';
+            closeBtn.onclick = () => overlay.remove();
+
+            overlay.appendChild(grid);
+            overlay.appendChild(closeBtn);
+            document.body.appendChild(overlay);
+        }
+
+        // ===== 随机敌人 =====
+        let enemyTeam = {};
+        function randomizeEnemy() {
+            const shuffled = [...userCards].sort(()=>Math.random()-0.5);
+            enemyTeam = {};
+            const positions = [1,2,3,4,5,6].sort(()=>Math.random()-0.5);
+            for (let i=0; i<Math.min(6, shuffled.length); i++) {
+                const card = shuffled[i];
+                const level = card.level || 1;
+                const maxHp = Math.round(((card.baseStats?.HP||0)+(level-1)*(card.growthStats?.HP||0)));
+                enemyTeam[positions[i]] = {...card, _hp: maxHp};
+            }
+            renderTeam('enemy', enemyTeam);
+            updateTurnOrder();
+        }
+
+        // ===== 战斗状态初始化 =====
+        function initBattle() {
+            const playerCards = formationData ? buildPlayerTeam(formationData.cards) : {};
+            const playerUnits = [];
+            for (let pos=1; pos<=6; pos++) {
+                const card = playerCards[pos];
+                if (!card) continue;
+                const level = card.level||1;
+                const bs = card.baseStats||{};
+                const gs = card.growthStats||{};
+                playerUnits.push({
+                    side:'player', pos,
+                    id: card.id||card.card_id,
+                    instanceId: card.instance_id,
+                    name: card.name||'?',
+                    rarity: card.rarity||1,
+                    image: card.image,
+                    maxHp: Math.round((bs.HP||0)+(level-1)*(gs.HP||0)),
+                    hp: Math.round((bs.HP||0)+(level-1)*(gs.HP||0)),
+                    atk: Math.round((bs.ATK||0)+(level-1)*(gs.ATK||0)),
+                    def: Math.round((bs.DEF||0)+(level-1)*(gs.DEF||0)),
+                    skl: Math.round((bs.SKL||0)+(level-1)*(gs.SKL||0)),
+                    spd: Math.round((bs.SPD||0)+(level-1)*(gs.SPD||0)),
+                    level,
+                });
+            }
+            const enemyUnits = [];
+            for (let pos=1; pos<=6; pos++) {
+                const card = enemyTeam[pos];
+                if (!card) continue;
+                const level = card.level||1;
+                const bs = card.baseStats||{};
+                const gs = card.growthStats||{};
+                enemyUnits.push({
+                    side:'enemy', pos,
+                    id: card.id||card.card_id,
+                    instanceId: card.instance_id,
+                    name: card.name||'?',
+                    rarity: card.rarity||1,
+                    image: card.image,
+                    maxHp: Math.round((bs.HP||0)+(level-1)*(gs.HP||0)),
+                    hp: Math.round((bs.HP||0)+(level-1)*(gs.HP||0)),
+                    atk: Math.round((bs.ATK||0)+(level-1)*(gs.ATK||0)),
+                    def: Math.round((bs.DEF||0)+(level-1)*(gs.DEF||0)),
+                    skl: Math.round((bs.SKL||0)+(level-1)*(gs.SKL||0)),
+                    spd: Math.round((bs.SPD||0)+(level-1)*(gs.SPD||0)),
+                    level,
+                });
+            }
+
+            if (playerUnits.length===0 || enemyUnits.length===0) {
+                alert('双方都需要至少1张卡牌！');
+                return;
+            }
+
+            return { playerUnits, enemyUnits, logs:[], round:0, turnIndex:0, finished:false };
+        }
+
+        // ===== 计算行动顺序 =====
+        function computeTurnOrder(state) {
+            const all = [...state.playerUnits.filter(u=>u.hp>0), ...state.enemyUnits.filter(u=>u.hp>0)];
+            return all.sort((a,b) => b.spd - a.spd);
+        }
+
+        // ===== 行动顺序条 =====
+        function updateTurnOrder() {
+            if (!battleState) {
+                // 预览状态：用当前队伍预览顺序
+                const playerCards = formationData ? buildPlayerTeam(formationData.cards) : {};
+                const all = [...Object.values(playerCards), ...Object.values(enemyTeam||{})].filter(Boolean).map(c => ({
+                    side: enemyTeam && Object.values(enemyTeam||{}).includes(c) ? 'enemy' : 'player',
+                    name: c.name||'?',
+                    spd: Math.round(((c.baseStats?.SPD||0)+((c.level||1)-1)*(c.growthStats?.SPD||0)))),
+                    hp: c._hp || 999,
+                }));
+                const order = [...all].sort((a,b)=>b.spd-a.spd).slice(0,12);
+                renderTurnOrder(order);
+                return;
+            }
+            const order = computeTurnOrder(battleState);
+            renderTurnOrder(order, battleState.turnIndex);
+        }
+
+        function renderTurnOrder(order, currentIdx=-1) {
+            const row = document.getElementById('turnOrderRow');
+            row.innerHTML = '';
+            order.forEach((u, i) => {
+                const badge = document.createElement('div');
+                badge.className = 'turn-badge ' + (u.side||(u.name?'player':'player'));
+                if (i===currentIdx) badge.classList.add('current');
+                if (u.hp!==undefined && u.hp<=0) badge.classList.add('dead');
+                badge.innerHTML = `<span>${u.side==='enemy'?'⚔️':'🛡️'}</span>${u.name||'?'}`;
+                row.appendChild(badge);
+            });
+        }
+
+        // ===== 渲染单个卡槽（战斗中更新HP） =====
+        function refreshSlot(unit) {
+            const row = unit.side==='player' ? (unit.pos<=3?'RowBack':'RowFront') : (unit.pos<=3?'RowBack':'RowFront');
+            const container = document.getElementById(unit.side + row);
+            if (!container) return;
+            const el = container.querySelector(`[data-pos="${unit.pos}"]`);
+            if (!el) return;
+
+            const hp = unit.hp;
+            const maxHp = unit.maxHp;
+            const hpPct = Math.max(0, Math.min(100, hp/maxHp*100));
+            const hpClass = hpPct>50?'':hpPct>20?' medium':' low';
+            const hpBar = el.querySelector('.hp-bar');
+            const hpText = el.querySelector('.hp-text');
+            if (hpBar) hpBar.style.width = hpPct+'%';
+            if (hpText) hpText.textContent = `${hp}/${maxHp}`;
+            if (hpBar) hpBar.className = 'hp-bar'+hpClass;
+
+            if (hp <= 0) {
+                el.classList.add('dead');
+            } else {
+                el.classList.remove('dead');
+            }
+        }
+
+        // ===== 伤害飘字 =====
+        function showDamagePop(side, pos, text, type) {
+            const row = side==='player' ? (pos<=3?'RowBack':'RowFront') : (pos<=3?'RowBack':'RowFront');
+            const container = document.getElementById(side + row);
+            if (!container) return;
+            const el = container.querySelector(`[data-pos="${pos}"]`);
+            if (!el) return;
+
+            const pop = document.createElement('div');
+            pop.className = 'damage-pop '+type;
+            pop.textContent = text;
+            pop.style.left = '50%';
+            pop.style.top = '10px';
+            pop.style.transform = 'translateX(-50%)';
+            el.appendChild(pop);
+            setTimeout(()=>pop.remove(), 1000);
+        }
+
+        // ===== 标记攻击/受击 =====
+        function markSlot(side, pos, cls) {
+            const row = side==='player' ? (pos<=3?'RowBack':'RowFront') : (pos<=3?'RowBack':'RowFront');
+            const container = document.getElementById(side + row);
+            if (!container) return;
+            const el = container.querySelector(`[data-pos="${pos}"]`);
+            if (!el) return;
+            el.classList.add(cls);
+            setTimeout(()=>el.classList.remove(cls), 800);
+        }
+
+        // ===== 战斗流程 =====
+        function startBattle() {
+            const state = initBattle();
+            if (!state) return;
+            battleState = state;
+            document.getElementById('battleLog').classList.add('show');
+            document.getElementById('battleLog').innerHTML = '⚔️ 战斗开始！';
+            document.getElementById('btnStartBattle').style.display = 'none';
+            document.getElementById('btnNextTurn').style.display = battleMode==='manual' ? 'inline-block' : 'none';
+            document.getElementById('btnAutoBattle').style.display = 'inline-block';
+            updateTurnOrder();
+
+            if (battleMode==='auto') {
+                document.getElementById('btnAutoBattle').classList.add('active');
+                autoBattle();
+            }
+        }
+
+        function nextTurn() {
+            if (!battleState || battleState.finished) return;
+            executeTurn();
+        }
+
+        function autoBattle() {
+            if (!battleState || battleState.finished) {
+                stopAuto();
+                return;
+            }
+            executeTurn();
+            if (!battleState.finished) {
+                autoBattleTimer = setTimeout(autoBattle, 600);
+            }
+        }
+
+        function stopAuto() {
+            if (autoBattleTimer) { clearTimeout(autoBattleTimer); autoBattleTimer=null; }
+            document.getElementById('btnAutoBattle').classList.remove('active');
+        }
+
+        function toggleAutoBattle() {
+            if (autoBattleTimer) {
+                stopAuto();
+            } else {
+                document.getElementById('btnAutoBattle').classList.add('active');
+                autoBattle();
+            }
+        }
+
+        // ===== 执行一回合 =====
+        function executeTurn() {
+            const state = battleState;
+            const order = computeTurnOrder(state);
+            const unit = order[state.turnIndex];
+
+            if (!unit || unit.hp <= 0) {
+                // 跳过已阵亡的
+                state.turnIndex++;
+                if (state.turnIndex >= order.length) {
+                    state.round++;
+                    state.turnIndex = 0;
+                    if (state.round >= 20) {
+                        endBattle(state);
+                        return;
+                    }
+                }
+                updateTurnOrder();
+                return;
+            }
+
+            addLog(`🛡️ ${unit.name} 行动`, 'round');
+
+            // 选择目标（优先前排，若无则后排）
+            const enemies = unit.side==='player' ? state.enemyUnits : state.playerUnits;
+            const alive = enemies.filter(e=>e.hp>0);
+            if (alive.length === 0) { endBattle(state); return; }
+
+            // 前排保护：后排目标被攻击时，前排随机一个帮忙挡
+            const frontRow = alive.filter(e=>e.pos>=4);
+            const backRow = alive.filter(e=>e.pos<=3);
+            let target;
+            if (backRow.length > 0 && Math.random() < 0.3) {
+                // 30%概率打后排
+                target = backRow[Math.floor(Math.random()*backRow.length)];
+            } else if (frontRow.length > 0) {
+                target = frontRow[Math.floor(Math.random()*frontRow.length)];
+            } else {
+                target = alive[Math.floor(Math.random()*alive.length)];
+            }
+
+            // 闪避判定
+            const hitRate = Math.min(92, Math.max(70, 75 + (unit.skl - target.skl)*0.5));
+            const dodgeRate = Math.min(30, Math.max(5, 5 + (target.spd - unit.spd)*0.3));
+            const roll = Math.random()*100;
+
+            markSlot(unit.side, unit.pos, 'attacking');
+            setTimeout(()=>markSlot(target.side, target.pos, 'defending'), 300);
+
+            if (roll < dodgeRate && roll < hitRate) {
+                // 闪避
+                addLog(`⚔️ ${unit.name} → ${target.name} → 闪避!`, 'dodge');
+                showDamagePop(target.side, target.pos, '闪避', 'dodge');
+            } else if (roll >= hitRate) {
+                // 未命中
+                addLog(`⚔️ ${unit.name} → ${target.name} → 未命中!`, 'miss');
+            } else {
+                // 命中
+                const critRate = Math.min(40, Math.max(0, unit.skl/5));
+                const isCrit = Math.random()*100 < critRate;
+                let damage = Math.max(1, unit.atk - target.def);
+                if (isCrit) damage = Math.max(1, Math.floor(damage * 1.5));
+                target.hp -= damage;
+
+                const cls = unit.side==='player' ? 'player-action' : 'enemy-action';
+                if (isCrit) {
+                    addLog(`⚔️ ${unit.name} → ${target.name} 暴击! 造成 ${damage} 伤害`, 'crit');
+                    showDamagePop(target.side, target.pos, '暴击!'+damage, 'crit');
+                } else {
+                    addLog(`⚔️ ${unit.name} → ${target.name} 造成 ${damage} 伤害`, 'hit');
+                    showDamagePop(target.side, target.pos, '-'+damage, 'dmg');
+                }
+
+                if (target.hp <= 0) {
+                    target.hp = 0;
+                    addLog(`💀 ${target.name} 阵亡!`, 'ko');
+                }
+                refreshSlot(target);
+            }
+
+            // 下一个
+            state.turnIndex++;
+            if (state.turnIndex >= order.filter(u=>u.hp>0||(order.indexOf(u)>=state.turnIndex)).length) {
+                // 真正到下一轮了
+                const aliveOrder = computeTurnOrder(state);
+                if (state.turnIndex >= aliveOrder.length) {
+                    state.round++;
+                    state.turnIndex = 0;
+                    addLog(`--- 第 ${state.round+1} 轮开始 ---`, 'round');
+                }
+            }
+
+            if (state.round >= 20) { endBattle(state); return; }
+
+            // 检查胜负
+            const pAlive = state.playerUnits.filter(u=>u.hp>0).length;
+            const eAlive = state.enemyUnits.filter(u=>u.hp>0).length;
+            if (pAlive===0 || eAlive===0) { endBattle(state); return; }
+
+            updateTurnOrder();
+        }
+
+        function addLog(text, cls) {
+            const log = document.getElementById('battleLog');
+            const div = document.createElement('div');
+            div.className = cls;
+            div.textContent = text;
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // ===== 结束战斗 =====
+        function endBattle(state) {
+            state.finished = true;
+            stopAuto();
+            updateTurnOrder();
+
+            const pAlive = state.playerUnits.filter(u=>u.hp>0).length;
+            const eAlive = state.enemyUnits.filter(u=>u.hp>0).length;
+            let title, titleClass, detail;
+
+            if (pAlive > 0 && eAlive === 0) {
+                title = '🏆 胜利!'; titleClass = 'win';
+                detail = `我方剩余 ${pAlive} 人，敌方全灭`;
+            } else if (eAlive > 0 && pAlive === 0) {
+                title = '💀 失败...'; titleClass = 'lose';
+                detail = `敌方剩余 ${eAlive} 人，我方全灭`;
+            } else {
+                title = '⚖️ 平手'; titleClass = 'draw';
+                detail = `我方剩余 ${pAlive} 人，敌方剩余 ${eAlive} 人`;
+            }
+
+            addLog(`${title} ${detail}`, 'result');
+
+            document.getElementById('resultTitle').textContent = title;
+            document.getElementById('resultTitle').className = 'result-title ' + titleClass;
+            document.getElementById('resultDetail').textContent = detail;
+            document.getElementById('resultOverlay').classList.add('show');
+            document.getElementById('btnNextTurn').style.display = 'none';
+        }
+
+        // ===== 重置 =====
+        function resetBattle() {
+            stopAuto();
+            battleState = null;
+            document.getElementById('resultOverlay').classList.remove('show');
+            document.getElementById('battleLog').classList.remove('show');
+            document.getElementById('battleLog').innerHTML = '';
+            document.getElementById('btnStartBattle').style.display = '';
+            document.getElementById('btnNextTurn').style.display = 'none';
+            document.getElementById('btnAutoBattle').style.display = 'none';
+
+            // 恢复所有槽位显示
+            if (formationData) renderTeam('player', buildPlayerTeam(formationData.cards));
+            if (enemyTeam && Object.keys(enemyTeam).length > 0) renderTeam('enemy', enemyTeam);
+
+            // 清除死标记
+            document.querySelectorAll('.slot.dead').forEach(el=>el.classList.remove('dead'));
+            document.querySelectorAll('.slot.attacking,.slot.defending').forEach(el=>el.classList.remove('attacking','defending'));
+
+            updateTurnOrder();
+        }
+
+        function setBattleMode(mode) {
+            battleMode = mode;
+            document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));
+            document.querySelector(`.mode-tab:nth-child(${mode==='manual'?1:2})`).classList.add('active');
+        }
+
+        // ===== 启动 =====
+        loadData();
+    </script>
+
+<!-- 底部 Tab Bar -->
+<nav class="app-tabbar">
+  <a href="draw_card.html" class="tab-item"><span class="tab-icon">🎲</span><span class="tab-label">抽卡</span></a>
+  <a href="my_cards.html" class="tab-item"><span class="tab-icon">📖</span><span class="tab-label">图鉴</span></a>
+  <a href="formation.html" class="tab-item"><span class="tab-icon">🛡️</span><span class="tab-label">编队</span></a>
+  <a href="battle_simu.html" class="tab-item"><span class="tab-icon">⚔️</span><span class="tab-label">战斗</span></a>
+</nav>
+
+<!-- 用户菜单底部 Sheet -->
+<div class="sheet-overlay" id="sheetOverlay"></div>
+<div class="user-sheet" id="userSheet"></div>
+
+<script src="app-common.js"></script>
+</body></html>
