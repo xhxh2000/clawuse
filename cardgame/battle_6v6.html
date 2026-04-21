@@ -11,73 +11,72 @@
     <link rel="stylesheet" href="app-common.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; padding-bottom: 70px; }
-        .app-page-header { background: rgba(15,52,96,0.9); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-        .app-page-header h1 { color: #e94560; font-size: 18px; margin: 0; }
-        .container { max-width: 900px; margin: 0 auto; padding: 10px; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; padding-bottom: 56px; }
+        .app-page-header { background: rgba(15,52,96,0.9); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .app-page-header h1 { color: #e94560; font-size: 16px; margin: 0; }
+        .container { max-width: 420px; margin: 0 auto; padding: 4px 6px; }
 
-        /* 模式切换 */
-        .mode-tabs { display: flex; gap: 8px; padding: 10px; justify-content: center; }
-        .mode-tab { padding: 6px 16px; border-radius: 20px; border: 1.5px solid #0f3460; background: transparent; color: #aaa; font-size: 14px; cursor: pointer; transition: 0.2s; }
+        /* 模式切换 - 极简 */
+        .mode-tabs { display: flex; gap: 4px; padding: 2px 0 4px; justify-content: center; }
+        .mode-tab { padding: 3px 10px; border-radius: 12px; border: 1px solid #0f3460; background: transparent; color: #888; font-size: 11px; cursor: pointer; transition: 0.2s; }
         .mode-tab.active { background: #e94560; border-color: #e94560; color: #fff; }
 
-        /* 队伍容器 */
-        .battle-arena { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 10px 0; }
-        .team-side { flex: 1; }
-        .team-label { text-align: center; font-size: 13px; color: #888; margin-bottom: 6px; font-weight: bold; }
-        .team-label.player { color: #4CAF50; }
+        /* 队伍标签行（标签+按钮合一） */
+        .team-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+        .team-label { font-size: 11px; font-weight: bold; }
         .team-label.enemy { color: #e94560; }
+        .team-label.player { color: #4CAF50; }
 
         /* 阵型布局 */
-        .formation-grid { display: flex; flex-direction: column; gap: 6px; align-items: center; }
-        .row-back, .row-front { display: flex; gap: 6px; }
-        .row-label { font-size: 10px; color: #555; text-align: center; margin: 2px 0; }
+        .formation-grid { display: flex; flex-direction: column; gap: 3px; align-items: center; }
+        .row-back, .row-front { display: flex; gap: 3px; }
+        .row-label { font-size: 8px; color: #444; text-align: center; line-height: 1; }
 
-        /* 卡槽 */
-        .slot { width: 78px; border-radius: 10px; background: #16213e; border: 2px solid #0f3460; display: flex; flex-direction: column; align-items: center; padding: 5px 3px; cursor: pointer; transition: 0.2s; position: relative; min-height: 100px; }
-        .slot:hover { border-color: #e94560; }
-        .slot.empty { border-style: dashed; opacity: 0.5; cursor: default; }
-        .slot.empty:hover { border-color: #0f3460; }
+        /* 卡槽 - 紧凑 */
+        .slot { width: 58px; border-radius: 6px; background: transparent; border: 1.5px solid transparent; display: flex; flex-direction: column; align-items: center; padding: 2px 1px; transition: 0.2s; position: relative; min-height: 68px; }
+        .slot:hover { border-color: transparent; }
+        .slot.empty { opacity: 0; pointer-events: none; min-height: 68px; }
         .slot.dead { opacity: 0.3; filter: grayscale(100%); }
-        .slot.attacking { border-color: #FFD700; box-shadow: 0 0 12px #FFD700; }
-        .slot.defending { border-color: #e94560; box-shadow: 0 0 12px #e94560; }
-        .slot.current-turn { border-color: #4CAF50; box-shadow: 0 0 10px #4CAF50; }
+        .slot.attacking { border-color: #FFD700; box-shadow: 0 0 8px #FFD700; background: rgba(255,215,0,0.08); }
+        .slot.defending { border-color: #e94560; box-shadow: 0 0 8px #e94560; background: rgba(233,69,96,0.08); }
+        .slot.current-turn { border-color: #4CAF50; box-shadow: 0 0 6px #4CAF50; background: rgba(76,175,80,0.08); }
 
-        .slot-pos { position: absolute; top: 2px; left: 4px; font-size: 9px; color: #555; font-weight: bold; }
-        .slot-empty-icon { font-size: 24px; color: #333; margin-top: 10px; }
-        .slot-empty-text { font-size: 10px; color: #444; margin-top: 4px; }
+        .slot-pos { position: absolute; top: 1px; left: 3px; font-size: 7px; color: #555; font-weight: bold; }
+        .slot-empty-icon { font-size: 16px; color: #333; margin-top: 6px; }
+        .slot-empty-text { font-size: 7px; color: #444; margin-top: 1px; }
 
-        .slot-img { width: 50px; height: 66px; object-fit: contain; border-radius: 5px; background: transparent; }
-        .slot-name { font-size: 9px; color: #ccc; margin-top: 2px; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; width: 100%; }
-        .slot-level { font-size: 8px; color: #888; }
+        .slot-img { width: 36px; height: 48px; object-fit: contain; border-radius: 3px; background: transparent; }
+        .slot-name { font-size: 7px; color: #ccc; margin-top: 1px; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; width: 100%; }
+        .slot-level { font-size: 7px; color: #888; }
 
-        /* HP条 */
-        .hp-bar-wrap { width: 100%; margin-top: 3px; }
-        .hp-bar-bg { width: 100%; height: 5px; background: #333; border-radius: 3px; overflow: hidden; }
-        .hp-bar { height: 100%; background: linear-gradient(90deg, #4CAF50, #8BC34A); border-radius: 3px; transition: width 0.3s; }
+        /* HP条 - 紧凑 */
+        .hp-bar-wrap { width: 100%; margin-top: 1px; }
+        .hp-bar-bg { width: 100%; height: 3px; background: #333; border-radius: 2px; overflow: hidden; }
+        .hp-bar { height: 100%; background: linear-gradient(90deg, #4CAF50, #8BC34A); border-radius: 2px; transition: width 0.3s; }
         .hp-bar.medium { background: linear-gradient(90deg, #FF9800, #FFC107); }
         .hp-bar.low { background: linear-gradient(90deg, #e94560, #ff6b6b); }
-        .hp-text { font-size: 8px; color: #aaa; text-align: center; margin-top: 1px; font-family: monospace; }
+        .hp-text { font-size: 6px; color: #888; text-align: center; margin-top: 0; font-family: monospace; }
 
-        /* VS分隔 */
-        .vs-divider { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 40px; }
-        .vs-text { font-size: 20px; font-weight: bold; color: #e94560; text-shadow: 0 0 10px rgba(233,69,96,0.5); }
+        /* VS分隔 - 极简 */
+        .vs-line { text-align: center; margin: 12px 0; padding: 8px 0; line-height: 1; position: relative; }
+        .vs-line::before, .vs-line::after { content: ''; position: absolute; top: 50%; width: 30%; height: 1px; background: linear-gradient(to right, transparent, rgba(233,69,96,0.4), transparent); }
+        .vs-line::before { left: 5%; }
+        .vs-line::after { right: 5%; }
+        .vs-line span { font-size: 16px; font-weight: bold; color: #e94560; text-shadow: 0 0 8px rgba(233,69,96,0.5); letter-spacing: 4px; }
 
-        /* 速度条指示 */
-        .spd-indicator { font-size: 9px; color: #2196F3; margin-top: 2px; }
-
-        /* 行动顺序条 */
-        .turn-order { background: #16213e; border-radius: 10px; padding: 8px 10px; margin: 8px 0; }
-        .turn-order-label { font-size: 11px; color: #888; margin-bottom: 6px; }
-        .turn-order-row { display: flex; flex-wrap: wrap; gap: 4px; }
-        .turn-badge { padding: 3px 8px; border-radius: 12px; font-size: 10px; background: #0f3460; color: #aaa; display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+        /* 行动顺序 - 默认折叠 */
+        .turn-order { background: #16213e; border-radius: 6px; padding: 4px 6px; margin: 4px 0; cursor: pointer; }
+        .turn-order-label { font-size: 10px; color: #888; }
+        .turn-order-row { display: none; flex-wrap: wrap; gap: 3px; margin-top: 3px; }
+        .turn-order.open .turn-order-row { display: flex; }
+        .turn-badge { padding: 2px 5px; border-radius: 8px; font-size: 9px; background: #0f3460; color: #aaa; display: flex; align-items: center; gap: 2px; white-space: nowrap; }
         .turn-badge.player { background: rgba(76,175,80,0.2); color: #4CAF50; }
         .turn-badge.enemy { background: rgba(233,69,96,0.2); color: #e94560; }
         .turn-badge.current { background: #FFD700; color: #1a1a2e; font-weight: bold; }
         .turn-badge.dead { opacity: 0.3; text-decoration: line-through; }
 
         /* 行动日志 */
-        .battle-log { background: #16213e; border-radius: 10px; padding: 12px; max-height: 200px; overflow-y: auto; font-size: 12px; line-height: 1.8; display: none; margin-top: 10px; }
+        .battle-log { background: #16213e; border-radius: 6px; padding: 6px; max-height: 80px; overflow-y: auto; font-size: 10px; line-height: 1.5; display: none; margin-top: 4px; }
         .battle-log.show { display: block; }
         .battle-log .round { color: #e94560; font-weight: bold; }
         .battle-log .action { color: #eee; }
@@ -89,42 +88,39 @@
         .battle-log .dead-unit { color: #666; text-decoration: line-through; }
         .battle-log .player-action { color: #4CAF50; }
         .battle-log .enemy-action { color: #e94560; }
-        .battle-log .result { color: #FFD700; font-size: 14px; text-align: center; font-weight: bold; margin-top: 4px; }
+        .battle-log .result { color: #FFD700; font-size: 13px; text-align: center; font-weight: bold; margin-top: 4px; }
 
-        /* 按钮 */
-        .btn-area { text-align: center; margin: 10px 0; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        .btn { padding: 12px 28px; font-size: 16px; border-radius: 10px; border: none; cursor: pointer; transition: 0.3s; }
+        /* 按钮 - 紧凑 */
+        .btn-area { text-align: center; margin: 4px 0; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+        .btn { padding: 6px 16px; font-size: 13px; border-radius: 8px; border: none; cursor: pointer; transition: 0.3s; }
         .btn-fight { background: #e94560; color: white; }
         .btn-fight:hover { background: #ff6b6b; }
         .btn-fight:disabled { background: #555; cursor: not-allowed; }
-        .btn-next { background: #2196F3; color: white; font-size: 14px; padding: 8px 20px; }
+        .btn-next { background: #2196F3; color: white; font-size: 12px; padding: 5px 12px; }
         .btn-next:hover { background: #64b5f6; }
-        .btn-auto { background: #0f3460; color: #aaa; font-size: 13px; padding: 8px 16px; }
+        .btn-auto { background: #0f3460; color: #aaa; font-size: 11px; padding: 5px 10px; }
         .btn-auto.active { background: #4CAF50; color: white; }
-        .btn-reset { background: #333; color: #aaa; font-size: 13px; padding: 8px 16px; }
+        .btn-sm { padding: 3px 10px; font-size: 11px; border-radius: 6px; border: none; cursor: pointer; background: #0f3460; color: #aaa; }
+        .btn-sm:hover { color: #eee; }
 
         /* 伤害飘字 */
-        .damage-pop { position: absolute; font-size: 16px; font-weight: bold; pointer-events: none; animation: popFade 1s forwards; z-index: 200; }
+        .damage-pop { position: absolute; font-size: 14px; font-weight: bold; pointer-events: none; animation: popFade 1s forwards; z-index: 200; }
         .damage-pop.dmg { color: #e94560; }
-        .damage-pop.crit { color: #FFD700; font-size: 20px; }
+        .damage-pop.crit { color: #FFD700; font-size: 17px; }
         .damage-pop.heal { color: #4CAF50; }
-        .damage-pop.dodge { color: #2196F3; font-size: 13px; }
-        @keyframes popFade { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-30px); } }
+        .damage-pop.dodge { color: #2196F3; font-size: 11px; }
+        @keyframes popFade { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-20px); } }
 
         /* 结果遮罩 */
         .result-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 300; align-items: center; justify-content: center; }
         .result-overlay.show { display: flex; }
-        .result-card { background: #16213e; border-radius: 16px; padding: 30px 40px; text-align: center; border: 2px solid #0f3460; }
-        .result-card .result-title { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
+        .result-card { background: #16213e; border-radius: 12px; padding: 24px 30px; text-align: center; border: 2px solid #0f3460; }
+        .result-card .result-title { font-size: 24px; font-weight: bold; margin-bottom: 8px; }
         .result-card .result-title.win { color: #4CAF50; }
         .result-card .result-title.lose { color: #e94560; }
         .result-card .result-title.draw { color: #FF9800; }
-        .result-card .result-detail { color: #888; font-size: 14px; margin: 10px 0; line-height: 1.8; }
-        .result-card .btn { margin-top: 15px; }
-
-        /* 站位说明 */
-        .pos-legend { text-align: center; font-size: 11px; color: #555; margin-top: 6px; }
-        .pos-legend span { margin: 0 6px; }
+        .result-card .result-detail { color: #888; font-size: 13px; margin: 8px 0; line-height: 1.6; }
+        .result-card .btn { margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -136,48 +132,50 @@
 
         <!-- 模式切换 -->
         <div class="mode-tabs">
-            <button class="mode-tab active" onclick="setBattleMode('manual')">🎮 手动模式</button>
-            <button class="mode-tab" onclick="setBattleMode('auto')">🤖 自动战斗</button>
+            <button class="mode-tab active" onclick="setBattleMode('manual')">🎮 手动</button>
+            <button class="mode-tab" onclick="setBattleMode('auto')">🤖 自动</button>
         </div>
 
-        <!-- 队伍选择：玩家 -->
+        <!-- 敌方阵容（上方） -->
         <div class="team-side">
-            <div class="team-label player">🛡️ 我方阵容</div>
-            <div style="display:flex;justify-content:center;margin-bottom:4px;">
-                <select id="selectFormation" onchange="loadFormation()" style="padding:5px 10px;border-radius:8px;background:#16213e;color:#eee;border:1px solid #0f3460;font-size:13px;max-width:200px;">
-                    <option value="">-- 选择编队 --</option>
-                </select>
+            <div class="team-header">
+                <span class="team-label enemy">⚔️ 敌方</span>
+                <div style="position:relative;display:inline-block;">
+                    <select id="selectEnemyFormation" onchange="loadEnemyFormation()" style="padding:2px 6px;border-radius:6px;background:#16213e;color:#eee;border:1px solid #0f3460;font-size:11px;min-width:60px;opacity:0;position:absolute;top:0;left:0;width:100%;height:100%;cursor:pointer;z-index:1;">
+                        <option value="">随机</option>
+                    </select>
+                    <span id="enemySelLabel" style="display:inline-block;padding:2px 6px;border-radius:6px;background:#16213e;color:#888;border:1px solid #0f3460;font-size:11px;pointer-events:none;">随机</span>
+                </div>
+                <button class="btn-sm" id="btnRandomEnemy" onclick="randomizeEnemy()">🎲 随机</button>
             </div>
             <div class="formation-grid">
-                <div class="row-label">后排</div>
-                <div class="row-back" id="playerRowBack"></div>
-                <div class="row-label">前排</div>
+                <div class="row-back" id="enemyRowBack"></div>
+                <div class="row-label">后排 ↓</div>
+                <div class="row-front" id="enemyRowFront"></div>
+            </div>
+        </div>
+
+        <!-- VS -->
+        <div class="vs-line"><span>VS</span></div>
+
+        <!-- 我方阵容（下方） -->
+        <div class="team-side">
+            <div class="formation-grid">
                 <div class="row-front" id="playerRowFront"></div>
+                <div class="row-label">后排 ↑</div>
+                <div class="row-back" id="playerRowBack"></div>
             </div>
-            <div class="pos-legend">
-                <span>位置 1 2 3 为后排</span><span>4 5 6 为前排</span>
-            </div>
-        </div>
-
-        <!-- VS + 敌方 -->
-        <div class="battle-arena" style="margin: 12px 0;">
-            <div class="team-side">
-                <div class="team-label enemy">⚔️ 敌方阵容</div>
-                <div style="display:flex;justify-content:center;margin-bottom:4px;">
-                    <button class="btn btn-auto" id="btnRandomEnemy" onclick="randomizeEnemy()" style="padding:5px 14px;font-size:13px;">🎲 随机敌人</button>
-                </div>
-                <div class="formation-grid">
-                    <div class="row-label">后排</div>
-                    <div class="row-back" id="enemyRowBack"></div>
-                    <div class="row-label">前排</div>
-                    <div class="row-front" id="enemyRowFront"></div>
-                </div>
+            <div class="team-header" style="margin-top:2px;">
+                <span class="team-label player">🛡️ 我方</span>
+                <select id="selectFormation" onchange="loadFormation()" style="padding:2px 6px;border-radius:6px;background:#16213e;color:#eee;border:1px solid #0f3460;font-size:11px;max-width:140px;">
+                    <option value="">选择编队</option>
+                </select>
             </div>
         </div>
 
-        <!-- 行动顺序 -->
-        <div class="turn-order" id="turnOrder">
-            <div class="turn-order-label">📋 行动顺序</div>
+        <!-- 行动顺序 - 点击展开/折叠 -->
+        <div class="turn-order" id="turnOrder" onclick="this.classList.toggle('open')">
+            <div class="turn-order-label">📋 行动顺序 ▾</div>
             <div class="turn-order-row" id="turnOrderRow"></div>
         </div>
 
@@ -189,7 +187,6 @@
             <button class="btn btn-fight" id="btnStartBattle" onclick="startBattle()">⚔️ 开始战斗</button>
             <button class="btn btn-next" id="btnNextTurn" onclick="nextTurn()" style="display:none">▶️ 下一步</button>
             <button class="btn btn-auto" id="btnAutoBattle" onclick="toggleAutoBattle()" style="display:none">🤖 自动播放</button>
-            <button class="btn btn-reset" onclick="resetBattle()">🔄 重置</button>
         </div>
 
         <!-- 结果 -->
@@ -236,41 +233,56 @@
             // 加载编队
             await loadFormationSelect();
 
-            // 渲染空槽
-            renderTeam('player', {});
-            renderTeam('enemy', {});
+            // 自动生成随机敌方
+            randomizeEnemy();
         }
 
         // ===== 加载编队下拉 =====
+        let formationsCache = []; // 缓存编队数据
         async function loadFormationSelect() {
             const resp = await fetch('formation_api.php?action=get_formations&user_id='+userId).catch(()=>null);
             if (!resp) return;
             const data = await resp.json();
             if (data.code !== 200) return;
+            formationsCache = data.formations || [];
             const sel = document.getElementById('selectFormation');
-            data.formations.forEach(f => {
+            sel.innerHTML = '<option value="">选择编队</option>';
+            formationsCache.forEach(f => {
                 const opt = document.createElement('option');
                 opt.value = f.id;
                 const cards = (f.cards||[]).length;
-                opt.textContent = `${f.name||'编队'+f.slot} (${cards}张)`;
+                opt.textContent = (f.name||('编队'+f.formation_slot)) + ' (' + cards + '张)';
                 sel.appendChild(opt);
             });
-            if (data.formations.length > 0) {
-                sel.value = data.formations[0].id;
-                await loadFormation();
+            if (formationsCache.length > 0) {
+                sel.value = formationsCache[0].id;
+                loadFormation();
             }
+
+            // 同时填充敌方编队下拉
+            const enemySel = document.getElementById('selectEnemyFormation');
+            enemySel.innerHTML = '<option value="">随机</option>';
+            formationsCache.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f.id;
+                const cards = (f.cards||[]).length;
+                opt.textContent = (f.name||('编队'+f.formation_slot)) + ' (' + cards + '张)';
+                enemySel.appendChild(opt);
+            });
+            // 页面加载时 label 默认显示"随机"
+            const selLabel0 = document.getElementById('enemySelLabel');
+            if (selLabel0) { selLabel0.textContent = '随机'; selLabel0.style.color = '#888'; }
         }
 
         // ===== 加载编队数据 =====
-        async function loadFormation() {
+        function loadFormation() {
             const sel = document.getElementById('selectFormation');
-            if (!sel.value) return;
-            const resp = await fetch(`formation_api.php?action=get_formation_cards&formation_id=${sel.value}`).catch(()=>null);
-            if (!resp) return;
-            const data = await resp.json();
-            if (data.code !== 200) return;
-            formationData = data;
-            renderTeam('player', buildPlayerTeam(data.cards||[]));
+            if (!sel.value) { renderTeam('player', {}); return; }
+            const fid = parseInt(sel.value);
+            const f = formationsCache.find(x => x.id === fid);
+            if (!f) return;
+            formationData = f;
+            renderTeam('player', buildPlayerTeam(f.cards||[]));
             updateTurnOrder();
         }
 
@@ -285,9 +297,9 @@
 
         // ===== 渲染队伍 =====
         function renderTeam(side, teamMap) {
-            // 位置映射: 1,2,3=后排  4,5,6=前排
+            // 位置映射: 1,2,3=前排  4,5,6=后排
             for (let pos = 1; pos <= 6; pos++) {
-                const row = pos <= 3 ? 'RowBack' : 'RowFront';
+                const row = pos <= 3 ? 'RowFront' : 'RowBack';
                 const container = document.getElementById(side + row);
                 if (!container) continue;
                 let existing = container.querySelector(`[data-pos="${pos}"]`);
@@ -298,18 +310,13 @@
                     existing.className = 'slot' + (card ? '' : ' empty');
                     existing.dataset.pos = pos;
                     existing.dataset.side = side;
-                    existing.onclick = () => onSlotClick(side, pos);
                     container.appendChild(existing);
                 }
 
                 existing.className = 'slot' + (card ? '' : ' empty');
 
                 if (!card) {
-                    existing.innerHTML = `
-                        <div class="slot-pos">${pos}</div>
-                        <div class="slot-empty-icon">+</div>
-                        <div class="slot-empty-text">选择</div>
-                    `;
+                    existing.innerHTML = '';
                 } else {
                     const level = card.level || 1;
                     const baseStats = card.baseStats || {};
@@ -319,7 +326,7 @@
                     const hpPct = Math.max(0, Math.min(100, hp/maxHp*100));
                     const hpClass = hpPct > 50 ? '' : hpPct > 20 ? ' medium' : ' low';
                     const color = rarityColors[card.rarity||1] || '#888';
-                    const imgSrc = card.image || `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='50' height='66'><rect fill='%230f3460' width='50' height='66'/><text fill='%23fff' x='25' y='38' text-anchor='middle' font-size='24'>?</text></svg>`;
+                    const imgSrc = card.image || `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='36' height='48'><rect fill='%230f3460' width='36' height='48'/><text fill='%23fff' x='18' y='30' text-anchor='middle' font-size='18'>?</text></svg>`;
 
                     existing.innerHTML = `
                         <div class="slot-pos">${pos}</div>
@@ -333,84 +340,6 @@
                     `;
                 }
             }
-        }
-
-        // ===== 点击卡槽 =====
-        function onSlotClick(side, pos) {
-            if (battleState) return; // 战斗中不能换人
-            if (side === 'player') {
-                // 弹出玩家卡牌选择
-                showCardPicker(side, pos);
-            } else {
-                // 敌方手动选择
-                showCardPicker(side, pos);
-            }
-        }
-
-        // ===== 简易卡牌选择器（弹层） =====
-        function showCardPicker(side, pos) {
-            const existing = document.getElementById('cardPicker');
-            if (existing) existing.remove();
-
-            const overlay = document.createElement('div');
-            overlay.id = 'cardPicker';
-            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;display:flex;flex-direction:column;align-items:center;padding:20px;overflow-y:auto;';
-            overlay.onclick = (e) => { if (e.target===overlay) overlay.remove(); };
-
-            const title = document.createElement('div');
-            title.style.cssText = 'color:#eee;font-size:16px;margin-bottom:10px;';
-            title.textContent = side==='player' ? `🛡️ 我方位置${pos} - 选择卡牌` : `⚔️ 敌方位置${pos} - 选择卡牌`;
-            overlay.appendChild(title);
-
-            const grid = document.createElement('div');
-            grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:500px;';
-
-            const cards = side==='player' ? userCards : userCards; // 敌人也用同一个池演示
-            cards.forEach(card => {
-                const level = card.level || 1;
-                const baseStats = card.baseStats || {};
-                const growthStats = card.growthStats || {};
-                const maxHp = Math.round((baseStats.HP||0)+(level-1)*(growthStats.HP||0));
-                const color = rarityColors[card.rarity||1]||'#888';
-                const stars = '⭐'.repeat(card.rarity||1);
-                const imgSrc = card.image || `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='50' height='66'><rect fill='%230f3460' width='50' height='66'/><text fill='%23fff' x='25' y='38' text-anchor='middle' font-size='24'>?</text></svg>`;
-
-                const item = document.createElement('div');
-                item.style.cssText = `background:#16213e;border:2px solid #0f3460;border-radius:10px;padding:6px;cursor:pointer;width:90px;display:flex;flex-direction:column;align-items:center;transition:0.2s;`;
-                item.onmouseover = () => item.style.borderColor = color;
-                item.onmouseout = () => item.style.borderColor = '#0f3460';
-                item.onclick = () => {
-                    // 设置卡牌到槽位
-                    if (side==='player') {
-                        formationData = formationData || {cards:[]};
-                        formationData.cards = formationData.cards.filter(c=>c.position!==pos);
-                        formationData.cards.push({...card, position:pos, _hp:maxHp});
-                        renderTeam('player', buildPlayerTeam(formationData.cards));
-                    } else {
-                        if (!enemyTeam) enemyTeam = {};
-                        enemyTeam[pos] = {...card, _hp: maxHp};
-                        renderTeam('enemy', enemyTeam);
-                    }
-                    updateTurnOrder();
-                    overlay.remove();
-                };
-                item.innerHTML = `
-                    <div style="font-size:9px;color:${color};margin-bottom:2px;">${stars}</div>
-                    <img src="${imgSrc}" style="width:50px;height:66px;object-fit:contain;border-radius:5px;">
-                    <div style="font-size:10px;color:#ccc;margin-top:2px;text-align:center;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${card.name||'?'}</div>
-                    <div style="font-size:9px;color:#888;">Lv${level} HP${maxHp}</div>
-                `;
-                grid.appendChild(item);
-            });
-
-            const closeBtn = document.createElement('button');
-            closeBtn.textContent = '关闭';
-            closeBtn.style.cssText = 'margin-top:15px;padding:8px 24px;border-radius:8px;border:none;background:#333;color:#aaa;cursor:pointer;font-size:14px;';
-            closeBtn.onclick = () => overlay.remove();
-
-            overlay.appendChild(grid);
-            overlay.appendChild(closeBtn);
-            document.body.appendChild(overlay);
         }
 
         // ===== 随机敌人 =====
@@ -427,6 +356,28 @@
             }
             renderTeam('enemy', enemyTeam);
             updateTurnOrder();
+            // 重置 label 显示随机
+            const lbl = document.getElementById("enemySelLabel");
+            if(lbl) { lbl.textContent="随机"; lbl.style.color="#888"; }
+        }
+
+        // ===== 加载敌方编队 =====
+        function loadEnemyFormation() {
+            const sel = document.getElementById('selectEnemyFormation');
+            if (!sel.value) return;
+            const fid = parseInt(sel.value);
+            const f = formationsCache.find(x => x.id === fid);
+            if (!f || !f.cards || f.cards.length === 0) return;
+            // 用编队数据构建敌方队伍
+            enemyTeam = buildPlayerTeam(f.cards);
+            renderTeam('enemy', enemyTeam);
+            updateTurnOrder();
+            // 更新 label 显示编队名
+            const selLabel2 = document.getElementById('enemySelLabel');
+            if (selLabel2) {
+                selLabel2.textContent = f.name || ('编队' + f.formation_slot);
+                selLabel2.style.color = '#eee';
+            }
         }
 
         // ===== 战斗状态初始化 =====
@@ -484,13 +435,36 @@
                 return;
             }
 
-            return { playerUnits, enemyUnits, logs:[], round:0, turnIndex:0, finished:false };
+            return { playerUnits, enemyUnits, logs:[], round:0, turnIndex:0, currentOrder:null, finished:false };
         }
 
         // ===== 计算行动顺序 =====
         function computeTurnOrder(state) {
+            // 1. 收集所有存活单位
             const all = [...state.playerUnits.filter(u=>u.hp>0), ...state.enemyUnits.filter(u=>u.hp>0)];
-            return all.sort((a,b) => b.spd - a.spd);
+
+            // 2. 按SPD降序排列，SPD相同时随机打散
+            all.sort((a, b) => {
+                if (b.spd !== a.spd) return b.spd - a.spd;
+                return Math.random() - 0.5;
+            });
+
+            // 3. 冒泡洗牌3轮：相邻比较，SPD差决定是否交换
+            //    stayChance = clamp(50 + spdDiff/2, 0, 100)
+            //    差100时stayChance=100%不换，差0时50%概率换
+            const PASSES = 3;
+            for (let p = 0; p < PASSES; p++) {
+                for (let i = 0; i < all.length - 1; i++) {
+                    const spdDiff = all[i].spd - all[i+1].spd;
+                    const stayChance = Math.min(100, Math.max(0, 50 + spdDiff / 2));
+                    if (Math.random() * 100 >= stayChance) {
+                        // 交换位置
+                        [all[i], all[i+1]] = [all[i+1], all[i]];
+                    }
+                }
+            }
+
+            return all;
         }
 
         // ===== 行动顺序条 =====
@@ -501,15 +475,18 @@
                 const all = [...Object.values(playerCards), ...Object.values(enemyTeam||{})].filter(Boolean).map(c => ({
                     side: enemyTeam && Object.values(enemyTeam||{}).includes(c) ? 'enemy' : 'player',
                     name: c.name||'?',
-                    spd: Math.round(((c.baseStats?.SPD||0)+((c.level||1)-1)*(c.growthStats?.SPD||0)))),
+                    spd: Math.round((c.baseStats?.SPD||0)+((c.level||1)-1)*(c.growthStats?.SPD||0)),
                     hp: c._hp || 999,
                 }));
                 const order = [...all].sort((a,b)=>b.spd-a.spd).slice(0,12);
                 renderTurnOrder(order);
                 return;
             }
-            const order = computeTurnOrder(battleState);
-            renderTurnOrder(order, battleState.turnIndex);
+            // 战斗中：直接用已存储的顺序，不重新计算！
+            const order = battleState.currentOrder;
+            if (order) {
+                renderTurnOrder(order, battleState.turnIndex);
+            }
         }
 
         function renderTurnOrder(order, currentIdx=-1) {
@@ -527,7 +504,7 @@
 
         // ===== 渲染单个卡槽（战斗中更新HP） =====
         function refreshSlot(unit) {
-            const row = unit.side==='player' ? (unit.pos<=3?'RowBack':'RowFront') : (unit.pos<=3?'RowBack':'RowFront');
+            const row = unit.side==='player' ? (unit.pos<=3?'RowFront':'RowBack') : (unit.pos<=3?'RowFront':'RowBack');
             const container = document.getElementById(unit.side + row);
             if (!container) return;
             const el = container.querySelector(`[data-pos="${unit.pos}"]`);
@@ -552,7 +529,7 @@
 
         // ===== 伤害飘字 =====
         function showDamagePop(side, pos, text, type) {
-            const row = side==='player' ? (pos<=3?'RowBack':'RowFront') : (pos<=3?'RowBack':'RowFront');
+            const row = side==='player' ? (pos<=3?'RowFront':'RowBack') : (pos<=3?'RowFront':'RowBack');
             const container = document.getElementById(side + row);
             if (!container) return;
             const el = container.querySelector(`[data-pos="${pos}"]`);
@@ -570,7 +547,7 @@
 
         // ===== 标记攻击/受击 =====
         function markSlot(side, pos, cls) {
-            const row = side==='player' ? (pos<=3?'RowBack':'RowFront') : (pos<=3?'RowBack':'RowFront');
+            const row = side==='player' ? (pos<=3?'RowFront':'RowBack') : (pos<=3?'RowFront':'RowBack');
             const container = document.getElementById(side + row);
             if (!container) return;
             const el = container.querySelector(`[data-pos="${pos}"]`);
@@ -584,6 +561,9 @@
             const state = initBattle();
             if (!state) return;
             battleState = state;
+            // 战斗开始时立即计算第一回合的行动顺序
+            battleState.currentOrder = computeTurnOrder(battleState);
+            battleState.round = 1;
             document.getElementById('battleLog').classList.add('show');
             document.getElementById('battleLog').innerHTML = '⚔️ 战斗开始！';
             document.getElementById('btnStartBattle').style.display = 'none';
@@ -603,14 +583,21 @@
         }
 
         function autoBattle() {
+            console.log('[autoBattle] called, turnIndex=', battleState ? battleState.turnIndex : 'N/A', 'round=', battleState ? battleState.round : 'N/A', 'finished=', battleState ? battleState.finished : 'N/A');
             if (!battleState || battleState.finished) {
+                console.log('[autoBattle] STOPPED: battleState null or finished');
                 stopAuto();
                 return;
             }
             executeTurn();
-            if (!battleState.finished) {
-                autoBattleTimer = setTimeout(autoBattle, 600);
+            // 防御：executeTurn 后若 battleState 已被清空（resetBattle），不继续
+            if (!battleState || battleState.finished) {
+                console.log('[autoBattle] STOPPED after executeTurn: battleState null or finished');
+                stopAuto();
+                return;
             }
+            console.log('[autoBattle] scheduling next, turnIndex now=', battleState.turnIndex);
+            autoBattleTimer = setTimeout(autoBattle, 600);
         }
 
         function stopAuto() {
@@ -627,105 +614,154 @@
             }
         }
 
-        // ===== 执行一回合 =====
+        // ===== 执行一回合（每回合开始时生成完整行动顺序，逐个执行） =====
         function executeTurn() {
             const state = battleState;
-            const order = computeTurnOrder(state);
-            const unit = order[state.turnIndex];
+            if (!state || state.finished) return;
 
-            if (!unit || unit.hp <= 0) {
-                // 跳过已阵亡的
-                state.turnIndex++;
-                if (state.turnIndex >= order.length) {
-                    state.round++;
-                    state.turnIndex = 0;
-                    if (state.round >= 20) {
-                        endBattle(state);
-                        return;
-                    }
-                }
+            // ★ 如果 currentOrder 为空，说明需要进入新的一轮
+            if (!state.currentOrder) {
+                state.currentOrder = computeTurnOrder(state);
+                state.turnIndex = 0;
+                state.round++;
+                addLog(`--- 第 ${state.round} 轮开始 ---`, 'round');
                 updateTurnOrder();
+            }
+
+            // 取当前顺序中的存活单位，跳过阵亡的
+            while (state.turnIndex < state.currentOrder.length) {
+                const unit = state.currentOrder[state.turnIndex];
+                if (unit && unit.hp > 0) break;
+                state.turnIndex++;
+            }
+
+            // 本回合所有单位都行动完毕 → 进入下一轮判定
+            if (state.turnIndex >= state.currentOrder.length) {
+                state.currentOrder = null;  // 清空，下次 executeTurn 会自动进入新回合
+                if (state.round >= 30) { endBattle(state); return; }
+                // 不递归！手动模式等用户点下一步，自动模式靠 autoBattle 循环
                 return;
             }
 
+            const unit = state.currentOrder[state.turnIndex];
+
+            // 二动判定（spd差>100触发二动，与1v1一致）
+            const enemies = unit.side==='player' ? state.enemyUnits : state.playerUnits;
+            const allAlive = enemies.filter(e=>e.hp>0);
+            const fastestEnemy = allAlive.length > 0 ? allAlive.reduce((a,b)=>a.spd>b.spd?a:b) : null;
+            const doubleAttack = fastestEnemy && (unit.spd - fastestEnemy.spd) > 100;
+            const attackCount = doubleAttack ? 2 : 1;
+            if (doubleAttack) addLog(`⚡ ${unit.name} 二动!`, 'round');
+
             addLog(`🛡️ ${unit.name} 行动`, 'round');
 
-            // 选择目标（优先前排，若无则后排）
-            const enemies = unit.side==='player' ? state.enemyUnits : state.playerUnits;
-            const alive = enemies.filter(e=>e.hp>0);
-            if (alive.length === 0) { endBattle(state); return; }
+            // 攻击循环（二动时执行两次）
+            for (let ai = 0; ai < attackCount; ai++) {
+                const alive = enemies.filter(e=>e.hp>0);
+                if (alive.length === 0) break;
 
-            // 前排保护：后排目标被攻击时，前排随机一个帮忙挡
-            const frontRow = alive.filter(e=>e.pos>=4);
-            const backRow = alive.filter(e=>e.pos<=3);
-            let target;
-            if (backRow.length > 0 && Math.random() < 0.3) {
-                // 30%概率打后排
-                target = backRow[Math.floor(Math.random()*backRow.length)];
-            } else if (frontRow.length > 0) {
-                target = frontRow[Math.floor(Math.random()*frontRow.length)];
-            } else {
-                target = alive[Math.floor(Math.random()*alive.length)];
-            }
+                // 列映射: 位置1,4=列0, 位置2,5=列1, 位置3,6=列2
+                const getColumn = (pos) => (pos - 1) % 3;
+                const isFront = (pos) => pos <= 3;
+                const isBack = (pos) => pos >= 4;
 
-            // 闪避判定
-            const hitRate = Math.min(92, Math.max(70, 75 + (unit.skl - target.skl)*0.5));
-            const dodgeRate = Math.min(30, Math.max(5, 5 + (target.spd - unit.spd)*0.3));
-            const roll = Math.random()*100;
+                // 按列分组存活敌人
+                const columnEnemies = [[], [], []];
+                alive.forEach(e => columnEnemies[getColumn(e.pos)].push(e));
 
-            markSlot(unit.side, unit.pos, 'attacking');
-            setTimeout(()=>markSlot(target.side, target.pos, 'defending'), 300);
+                // 过滤有敌人的列
+                const availableColumns = [];
+                columnEnemies.forEach((units, col) => { if (units.length > 0) availableColumns.push(col); });
 
-            if (roll < dodgeRate && roll < hitRate) {
-                // 闪避
-                addLog(`⚔️ ${unit.name} → ${target.name} → 闪避!`, 'dodge');
-                showDamagePop(target.side, target.pos, '闪避', 'dodge');
-            } else if (roll >= hitRate) {
-                // 未命中
-                addLog(`⚔️ ${unit.name} → ${target.name} → 未命中!`, 'miss');
-            } else {
-                // 命中
-                const critRate = Math.min(40, Math.max(0, unit.skl/5));
-                const isCrit = Math.random()*100 < critRate;
-                let damage = Math.max(1, unit.atk - target.def);
-                if (isCrit) damage = Math.max(1, Math.floor(damage * 1.5));
-                target.hp -= damage;
+                // 随机选一列
+                const selectedCol = availableColumns[Math.floor(Math.random() * availableColumns.length)];
+                const colEnemies = columnEnemies[selectedCol];
+                const colFront = colEnemies.filter(e => isFront(e.pos));
+                const colBack = colEnemies.filter(e => isBack(e.pos));
 
-                const cls = unit.side==='player' ? 'player-action' : 'enemy-action';
-                if (isCrit) {
-                    addLog(`⚔️ ${unit.name} → ${target.name} 暴击! 造成 ${damage} 伤害`, 'crit');
-                    showDamagePop(target.side, target.pos, '暴击!'+damage, 'crit');
+                // 根据攻击者位置决定目标
+                let target;
+                const attackerIsFront = isFront(unit.pos);
+
+                if (!attackerIsFront) {
+                    // 后排攻击者：只能打前排，前排死后才能打后排
+                    if (colFront.length > 0) {
+                        target = colFront[Math.floor(Math.random() * colFront.length)];
+                    } else {
+                        target = colBack[Math.floor(Math.random() * colBack.length)];
+                    }
                 } else {
-                    addLog(`⚔️ ${unit.name} → ${target.name} 造成 ${damage} 伤害`, 'hit');
-                    showDamagePop(target.side, target.pos, '-'+damage, 'dmg');
+                    // 前排攻击者
+                    if (colFront.length > 0 && colBack.length > 0) {
+                        if (Math.random() < 0.1) {
+                            target = colBack[Math.floor(Math.random() * colBack.length)];
+                        } else {
+                            target = colFront[Math.floor(Math.random() * colFront.length)];
+                        }
+                    } else if (colFront.length > 0) {
+                        target = colFront[Math.floor(Math.random() * colFront.length)];
+                    } else {
+                        target = colBack[Math.floor(Math.random() * colBack.length)];
+                    }
                 }
 
-                if (target.hp <= 0) {
-                    target.hp = 0;
-                    addLog(`💀 ${target.name} 阵亡!`, 'ko');
-                }
-                refreshSlot(target);
-            }
+                // 判断目标是否受保护（后排被攻击时，同列前排是否存活）
+                const targetIsProtected = isBack(target.pos) && colFront.length > 0;
 
-            // 下一个
+                // 命中/闪避判定（与1v1一致）
+                const hitRate = Math.min(95, Math.max(75, 75 + Math.max(0, unit.skl - target.skl) * 0.8 + Math.max(0, unit.spd - target.spd) * 0.2));
+                const dodgeRate = Math.min(35, Math.max(5, 5 + Math.max(0, target.spd - unit.spd) * 0.8 + Math.max(0, target.skl - unit.skl) * 0.2));
+                const roll = Math.random()*100;
+                const isHit = roll < hitRate;
+                const isDodge = roll > hitRate && roll < hitRate + dodgeRate;
+
+                markSlot(unit.side, unit.pos, 'attacking');
+                setTimeout(()=>markSlot(target.side, target.pos, 'defending'), 300);
+
+                if (isDodge) {
+                    addLog(`⚔️ ${unit.name} → ${target.name} → 闪避! (命中${hitRate.toFixed(1)}% 闪避${dodgeRate.toFixed(1)}%)`, 'dodge');
+                    showDamagePop(target.side, target.pos, '闪避', 'dodge');
+                } else if (!isHit) {
+                    addLog(`⚔️ ${unit.name} → ${target.name} → 未命中!`, 'miss');
+                } else {
+                    // 暴击判定（受保护时暴击率减半）
+                    let critRate = Math.min(50, Math.max(0, (unit.skl - target.skl) / 2 + (unit.spd - target.spd) / 4));
+                    if (targetIsProtected) critRate *= 0.5;
+                    const critRoll = Math.random() * 100;
+                    const isCrit = critRoll < critRate;
+
+                    // 伤害计算
+                    let damage = Math.max(1, unit.atk - target.def);
+                    if (isCrit) damage = Math.max(1, Math.floor(unit.atk * 1.5) - target.def);
+                    if (isCrit) damage = Math.max(damage, Math.floor(target.maxHp * 0.2));
+                    if (targetIsProtected && !isCrit) damage = Math.max(1, Math.floor(damage * 0.5));
+                    target.hp -= damage;
+
+                    if (isCrit) {
+                        const protText = targetIsProtected ? '(穿透保护)' : '';
+                        addLog(`⚔️ ${unit.name} → ${target.name} 暴击!${protText}  造成 ${damage} 伤害`, 'crit');
+                        showDamagePop(target.side, target.pos, '暴击!'+damage, 'crit');
+                    } else {
+                        const protText2 = targetIsProtected ? '(保护减伤)' : '';
+                        addLog(`⚔️ ${unit.name} → ${target.name}${protText2} 造成 ${damage} 伤害`, 'hit');
+                        showDamagePop(target.side, target.pos, '-'+damage, 'dmg');
+                    }
+
+                    if (target.hp <= 0) {
+                        target.hp = 0;
+                        addLog(`💀 ${target.name} 阵亡!`, 'ko');
+                    }
+                    refreshSlot(target);
+                }
+
+                // 每次攻击后检查胜负
+                const pAlive = state.playerUnits.filter(u=>u.hp>0).length;
+                const eAlive = state.enemyUnits.filter(u=>u.hp>0).length;
+                if (pAlive===0 || eAlive===0) { endBattle(state); return; }
+            } // end for (attackCount loop)
+
+            // 前进到下一个
             state.turnIndex++;
-            if (state.turnIndex >= order.filter(u=>u.hp>0||(order.indexOf(u)>=state.turnIndex)).length) {
-                // 真正到下一轮了
-                const aliveOrder = computeTurnOrder(state);
-                if (state.turnIndex >= aliveOrder.length) {
-                    state.round++;
-                    state.turnIndex = 0;
-                    addLog(`--- 第 ${state.round+1} 轮开始 ---`, 'round');
-                }
-            }
-
-            if (state.round >= 20) { endBattle(state); return; }
-
-            // 检查胜负
-            const pAlive = state.playerUnits.filter(u=>u.hp>0).length;
-            const eAlive = state.enemyUnits.filter(u=>u.hp>0).length;
-            if (pAlive===0 || eAlive===0) { endBattle(state); return; }
-
             updateTurnOrder();
         }
 
@@ -782,6 +818,10 @@
             // 恢复所有槽位显示
             if (formationData) renderTeam('player', buildPlayerTeam(formationData.cards));
             if (enemyTeam && Object.keys(enemyTeam).length > 0) renderTeam('enemy', enemyTeam);
+            const rsel = document.getElementById('selectEnemyFormation');
+            rsel.value = '';
+            const rselLbl = document.getElementById('enemySelLabel');
+            if(rselLbl) { rselLbl.textContent='随机'; rselLbl.style.color='#888'; }
 
             // 清除死标记
             document.querySelectorAll('.slot.dead').forEach(el=>el.classList.remove('dead'));
