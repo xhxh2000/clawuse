@@ -140,13 +140,13 @@
         <div class="team-side">
             <div class="team-header">
                 <span class="team-label enemy">⚔️ 敌方</span>
+                <button class="btn-sm" id="btnRandomEnemy" onclick="randomizeEnemy()">🎲 随机</button>
                 <div style="position:relative;display:inline-block;">
                     <select id="selectEnemyFormation" onchange="loadEnemyFormation()" style="padding:2px 6px;border-radius:6px;background:#16213e;color:#eee;border:1px solid #0f3460;font-size:11px;min-width:60px;opacity:0;position:absolute;top:0;left:0;width:100%;height:100%;cursor:pointer;z-index:1;">
                         <option value="">随机</option>
                     </select>
                     <span id="enemySelLabel" style="display:inline-block;padding:2px 6px;border-radius:6px;background:#16213e;color:#888;border:1px solid #0f3460;font-size:11px;pointer-events:none;">随机</span>
                 </div>
-                <button class="btn-sm" id="btnRandomEnemy" onclick="randomizeEnemy()">🎲 随机</button>
             </div>
             <div class="formation-grid">
                 <div class="row-back" id="enemyRowBack"></div>
@@ -160,16 +160,19 @@
 
         <!-- 我方阵容（下方） -->
         <div class="team-side">
+            <div class="team-header" style="margin-bottom:2px;">
+                <span class="team-label player">🛡️ 我方</span>
+                <div style="position:relative;display:inline-block;">
+                    <select id="selectFormation" onchange="loadFormation()" style="padding:2px 6px;border-radius:6px;background:#16213e;color:#eee;border:1px solid #0f3460;font-size:11px;min-width:60px;opacity:0;position:absolute;top:0;left:0;width:100%;height:100%;cursor:pointer;z-index:1;">
+                        <option value="">选择编队</option>
+                    </select>
+                    <span id="playerSelLabel" style="display:inline-block;padding:2px 6px;border-radius:6px;background:#16213e;color:#888;border:1px solid #0f3460;font-size:11px;pointer-events:none;">选择编队</span>
+                </div>
+            </div>
             <div class="formation-grid">
                 <div class="row-front" id="playerRowFront"></div>
                 <div class="row-label">后排 ↑</div>
                 <div class="row-back" id="playerRowBack"></div>
-            </div>
-            <div class="team-header" style="margin-top:2px;">
-                <span class="team-label player">🛡️ 我方</span>
-                <select id="selectFormation" onchange="loadFormation()" style="padding:2px 6px;border-radius:6px;background:#16213e;color:#eee;border:1px solid #0f3460;font-size:11px;max-width:140px;">
-                    <option value="">选择编队</option>
-                </select>
             </div>
         </div>
 
@@ -259,6 +262,16 @@
                 loadFormation();
             }
 
+            // 同步 playerSelLabel
+            if (formationsCache.length > 0) {
+                const f = formationsCache[0];
+                const pl = document.getElementById('playerSelLabel');
+                if (pl) {
+                    pl.textContent = f.name || ('编队' + f.formation_slot);
+                    pl.style.color = '#eee';
+                }
+            }
+
             // 同时填充敌方编队下拉
             const enemySel = document.getElementById('selectEnemyFormation');
             enemySel.innerHTML = '<option value="">随机</option>';
@@ -276,12 +289,20 @@
 
         // ===== 加载编队数据 =====
         function loadFormation() {
+            // 战斗中禁止切换
+            if (battleState && !battleState.finished) return;
             const sel = document.getElementById('selectFormation');
             if (!sel.value) { renderTeam('player', {}); return; }
             const fid = parseInt(sel.value);
             const f = formationsCache.find(x => x.id === fid);
             if (!f) return;
             formationData = f;
+            // 同步 playerSelLabel
+            const lbl = document.getElementById('playerSelLabel');
+            if (lbl) {
+                lbl.textContent = (f.name||('编队'+f.formation_slot));
+                lbl.style.color = '#eee';
+            }
             renderTeam('player', buildPlayerTeam(f.cards||[]));
             updateTurnOrder();
         }
@@ -345,6 +366,8 @@
         // ===== 随机敌人 =====
         let enemyTeam = {};
         function randomizeEnemy() {
+            // 战斗中禁止切换
+            if (battleState && !battleState.finished) return;
             const shuffled = [...userCards].sort(()=>Math.random()-0.5);
             enemyTeam = {};
             const positions = [1,2,3,4,5,6].sort(()=>Math.random()-0.5);
@@ -363,6 +386,8 @@
 
         // ===== 加载敌方编队 =====
         function loadEnemyFormation() {
+            // 战斗中禁止切换
+            if (battleState && !battleState.finished) return;
             const sel = document.getElementById('selectEnemyFormation');
             if (!sel.value) return;
             const fid = parseInt(sel.value);
@@ -443,22 +468,23 @@
             // 1. 收集所有存活单位
             const all = [...state.playerUnits.filter(u=>u.hp>0), ...state.enemyUnits.filter(u=>u.hp>0)];
 
-            // 2. 按SPD降序排列，SPD相同时随机打散
-            all.sort((a, b) => {
-                if (b.spd !== a.spd) return b.spd - a.spd;
-                return Math.random() - 0.5;
-            });
+            // 2. 先完全随机打乱（打破上轮的顺序惯性）
+            for (let i = all.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [all[i], all[j]] = [all[j], all[i]];
+            }
 
-            // 3. 冒泡洗牌3轮：相邻比较，SPD差决定是否交换
-            //    stayChance = clamp(50 + spdDiff/2, 0, 100)
-            //    差100时stayChance=100%不换，差0时50%概率换
-            const PASSES = 3;
+            // 3. 冒泡排序5轮：SPD差决定是否交换到前面
+            //    swapChance = clamp(50 + spdDiff/2, 0, 100)
+            //    差100时swapChance=100%必换到前面，差0时50%概率换
+            //    5轮保证速度高的有足够机会冒泡到前面
+            const PASSES = 5;
             for (let p = 0; p < PASSES; p++) {
                 for (let i = 0; i < all.length - 1; i++) {
-                    const spdDiff = all[i].spd - all[i+1].spd;
-                    const stayChance = Math.min(100, Math.max(0, 50 + spdDiff / 2));
-                    if (Math.random() * 100 >= stayChance) {
-                        // 交换位置
+                    const spdDiff = all[i+1].spd - all[i].spd; // 后面比前面快多少
+                    const swapChance = Math.min(100, Math.max(0, 50 + spdDiff / 2));
+                    if (Math.random() * 100 < swapChance) {
+                        // 后面更快的换到前面
                         [all[i], all[i+1]] = [all[i+1], all[i]];
                     }
                 }
@@ -557,6 +583,30 @@
         }
 
         // ===== 战斗流程 =====
+        function lockBattleControls() {
+            // 禁用敌方选择器
+            document.getElementById('selectEnemyFormation').style.pointerEvents = 'none';
+            document.getElementById('enemySelLabel').style.opacity = '0.5';
+            document.getElementById('btnRandomEnemy').disabled = true;
+            document.getElementById('btnRandomEnemy').style.opacity = '0.5';
+            // 禁用玩家选择器
+            document.getElementById('selectFormation').style.pointerEvents = 'none';
+            const pl = document.getElementById('playerSelLabel');
+            if (pl) pl.style.opacity = '0.5';
+        }
+
+        function unlockBattleControls() {
+            // 启用敌方选择器
+            document.getElementById('selectEnemyFormation').style.pointerEvents = 'auto';
+            document.getElementById('enemySelLabel').style.opacity = '1';
+            document.getElementById('btnRandomEnemy').disabled = false;
+            document.getElementById('btnRandomEnemy').style.opacity = '1';
+            // 启用玩家选择器
+            document.getElementById('selectFormation').style.pointerEvents = 'auto';
+            const pl = document.getElementById('playerSelLabel');
+            if (pl) pl.style.opacity = '1';
+        }
+
         function startBattle() {
             const state = initBattle();
             if (!state) return;
@@ -569,6 +619,8 @@
             document.getElementById('btnStartBattle').style.display = 'none';
             document.getElementById('btnNextTurn').style.display = battleMode==='manual' ? 'inline-block' : 'none';
             document.getElementById('btnAutoBattle').style.display = 'inline-block';
+            // 锁定编队选择，防止战斗中切换阵容
+            lockBattleControls();
             updateTurnOrder();
 
             if (battleMode==='auto') {
@@ -655,58 +707,62 @@
 
             addLog(`🛡️ ${unit.name} 行动`, 'round');
 
-            // 攻击循环（二动时执行两次）
+            // 攻击循环（二动时执行两次，必须打同一目标）
+            let fixedTarget = null;
             for (let ai = 0; ai < attackCount; ai++) {
                 const alive = enemies.filter(e=>e.hp>0);
                 if (alive.length === 0) break;
 
-                // 列映射: 位置1,4=列0, 位置2,5=列1, 位置3,6=列2
+                // 二动时如果第一击的目标还活着，继续打它
+                let target;
                 const getColumn = (pos) => (pos - 1) % 3;
                 const isFront = (pos) => pos <= 3;
                 const isBack = (pos) => pos >= 4;
 
-                // 按列分组存活敌人
-                const columnEnemies = [[], [], []];
-                alive.forEach(e => columnEnemies[getColumn(e.pos)].push(e));
-
-                // 过滤有敌人的列
-                const availableColumns = [];
-                columnEnemies.forEach((units, col) => { if (units.length > 0) availableColumns.push(col); });
-
-                // 随机选一列
-                const selectedCol = availableColumns[Math.floor(Math.random() * availableColumns.length)];
-                const colEnemies = columnEnemies[selectedCol];
-                const colFront = colEnemies.filter(e => isFront(e.pos));
-                const colBack = colEnemies.filter(e => isBack(e.pos));
-
-                // 根据攻击者位置决定目标
-                let target;
-                const attackerIsFront = isFront(unit.pos);
-
-                if (!attackerIsFront) {
-                    // 后排攻击者：只能打前排，前排死后才能打后排
-                    if (colFront.length > 0) {
-                        target = colFront[Math.floor(Math.random() * colFront.length)];
-                    } else {
-                        target = colBack[Math.floor(Math.random() * colBack.length)];
-                    }
+                if (fixedTarget && fixedTarget.hp > 0) {
+                    target = fixedTarget;
                 } else {
-                    // 前排攻击者
-                    if (colFront.length > 0 && colBack.length > 0) {
-                        if (Math.random() < 0.1) {
-                            target = colBack[Math.floor(Math.random() * colBack.length)];
-                        } else {
-                            target = colFront[Math.floor(Math.random() * colFront.length)];
-                        }
-                    } else if (colFront.length > 0) {
-                        target = colFront[Math.floor(Math.random() * colFront.length)];
+                    // 按列分组存活敌人
+                    const columnEnemies = [[], [], []];
+                    alive.forEach(e => columnEnemies[getColumn(e.pos)].push(e));
+
+                    // 过滤有敌人的列
+                    const availableColumns = [];
+                    columnEnemies.forEach((units, col) => { if (units.length > 0) availableColumns.push(col); });
+
+                    // 随机选一列
+                    const selectedCol = availableColumns[Math.floor(Math.random() * availableColumns.length)];
+                    const colEnemies = columnEnemies[selectedCol];
+                    const colFront = colEnemies.filter(e => isFront(e.pos));
+                    const colBack = colEnemies.filter(e => isBack(e.pos));
+
+                    // 根据攻击者位置决定目标
+                    const attackerIsFront = isFront(unit.pos);
+                    if (!attackerIsFront) {
+                        // 后排攻击者：只能打前排，前排死后才能打后排
+                        target = colFront.length > 0
+                            ? colFront[Math.floor(Math.random() * colFront.length)]
+                            : colBack[Math.floor(Math.random() * colBack.length)];
                     } else {
-                        target = colBack[Math.floor(Math.random() * colBack.length)];
+                        // 前排攻击者
+                        if (colFront.length > 0 && colBack.length > 0) {
+                            target = Math.random() < 0.1
+                                ? colBack[Math.floor(Math.random() * colBack.length)]
+                                : colFront[Math.floor(Math.random() * colFront.length)];
+                        } else if (colFront.length > 0) {
+                            target = colFront[Math.floor(Math.random() * colFront.length)];
+                        } else {
+                            target = colBack[Math.floor(Math.random() * colBack.length)];
+                        }
                     }
                 }
 
-                // 判断目标是否受保护（后排被攻击时，同列前排是否存活）
-                const targetIsProtected = isBack(target.pos) && colFront.length > 0;
+                // 固定目标，二动时不再重新选
+                fixedTarget = target;
+
+                // 列信息（用于保护判定）
+                const colFrontAlive = alive.filter(e => e.pos !== target.pos && isFront(e.pos) && getColumn(e.pos) === getColumn(target.pos));
+                const targetIsProtected = isBack(target.pos) && colFrontAlive.length > 0;
 
                 // 命中/闪避判定（与1v1一致）
                 const hitRate = Math.min(95, Math.max(75, 75 + Math.max(0, unit.skl - target.skl) * 0.8 + Math.max(0, unit.spd - target.spd) * 0.2));
@@ -752,6 +808,15 @@
                         addLog(`💀 ${target.name} 阵亡!`, 'ko');
                     }
                     refreshSlot(target);
+
+                    // 第一击打死则不发动第二击，避免其他角色多挨打
+                    if (ai === 0 && target.hp <= 0) {
+                        // 打死目标后立即检查胜负，再跳出
+                        const pAlive = state.playerUnits.filter(u=>u.hp>0).length;
+                        const eAlive = state.enemyUnits.filter(u=>u.hp>0).length;
+                        if (pAlive===0 || eAlive===0) { endBattle(state); return; }
+                        break;
+                    }
                 }
 
                 // 每次攻击后检查胜负
@@ -822,6 +887,9 @@
             rsel.value = '';
             const rselLbl = document.getElementById('enemySelLabel');
             if(rselLbl) { rselLbl.textContent='随机'; rselLbl.style.color='#888'; }
+
+            // 恢复编队控件
+            unlockBattleControls();
 
             // 清除死标记
             document.querySelectorAll('.slot.dead').forEach(el=>el.classList.remove('dead'));
