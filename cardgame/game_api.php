@@ -438,8 +438,9 @@ if ($action === 'get_all') {
     }
     $max_level = intval($cfg['max_level'] ?? 100);
     $exp_per_level = intval($cfg['exp_per_level'] ?? 100);
-    $material_base_exp = floatval($cfg['material_base_exp'] ?? 5);
+    $material_base_exp = floatval($cfg['material_base_exp'] ?? 20);
     $material_rarity_factor = floatval($cfg['material_rarity_factor'] ?? 1.3);
+    $material_exp_return_rate = floatval($cfg['material_exp_return_rate'] ?? 0.5);
     
     // Get target card
     $stmt = $db->prepare('SELECT uc.id, uc.card_id, uc.level, uc.exp, c.rarity, c.name FROM user_cards uc JOIN cards c ON uc.card_id=c.id WHERE uc.id=:id AND uc.user_id=:uid');
@@ -465,7 +466,7 @@ if ($action === 'get_all') {
         if (isset($duplicate_check[$mid])) { echo json_encode(['code'=>400,'msg'=>'材料卡重复']); exit; }
         $duplicate_check[$mid] = true;
         
-        $stmt = $db->prepare('SELECT uc.id, uc.card_id, uc.level, uc.is_favorite, c.rarity, c.name FROM user_cards uc JOIN cards c ON uc.card_id=c.id WHERE uc.id=:id AND uc.user_id=:uid');
+        $stmt = $db->prepare('SELECT uc.id, uc.card_id, uc.level, uc.exp, uc.is_favorite, c.rarity, c.name FROM user_cards uc JOIN cards c ON uc.card_id=c.id WHERE uc.id=:id AND uc.user_id=:uid');
         $stmt->bindValue(':id', $mid);
         $stmt->bindValue(':uid', $user_id);
         $matRow = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
@@ -474,11 +475,18 @@ if ($action === 'get_all') {
         
         $mat_level = intval($matRow['level']);
         $mat_rarity = intval($matRow['rarity']);
+        $mat_exp = intval($matRow['exp']);
         $rarity_diff = $mat_rarity - $target_rarity;
         
-        // exp = base × material_level × factor^(diff)
-        $exp_gained = $material_base_exp * $mat_level * pow($material_rarity_factor, $rarity_diff);
-        $exp_gained = max(1, intval(round($exp_gained))); // at least 1 exp
+        // exp = base × material_level × factor^(diff) + material_card_exp × return_rate
+        $base_exp = $material_base_exp * $mat_level * pow($material_rarity_factor, $rarity_diff);
+        // Calculate total exp the material card has accumulated (sum of all level thresholds + current exp)
+        $total_mat_exp = $mat_exp;
+        for ($i = 1; $i < $mat_level; $i++) {
+            $total_mat_exp += 15 + 15 * $i;
+        }
+        $return_exp = intval(round($total_mat_exp * $material_exp_return_rate));
+        $exp_gained = max(1, intval(round($base_exp)) + $return_exp);
         
         $total_exp_gained += $exp_gained;
         $material_details[] = [
@@ -486,19 +494,23 @@ if ($action === 'get_all') {
             'name' => $matRow['name'],
             'rarity' => $mat_rarity,
             'level' => $mat_level,
+            'base_exp' => intval(round($base_exp)),
+            'return_exp' => $return_exp,
             'exp_gained' => $exp_gained
         ];
     }
     
-    // Apply exp to target card, handle level ups
+    // Apply exp to target card, handle level ups (progressive curve: 15 + 15*Lv)
     $new_exp = $target_exp + $total_exp_gained;
     $new_level = $target_level;
     $levels_gained = 0;
     
-    while ($new_exp >= $exp_per_level && $new_level < $max_level) {
-        $new_exp -= $exp_per_level;
+    $expNeeded = 15 + 15 * $new_level;
+    while ($new_exp >= $expNeeded && $new_level < $max_level) {
+        $new_exp -= $expNeeded;
         $new_level++;
         $levels_gained++;
+        $expNeeded = 15 + 15 * $new_level;
     }
     // If max level, cap exp at 0
     if ($new_level >= $max_level) {

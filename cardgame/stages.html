@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="mobile-web-app-capable" content="yes">
+<title>关卡 - 卡牌游戏</title>
+<link rel="stylesheet" href="app-common.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; padding-bottom: 56px; }
+.app-page-header { background: rgba(15,52,96,0.9); padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+.app-page-header h1 { color: #e94560; font-size: 18px; margin: 0; }
+.container { max-width: 500px; margin: 0 auto; padding: 10px; }
+
+/* === 世界选择 === */
+.world-card { background: linear-gradient(135deg, #16213e, #1a1a2e); border-radius: 16px; padding: 20px; margin-bottom: 14px; border: 2px solid #0f3460; cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden; }
+.world-card:hover { border-color: #e94560; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(233,69,96,0.2); }
+.world-card::before { content: ''; position: absolute; top: 0; right: 0; width: 100px; height: 100px; border-radius: 50%; opacity: 0.08; }
+.world-card.w1 { border-left: 4px solid #4CAF50; }
+.world-card.w1::before { background: #4CAF50; }
+.world-card.w2 { border-left: 4px solid #9C27B0; }
+.world-card.w2::before { background: #9C27B0; }
+.world-card.w3 { border-left: 4px solid #FF5722; }
+.world-card.w3::before { background: #FF5722; }
+.world-card.w3 .world-progress-fill { background: #FF5722; }
+.world-card.w4 { border-left: 4px solid #e94560; }
+.world-card.w4::before { background: #e94560; }
+.world-card.w4 .world-progress-fill { background: #e94560; }
+.world-card.locked { opacity: 0.5; cursor: not-allowed; }
+.world-card.locked:hover { border-color: #0f3460; transform: none; box-shadow: none; }
+
+.world-icon { font-size: 36px; margin-bottom: 8px; }
+.world-name { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
+.world-desc { font-size: 12px; color: #888; margin-bottom: 8px; line-height: 1.4; }
+.world-progress { font-size: 11px; color: #4ade80; }
+.world-progress-bar { height: 4px; background: #0f3460; border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.world-progress-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+.world-card.w1 .world-progress-fill { background: #4CAF50; }
+.world-card.w2 .world-progress-fill { background: #9C27B0; }
+.world-card.w3 .world-progress-fill { background: #FF5722; }
+
+.lock-badge { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.6); padding: 3px 10px; border-radius: 10px; font-size: 11px; color: #888; }
+
+/* === 关卡列表 === */
+.stage-list-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.back-btn { background: none; border: 1px solid #0f3460; color: #aaa; padding: 6px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+.back-btn:hover { border-color: #e94560; color: #e94560; }
+.world-title { font-size: 18px; font-weight: bold; }
+
+.stage-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
+.stage-node { aspect-ratio: 1; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; position: relative; }
+.stage-node .num { font-size: 18px; font-weight: bold; }
+.stage-node .label { font-size: 9px; color: #aaa; margin-top: 2px; }
+
+.stage-node.cleared { background: linear-gradient(135deg, #1a3a2a, #16213e); border-color: #4ade80; }
+.stage-node.cleared .num { color: #4ade80; }
+.stage-node.current { background: linear-gradient(135deg, #3a1a2a, #2a1625); border-color: #e94560; animation: pulse 2s infinite; }
+.stage-node.current .num { color: #e94560; }
+.stage-node.locked { background: #0a0a1a; opacity: 0.4; cursor: not-allowed; }
+.stage-node.locked .num { color: #333; }
+
+.stage-node .star-row { position: absolute; bottom: 3px; font-size: 7px; }
+.stage-node .star-row .filled { color: #ffd700; }
+.stage-node .star-row .empty { color: #333; }
+
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(233,69,96,0.4); } 50% { box-shadow: 0 0 12px 4px rgba(233,69,96,0.2); } }
+
+/* === 关卡详情/战斗 === */
+.stage-detail { background: #16213e; border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+.stage-detail-title { font-size: 16px; font-weight: bold; color: #e94560; margin-bottom: 4px; }
+.stage-detail-desc { font-size: 12px; color: #888; margin-bottom: 12px; }
+.enemy-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.enemy-card { background: #0f3460; border-radius: 8px; padding: 8px; text-align: center; min-width: 70px; }
+.enemy-card .e-icon { font-size: 24px; }
+.enemy-card .e-name { font-size: 10px; color: #ccc; margin-top: 2px; }
+.enemy-card .e-tier { font-size: 9px; }
+
+.reward-info { display: flex; gap: 16px; font-size: 13px; margin-bottom: 12px; }
+.reward-info span { color: #ffd700; }
+
+.btn-start { width: 100%; padding: 14px; font-size: 16px; border-radius: 12px; border: none; background: linear-gradient(135deg, #e94560, #c73e54); color: white; cursor: pointer; font-weight: bold; transition: 0.3s; }
+.btn-start:hover { background: linear-gradient(135deg, #ff6b6b, #e94560); }
+.btn-start:disabled { background: #333; cursor: not-allowed; color: #666; }
+
+/* === 战斗中 === */
+.battle-scene { display: none; }
+.battle-scene.active { display: block; }
+
+.battle-header { text-align: center; padding: 8px; background: rgba(233,69,96,0.15); border-radius: 10px; margin-bottom: 10px; }
+.battle-header .round { color: #e94560; font-size: 14px; font-weight: bold; }
+
+.battle-teams { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.battle-team { flex: 1; }
+.battle-team-label { font-size: 11px; font-weight: bold; text-align: center; padding: 4px; border-radius: 6px 6px 0 0; }
+.battle-team-label.player { background: rgba(76,175,80,0.3); color: #4ade80; }
+.battle-team-label.enemy { background: rgba(233,69,96,0.3); color: #e94560; }
+
+.battle-unit { display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 11px; }
+.battle-unit.dead { opacity: 0.3; text-decoration: line-through; }
+.battle-unit .u-icon { font-size: 18px; }
+.battle-unit .u-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.battle-unit .u-hp { font-size: 10px; }
+.battle-unit .u-hp-bar { width: 50px; height: 5px; background: #333; border-radius: 3px; overflow: hidden; }
+.battle-unit .u-hp-fill { height: 100%; background: #4ade80; border-radius: 3px; transition: width 0.3s; }
+.battle-unit .u-hp-fill.low { background: #e94560; }
+.battle-unit.attacking { background: rgba(255,215,0,0.15); border-left: 2px solid #ffd700; }
+
+.battle-log { background: #0a0e1a; border-radius: 10px; padding: 10px; max-height: 200px; overflow-y: auto; font-size: 11px; line-height: 1.6; margin-bottom: 10px; }
+.battle-log .log-round { color: #e94560; font-weight: bold; margin-top: 4px; }
+.battle-log .log-hit { color: #4ade80; }
+.battle-log .log-crit { color: #ffd700; font-weight: bold; }
+.battle-log .log-miss { color: #888; }
+.battle-log .log-die { color: #e94560; }
+
+.battle-result { text-align: center; padding: 20px; background: #16213e; border-radius: 16px; margin-top: 10px; }
+.battle-result .result-title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+.battle-result .result-title.win { color: #ffd700; }
+.battle-result .result-title.lose { color: #e94560; }
+.battle-result .result-detail { font-size: 13px; color: #aaa; margin-bottom: 6px; }
+.battle-result .result-exp { font-size: 18px; color: #ffd700; margin: 10px 0; }
+.battle-result .btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
+.battle-result .btn-secondary { padding: 10px 24px; border-radius: 10px; border: 1px solid #0f3460; background: transparent; color: #aaa; cursor: pointer; font-size: 14px; }
+.battle-result .btn-primary { padding: 10px 24px; border-radius: 10px; border: none; background: #e94560; color: white; cursor: pointer; font-size: 14px; }
+
+/* Formation selector */
+.formation-select { margin-bottom: 14px; }
+.formation-select label { font-size: 12px; color: #aaa; display: block; margin-bottom: 6px; }
+.formation-select select { width: 100%; padding: 10px; background: #0f3460; color: #eee; border: 1px solid #16213e; border-radius: 8px; font-size: 14px; }
+</style>
+</head>
+<body>
+<!-- 页面头部 -->
+<div class="app-page-header">
+    <h1>关卡</h1>
+    <div id="headerInfo" style="font-size:12px;color:#888;"></div>
+</div>
+
+<div class="container" id="app">
+    <!-- 世界选择视图 -->
+    <div id="viewWorlds">
+        <div id="worldList"></div>
+    </div>
+
+    <!-- 关卡列表视图 -->
+    <div id="viewStages" style="display:none;">
+        <div class="stage-list-header">
+            <button class="back-btn" onclick="showWorlds()">← 返回</button>
+            <div class="world-title" id="stageWorldTitle"></div>
+        </div>
+        <div class="stage-grid" id="stageGrid"></div>
+        <div id="stageDetail"></div>
+    </div>
+</div>
+
+<!-- 底部 Tab Bar -->
+<nav class="app-tabbar">
+  <a href="draw_card.html" class="tab-item"><span class="tab-icon">🎲</span><span class="tab-label">抽卡</span></a>
+  <a href="my_cards.html" class="tab-item"><span class="tab-icon">📖</span><span class="tab-label">图鉴</span></a>
+  <a href="formation.html" class="tab-item"><span class="tab-icon">🛡️</span><span class="tab-label">编队</span></a>
+  <a href="battle.html" class="tab-item"><span class="tab-icon">⚔️</span><span class="tab-label">战斗</span></a>
+</nav>
+
+<script>
+var userId = localStorage.getItem('user_id');
+if (!userId) { window.location.href = 'login.html'; }
+
+var worlds = [];
+var currentWorld = null;
+var currentStage = null;
+var allProgress = {};
+var allStages = [];      // all stage ids from get_worlds
+var worldStageMap = {};  // world_id => [stage_ids]
+var enemyData = {};
+var userFormations = [];
+var selectedFormationId = null;
+var battleCards = [];    // cards used in current battle
+
+// === 初始化 ===
+async function init() {
+    await loadWorlds();
+    await loadProgress();
+    await loadFormations();
+    renderWorlds();
+}
+
+// === 数据加载 ===
+async function loadWorlds() {
+    try {
+        var res = await fetch('stage_api.php?action=get_worlds');
+        var data = await res.json();
+        if (data.code === 200) {
+            worlds = data.worlds;
+            allStages = data.all_stages || [];
+            // Index stage IDs by world_id for fast lookup
+            worldStageMap = {};
+            allStages.forEach(function(s) {
+                if (!worldStageMap[s.world_id]) worldStageMap[s.world_id] = [];
+                worldStageMap[s.world_id].push(s.id);
+            });
+        }
+    } catch(e) { console.error('loadWorlds', e); }
+}
+
+async function loadProgress() {
+    try {
+        var res = await fetch('stage_api.php?action=get_all_progress&user_id=' + userId);
+        var data = await res.json();
+        if (data.code === 200) {
+            data.progress.forEach(function(p) {
+                allProgress[p.stage_id] = p;
+            });
+        }
+    } catch(e) { console.error('loadProgress', e); }
+}
+
+async function loadFormations() {
+    try {
+        var res = await fetch('formation_api.php?action=get_formations&user_id=' + userId);
+        var data = await res.json();
+        if (data.code === 200) {
+            userFormations = data.formations || [];
+            if (userFormations.length > 0) selectedFormationId = userFormations[0].id;
+        }
+    } catch(e) { console.error('loadFormations', e); }
+}
+
+async function loadStageEnemies(worldId) {
+    try {
+        var res = await fetch('stage_api.php?action=get_stages&world_id=' + worldId + '&user_id=' + userId);
+        var data = await res.json();
+        if (data.code === 200) {
+            enemyData = data.enemies || {};
+            currentWorld.stages = data.stages;
+        }
+    } catch(e) { console.error('loadStageEnemies', e); }
+}
+
+// === 世界渲染 ===
+function renderWorlds() {
+    var html = '';
+    worlds.forEach(function(w, idx) {
+        // 世界解锁逻辑：第1个世界总是解锁，后续世界需要前一世界至少通关1关
+        var unlocked = (idx === 0);
+        if (idx > 0) {
+            var prevWorld = worlds[idx - 1];
+            var prevCleared = 0;
+            // check if any stage in previous world is cleared
+            for (var sid in allProgress) {
+                var p = allProgress[sid];
+                if (p.status === 'cleared') prevCleared++;
+            }
+            unlocked = prevCleared > 0;
+        }
+
+        // Calculate world progress (use actual stage count, not hardcoded 10)
+        var worldStageIds = worldStageMap[w.id] || [];
+        var totalStages = worldStageIds.length;
+        var clearedStages = 0;
+        worldStageIds.forEach(function(sid) {
+            if (allProgress[sid] && allProgress[sid].status === 'cleared') clearedStages++;
+        });
+
+        var wClass = 'world-card w' + w.id + (unlocked ? '' : ' locked');
+        var pct = totalStages > 0 ? (clearedStages / totalStages * 100) : 0;
+
+        var icons = {1: '🌿', 2: '🌑', 3: '🌋', 4: '🔥'};
+        var icon = icons[w.id] || '🗺️';
+
+        html += '<div class="' + wClass + '" onclick="' + (unlocked ? 'showStages(' + w.id + ')' : '') + '">';
+        if (!unlocked) html += '<div class="lock-badge">🔒 未解锁</div>';
+        html += '<div class="world-icon">' + icon + '</div>';
+        html += '<div class="world-name">' + w.name + '</div>';
+        html += '<div class="world-desc">' + (w.description || '') + '</div>';
+        html += '<div class="world-progress">通关 ' + clearedStages + '/' + totalStages + '</div>';
+        html += '<div class="world-progress-bar"><div class="world-progress-fill" style="width:' + pct + '%"></div></div>';
+        html += '</div>';
+    });
+    document.getElementById('worldList').innerHTML = html;
+}
+
+// === 关卡列表 ===
+async function showStages(worldId) {
+    currentWorld = worlds.find(function(w) { return w.id === worldId; });
+    if (!currentWorld) return;
+    await loadStageEnemies(worldId);
+
+    document.getElementById('viewWorlds').style.display = 'none';
+    document.getElementById('viewStages').style.display = 'block';
+    document.getElementById('stageWorldTitle').textContent = currentWorld.name;
+
+    renderStageGrid();
+}
+
+function showWorlds() {
+    document.getElementById('viewWorlds').style.display = 'block';
+    document.getElementById('viewStages').style.display = 'none';
+    document.getElementById('stageDetail').innerHTML = '';
+    currentStage = null;
+}
+
+function renderStageGrid() {
+    var html = '';
+    var stages = currentWorld.stages || [];
+    stages.forEach(function(s, idx) {
+        var progress = allProgress[s.id];
+        var cleared = progress && progress.status === 'cleared';
+        var prevCleared = (idx === 0) || (stages[idx-1] && allProgress[stages[idx-1].id] && allProgress[stages[idx-1].id].status === 'cleared');
+        var isCurrent = !cleared && prevCleared;
+        var isLocked = !cleared && !prevCleared;
+
+        var cls = cleared ? 'cleared' : (isCurrent ? 'current' : 'locked');
+        var clickFn = isLocked ? '' : 'selectStage(' + s.id + ')';
+
+        // Stars
+        var stars = 0;
+        if (cleared) {
+            stars = 1;
+            var bt = progress.best_turns || 99;
+            if (bt <= 5) stars = 3;
+            else if (bt <= 8) stars = 2;
+        }
+
+        html += '<div class="stage-node ' + cls + '" onclick="' + clickFn + '">';
+        html += '<div class="num">' + (idx + 1) + '</div>';
+        if (cleared) {
+            html += '<div class="star-row">';
+            for (var i = 0; i < 3; i++) {
+                html += '<span class="' + (i < stars ? 'filled' : 'empty') + '">★</span>';
+            }
+            html += '</div>';
+        }
+        if (isLocked) html += '<div class="label">🔒</div>';
+        html += '</div>';
+    });
+    document.getElementById('stageGrid').innerHTML = html;
+    document.getElementById('stageDetail').innerHTML = '';
+}
+
+// === 关卡详情 ===
+async function selectStage(stageId) {
+    currentStage = currentWorld.stages.find(function(s) { return s.id === stageId; });
+    if (!currentStage) return;
+
+    var progress = allProgress[stageId];
+    var cleared = progress && progress.status === 'cleared';
+
+    // Calculate base exp
+    var baseExp = currentStage.base_exp || Math.round(50 * Math.pow(currentStage.stage_num, 1.3));
+    var firstClearExp = baseExp * 2;
+
+    // Enemy preview
+    var enemyIds = currentStage.enemy_card_ids || [];
+    var enemyHtml = '';
+    var tierIcons = {1: '🟢', 2: '🔵', 3: '🟣', 4: '🟠', 5: '🔴', 6: '💀'};
+
+    enemyIds.forEach(function(eid) {
+        var e = enemyData[eid];
+        if (e) {
+            enemyHtml += '<div class="enemy-card"><div class="e-icon">' + (tierIcons[e.rarity] || '⚪') + '</div>';
+            enemyHtml += '<div class="e-name">' + e.name + '</div>';
+            enemyHtml += '<div class="e-tier">HP' + e.base_hp + ' ATK' + e.base_atk + '</div></div>';
+        }
+    });
+
+    // Formation selector
+    var formationHtml = '<div class="formation-select"><label>选择编队</label><select id="formationSelect">';
+    userFormations.forEach(function(f) {
+        formationHtml += '<option value="' + f.id + '"' + (f.id === selectedFormationId ? ' selected' : '') + '>' + f.name + ' (' + (f.card_count || 6) + '人)</option>';
+    });
+    if (userFormations.length === 0) {
+        formationHtml += '<option value="">请先创建编队</option>';
+    }
+    formationHtml += '</select></div>';
+
+    var html = '<div class="stage-detail">';
+    html += '<div class="stage-detail-title">' + currentStage.name + '</div>';
+    if (currentStage.description) html += '<div class="stage-detail-desc">' + currentStage.description + '</div>';
+    if (currentStage.special_rule) html += '<div class="stage-detail-desc" style="color:#ffd700;">⚠️ ' + currentStage.special_rule + '</div>';
+
+    html += '<div style="font-size:13px;margin-bottom:8px;color:#aaa;">敌人阵容</div>';
+    html += '<div class="enemy-preview">' + enemyHtml + '</div>';
+
+    html += '<div class="reward-info">';
+    html += '<span>🏆 经验: ' + baseExp + '</span>';
+    if (!cleared) html += '<span style="color:#4ade80;">🎉 首通: ' + firstClearExp + '</span>';
+    if (cleared) html += '<span style="color:#4ade80;">✅ 已通关 (最佳' + (progress.best_turns || '-') + '回合)</span>';
+    html += '</div>';
+
+    html += formationHtml;
+    html += '<button class="btn-start" ' + (userFormations.length === 0 ? 'disabled' : '') + ' onclick="startBattle()">⚔️ ' + (cleared ? '再次挑战' : '开始战斗') + '</button>';
+    html += '</div>';
+
+    document.getElementById('stageDetail').innerHTML = html;
+}
+
+// === 战斗系统 ===
+async function startBattle() {
+    if (!currentStage || userFormations.length === 0) return;
+
+    var fSel = document.getElementById('formationSelect');
+    selectedFormationId = fSel ? parseInt(fSel.value) : null;
+    if (!selectedFormationId) { alert('请选择编队'); return; }
+
+    // Find formation from already loaded data
+    var formation = userFormations.find(function(f) { return f.id === selectedFormationId; });
+    var playerCards = (formation && formation.cards) ? formation.cards : [];
+
+    if (playerCards.length === 0) { alert('编队中没有卡牌，请先去编队页面配置'); return; }
+
+    // Store player card instances for exp reward
+    battleCards = playerCards.map(function(uc) {
+        return { instance_id: uc.instance_id || uc.id, level: uc.level || 1 };
+    });
+
+    // Build enemy units
+    var enemyIds = currentStage.enemy_card_ids || [];
+    var enemyLvMap = currentStage.enemy_positions || [];
+    var enemyUnits = [];
+    var tierIcons = {1: '🌿', 2: '🐺', 3: '🦇', 4: '👹', 5: '🐉', 6: '💀'};
+
+    enemyIds.forEach(function(eid, idx) {
+        var e = enemyData[eid];
+        if (e) {
+            var lvInfo = enemyLvMap[idx] || [0, Math.round(currentStage.stage_num * 1.25)];
+            var level = lvInfo[1] || Math.round(currentStage.stage_num * 1.25);
+            // Scale enemy stats by level (4% per level for smoother scaling)
+            var scale = 1 + (level - 1) * 0.04;
+            enemyUnits.push({
+                id: 'e' + idx,
+                name: e.name,
+                icon: tierIcons[e.rarity] || '👾',
+                hp: Math.floor(e.base_hp * scale),
+                maxHp: Math.floor(e.base_hp * scale),
+                atk: Math.floor(e.base_atk * scale),
+                def: Math.floor(e.base_def * scale),
+                skl: Math.floor(e.base_skl * scale),
+                spd: Math.floor(e.base_spd * scale),
+                level: level,
+                isEnemy: true
+            });
+        }
+    });
+
+    // Build player units
+    var playerUnits = playerCards.map(function(uc, idx) {
+        var lv = uc.level || 1;
+        var calc = function(base, growth) { return Math.floor(base + growth * (lv - 1)); };
+        var bs = uc.baseStats || uc.base_stats || {};
+        var gs = uc.growthStats || uc.growth_stats || {};
+        return {
+            id: 'p' + idx,
+            name: uc.name,
+            icon: '⚔️',
+            hp: calc(bs.HP || 100, gs.HP || 5),
+            maxHp: calc(bs.HP || 100, gs.HP || 5),
+            atk: calc(bs.ATK || 10, gs.ATK || 2),
+            def: calc(bs.DEF || 5, gs.DEF || 1),
+            skl: calc(bs.SKL || 5, gs.SKL || 1),
+            spd: calc(bs.SPD || 5, gs.SPD || 1),
+            level: lv,
+            isEnemy: false,
+            image: uc.image || ''
+        };
+    });
+
+    // Run battle simulation
+    runBattle(playerUnits, enemyUnits);
+}
+
+function runBattle(playerUnits, enemyUnits) {
+    var allUnits = playerUnits.concat(enemyUnits);
+    var logs = [];
+    var round = 0;
+    var maxRounds = 15;
+
+    while (round < maxRounds) {
+        round++;
+        logs.push({type: 'round', text: '=== 第' + round + '回合 ==='});
+
+        // Sort by SPD descending
+        var alive = allUnits.filter(function(u) { return u.hp > 0; });
+        alive.sort(function(a, b) { return b.spd - a.spd; });
+
+        for (var i = 0; i < alive.length; i++) {
+            var attacker = alive[i];
+            if (attacker.hp <= 0) continue;
+
+            // Find target
+            var targets = allUnits.filter(function(u) {
+                return u.hp > 0 && u.isEnemy !== attacker.isEnemy;
+            });
+            if (targets.length === 0) break;
+
+            // Target selection: prefer lower HP ratio
+            targets.sort(function(a, b) { return (a.hp/a.maxHp) - (b.hp/b.maxHp); });
+            var target = targets[0];
+
+            // Hit/Crit calculation
+            var hitRate = Math.min(95, Math.max(70, 75 + (attacker.skl - target.skl) * 0.5));
+            var critRate = Math.min(40, Math.max(0, (attacker.skl - target.skl) * 0.8));
+            var dodgeRate = Math.min(30, Math.max(5, 5 + (target.spd - attacker.spd) * 0.3));
+
+            var roll = Math.random() * 100;
+            if (roll < dodgeRate) {
+                logs.push({type: 'miss', text: attacker.name + ' → ' + target.name + ': 闪避!'});
+                continue;
+            }
+
+            // Damage calc
+            var rawDmg = attacker.atk * (1 - target.def / (target.def + 100));
+            var isCrit = Math.random() * 100 < critRate;
+            if (isCrit) rawDmg *= 1.5;
+            var dmg = Math.max(1, Math.floor(rawDmg * (0.9 + Math.random() * 0.2)));
+
+            target.hp = Math.max(0, target.hp - dmg);
+
+            var logType = isCrit ? 'crit' : 'hit';
+            var logText = attacker.name + ' → ' + target.name + ': ' + dmg + (isCrit ? ' 暴击!' : '');
+            logs.push({type: logType, text: logText});
+
+            if (target.hp <= 0) {
+                logs.push({type: 'die', text: target.name + ' 被击败!'});
+            }
+        }
+
+        // Check win/lose
+        var playerAlive = playerUnits.filter(function(u) { return u.hp > 0; }).length;
+        var enemyAlive = enemyUnits.filter(function(u) { return u.hp > 0; }).length;
+
+        if (enemyAlive === 0) {
+            logs.push({type: 'win', text: '🎉 胜利!'});
+            break;
+        }
+        if (playerAlive === 0) {
+            logs.push({type: 'lose', text: '💀 战败...'});
+            break;
+        }
+    }
+
+    if (round >= maxRounds) {
+        logs.push({type: 'lose', text: '⏰ 回合用尽，战败...'});
+    }
+
+    showBattleResult(playerUnits, enemyUnits, logs, round);
+}
+
+function showBattleResult(playerUnits, enemyUnits, logs, rounds) {
+    var isWin = logs[logs.length - 1].type === 'win';
+    var cleared = allProgress[currentStage.id] && allProgress[currentStage.id].status === 'cleared';
+    var baseExp = currentStage.base_exp || Math.round(50 * Math.pow(currentStage.stage_num, 1.3));
+
+    // Render battle scene
+    var html = '<div class="battle-scene active">';
+
+    // Battle header
+    html += '<div class="battle-header"><span class="round">' + (currentStage.name || '') + ' 战斗记录</span></div>';
+
+    // Teams
+    html += '<div class="battle-teams">';
+    html += renderTeamColumn('我方', playerUnits, false);
+    html += renderTeamColumn('敌方', enemyUnits, true);
+    html += '</div>';
+
+    // Result
+    html += '<div class="battle-result">';
+    html += '<div class="result-title ' + (isWin ? 'win' : 'lose') + '">' + (isWin ? '🎉 胜利!' : '💀 战败') + '</div>';
+    html += '<div class="result-detail">用时 ' + rounds + ' 回合</div>';
+
+    if (isWin) {
+        var expGain = cleared ? baseExp : baseExp * 2;
+        html += '<div class="result-exp">+' + expGain + ' 经验' + (!cleared ? ' (首通双倍!)' : '') + '</div>';
+    }
+
+    html += '<div class="btn-group">';
+    html += '<button class="btn-secondary" onclick="backToStageList()">返回关卡</button>';
+    if (isWin) {
+        html += '<button class="btn-primary" onclick="claimReward()">领取奖励</button>';
+    } else {
+        html += '<button class="btn-primary" onclick="startBattle()">再次挑战</button>';
+    }
+    html += '</div>';
+    html += '</div>';
+
+    // Log at bottom
+    html += '<div class="battle-log">';
+    logs.forEach(function(l) {
+        html += '<div class="log-' + l.type + '">' + l.text + '</div>';
+    });
+    html += '</div>';
+
+    html += '</div>';
+
+    document.getElementById('stageDetail').innerHTML = html;
+
+    // Save progress if won
+    if (isWin) {
+        window._pendingReward = {
+            stageId: currentStage.id,
+            rounds: rounds,
+            firstClear: !cleared,
+            expGain: expGain,
+            cardIds: battleCards.map(function(c) { return c.instance_id; })
+        };
+    }
+}
+
+function renderTeamColumn(label, units, isEnemy) {
+    var html = '<div class="battle-team">';
+    html += '<div class="battle-team-label ' + (isEnemy ? 'enemy' : 'player') + '">' + label + '</div>';
+    units.forEach(function(u) {
+        var hpPct = Math.max(0, u.hp / u.maxHp * 100);
+        var hpClass = hpPct < 30 ? 'low' : '';
+        var deadClass = u.hp <= 0 ? 'dead' : '';
+        html += '<div class="battle-unit ' + deadClass + '">';
+        html += '<span class="u-icon">' + u.icon + '</span>';
+        html += '<span class="u-name">' + u.name + '</span>';
+        html += '<span class="u-hp"><div class="u-hp-bar"><div class="u-hp-fill ' + hpClass + '" style="width:' + hpPct + '%"></div></div></span>';
+        html += '</div>';
+    });
+    html += '</div>';
+    return html;
+}
+
+async function claimReward() {
+    if (!window._pendingReward) return;
+    var r = window._pendingReward;
+
+    try {
+        var res = await fetch('stage_api.php?action=save_progress', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                user_id: parseInt(userId),
+                stage_id: r.stageId,
+                status: 'cleared',
+                turns: r.rounds,
+                card_ids: r.cardIds || [],
+                exp_gain: r.expGain || 0
+            })
+        });
+        var data = await res.json();
+        if (data.code === 200) {
+            // Update local progress
+            allProgress[r.stageId] = { stage_id: r.stageId, status: 'cleared', best_turns: r.rounds };
+
+            // Build reward modal
+            var rewardHtml = '<div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:9999" id="rewardOverlay" onclick="if(event.target===this)this.remove();document.body.removeChild(document.getElementById(\'rewardCss\'))">';
+            rewardHtml += '<div style="background:#1a1a2e;border-radius:16px;padding:24px;min-width:300px;max-width:420px;width:90%;font-family:sans-serif;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.5)">';
+            rewardHtml += '<div style="text-align:center;font-size:18px;font-weight:bold;margin-bottom:16px;color:#ffd700">🎉 通关成功！</div>';
+            if (data.first_clear) {
+                rewardHtml += '<div style="text-align:center;color:#aaa;margin-bottom:12px">首通奖励 <span style="color:#ffd700">+' + data.exp_reward + ' 经验</span></div>';
+            } else {
+                rewardHtml += '<div style="text-align:center;color:#aaa;margin-bottom:12px">获得 <span style="color:#ffd700">+' + data.exp_reward + ' 经验</span></div>';
+            }
+            rewardHtml += '<div style="background:#16213e;border-radius:8px;padding:12px;margin-bottom:16px">';
+            if (data.card_rewards && data.card_rewards.length > 0) {
+                data.card_rewards.forEach(function(cr) {
+                    var rarityColor = {'N':'#aaa','R':'#4fc3f7','SR':'#b388ff','SSR':'#ffd740'}[cr.rarity] || '#aaa';
+                    var levelLine = cr.leveled
+                        ? '<span style="color:#2e7d32;font-size:13px">Lv.' + cr.old_lv + ' → Lv.' + cr.new_lv + ' <b>Level UP!</b></span>'
+                        : '<span style="color:#888;font-size:13px">Lv.' + cr.new_lv + ' (+' + cr.exp_gain + ' EXP)</span>';
+                    rewardHtml += '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)">';
+                    rewardHtml += '<div style="flex:1">';
+                    rewardHtml += '<div style="font-size:14px;font-weight:500">' + cr.name + '<span style="color:' + rarityColor + ';font-size:11px;margin-left:4px">[' + cr.rarity + ']</span></div>';
+                    rewardHtml += '<div style="margin-top:2px">' + levelLine + '</div>';
+                    rewardHtml += '</div></div>';
+                });
+            } else {
+                rewardHtml += '<div style="color:#666;text-align:center;font-size:13px">无参战卡牌</div>';
+            }
+            rewardHtml += '</div>';
+            rewardHtml += '<div style="text-align:center"><button onclick="document.getElementById(\'rewardOverlay\').remove();document.body.removeChild(document.getElementById(\'rewardCss\'))" style="background:#ffd700;color:#1a1a2e;border:none;padding:10px 32px;border-radius:20px;font-size:15px;font-weight:bold;cursor:pointer">确定</button></div>';
+            rewardHtml += '</div></div>';
+
+            var styleEl = document.createElement('style');
+            styleEl.id = 'rewardCss';
+            styleEl.textContent = '#rewardOverlay button:hover{opacity:0.85}';
+            document.body.appendChild(styleEl);
+            document.body.insertAdjacentHTML('beforeend', rewardHtml);
+
+            // Refresh views
+            renderWorlds();
+            renderStageGrid();
+            selectStage(currentStage.id);
+        }
+    } catch(e) {
+        console.error(e);
+        alert('保存失败，请重试');
+    }
+    window._pendingReward = null;
+}
+
+function backToStageList() {
+    renderStageGrid();
+    document.getElementById('stageDetail').innerHTML = '';
+    currentStage = null;
+}
+
+// Init
+init();
+</script>
+</body>
+</html>
