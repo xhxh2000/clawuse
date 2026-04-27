@@ -568,6 +568,21 @@ function showBattleResult(playerUnits, enemyUnits, logs, rounds) {
     // Result
     html += '<div class="battle-result">';
     html += '<div class="result-title ' + (isWin ? 'win' : 'lose') + '">' + (isWin ? '🎉 胜利!' : '💀 战败') + '</div>';
+
+    // Stars (based on turns)
+    console.log('[showBattleResult] rounds=', rounds, 'cleared=', cleared);
+    if (isWin) {
+        var stars = 1;
+        if (rounds <= 5) stars = 3;
+        else if (rounds <= 8) stars = 2;
+        console.log('[showBattleResult] calculated stars=', stars, ' (rounds=', rounds, ')');
+        var starIcons = '';
+        for (var si = 0; si < 3; si++) {
+            starIcons += si < stars ? '<b style="font-size:28px;color:#ffd700">★</b>' : '<b style="font-size:28px;color:#444">☆</b>';
+        }
+        html += '<div style="text-align:center;margin:8px 0">' + starIcons + '</div>';
+    }
+
     html += '<div class="result-detail">用时 ' + rounds + ' 回合</div>';
 
     if (isWin) {
@@ -626,26 +641,38 @@ function renderTeamColumn(label, units, isEnemy) {
 }
 
 async function claimReward() {
-    if (!window._pendingReward) return;
+    if (!window._pendingReward) { console.log('[claimReward] no pending reward'); return; }
     var r = window._pendingReward;
+    console.log('[claimReward] pending reward:', r);
+    console.log('[claimReward] userId:', userId, 'parsed:', parseInt(userId));
 
     try {
+        var payload = {
+            user_id: parseInt(userId),
+            stage_id: r.stageId,
+            status: 'cleared',
+            turns: r.rounds,
+            card_ids: r.cardIds || [],
+            exp_gain: r.expGain || 0
+        };
+        console.log('[claimReward] sending payload:', payload);
+        
         var res = await fetch('stage_api.php?action=save_progress', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                user_id: parseInt(userId),
+            body: JSON.stringify(payload)
+        });
+        console.log('[claimReward] response status:', res.status);
+        var data = await res.json();
+        console.log('[claimReward] response data:', data);
+        if (data.code === 200) {
+            // Update local progress — always keep the best (lowest) turn count
+            var prev = allProgress[r.stageId] || {};
+            allProgress[r.stageId] = {
                 stage_id: r.stageId,
                 status: 'cleared',
-                turns: r.rounds,
-                card_ids: r.cardIds || [],
-                exp_gain: r.expGain || 0
-            })
-        });
-        var data = await res.json();
-        if (data.code === 200) {
-            // Update local progress
-            allProgress[r.stageId] = { stage_id: r.stageId, status: 'cleared', best_turns: r.rounds };
+                best_turns: data.best_turns !== undefined ? data.best_turns : (prev.best_turns || r.rounds)
+            };
 
             // Build reward modal
             var rewardHtml = '<div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:9999" id="rewardOverlay" onclick="if(event.target===this)this.remove();document.body.removeChild(document.getElementById(\'rewardCss\'))">';
@@ -686,9 +713,11 @@ async function claimReward() {
             renderWorlds();
             renderStageGrid();
             selectStage(currentStage.id);
+        } else {
+            alert('保存失败: ' + (data.msg || JSON.stringify(data)));
         }
     } catch(e) {
-        console.error(e);
+        console.error('claimReward error:', e);
         alert('保存失败，请重试');
     }
     window._pendingReward = null;

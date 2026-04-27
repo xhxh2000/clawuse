@@ -135,6 +135,7 @@ if ($action === 'get_worlds') {
 
         $first_clear = ($old_status !== 'cleared' && $status === 'cleared');
     } else {
+        $new_best = $turns;  // INSERT 分支：首次记录，best_turns 就是本次回合数
         $stmt2 = $db->prepare('INSERT INTO stage_progress (user_id, stage_id, status, best_turns, cleared_at) VALUES (:uid, :sid, :s, :bt, datetime("now"))');
         $stmt2->bindValue(':uid', $user_id);
         $stmt2->bindValue(':sid', $stage_id);
@@ -206,7 +207,7 @@ if ($action === 'get_worlds') {
         }
     }
 
-    echo json_encode(['code'=>200, 'first_clear'=>$first_clear, 'exp_reward'=>$exp_reward, 'card_rewards'=>$card_rewards, 'msg'=>'ok'], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['code'=>200, 'first_clear'=>$first_clear, 'exp_reward'=>$exp_reward, 'card_rewards'=>$card_rewards, 'best_turns'=>$new_best, 'msg'=>'ok'], JSON_UNESCAPED_UNICODE);
 
 } elseif ($action === 'get_all_progress') {
     $user_id = intval($_GET['user_id'] ?? $_POST['user_id'] ?? 0);

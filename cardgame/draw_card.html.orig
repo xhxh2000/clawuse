@@ -1,0 +1,1181 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="mobile-web-app-capable" content="yes">
+<title>鎶藉崱 - 鍗＄墝娓告垙</title>
+<link rel="stylesheet" href="app-common.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #eee; min-height: 100vh; }
+.header { background: rgba(15,52,96,0.9); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+.header h1 { color: #e94560; font-size: 20px; }
+.currency { background: linear-gradient(135deg, #ffd700, #ffaa00); padding: 5px 15px; border-radius: 15px; color: #000; font-weight: bold; font-size: 14px; }
+.container { max-width: 500px; margin: 0 auto; padding: 15px; }
+.top-draw-area { min-height: 280px; display: flex; flex-direction: column; justify-content: center; align-items: center; margin-bottom: 20px; }
+.card-back { width: 160px; height: 220px; background: linear-gradient(135deg, #e94560, #0f3460); border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 50px; box-shadow: 0 8px 30px rgba(233,69,96,0.4); cursor: pointer; }
+.card-back::after { content: '馃幋'; }
+.card-back.drawing { animation: shake 0.3s ease-in-out infinite; }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+.result-card { display: none; grid-template-columns: 140px 1fr; gap: 15px; background: #16213e; border-radius: 15px; padding: 15px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); border: 2px solid rgba(233,69,96,0.3); text-align: left; margin-bottom: 15px; }
+.result-card.show { display: grid; }
+.result-card-10 { display: none; width: 95%; max-width: 1000px; background: #16213e; border-radius: 15px; padding: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); border: 2px solid rgba(233,69,96,0.3); margin-bottom: 15px; }
+.result-card-10.show { display: block; }
+.result-card-10 h3 { color: #e94560; margin-bottom: 15px; text-align: center; }
+.grid-10 { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.grid-10 .grid-row { display: flex; justify-content: center; gap: 10px; width: 100%; }
+.grid-10 .card-item { width: calc(20% - 10px); min-width: 120px; background: #16213e; border-radius: 8px; padding: 8px; text-align: center; }
+@media (max-width: 600px) { 
+  .grid-10 { display: grid; grid-template-columns: repeat(2, 1fr); } 
+  .grid-10 .grid-row { display: contents; }
+  .grid-10 .card-item { width: auto; min-width: unset; }
+}
+.grid-10 .card-item { background: #16213e; border-radius: 8px; padding: 8px; text-align: center; }
+.grid-10 .card-item.rarity-4 { background: linear-gradient(135deg, #2d1b4e, #4a2c7a); border: 1px solid #9c27b0; }
+.grid-10 .card-item.rarity-5 { background: linear-gradient(135deg, #4a2c00, #7a4a00); border: 1px solid #ffd700; }
+.grid-10 .card-item.rarity-6 { background: linear-gradient(135deg, #4a0000, #7a0000); border: 1px solid #f32b2b; }
+.grid-10 .card-item .thumb { width: 80px; height: 80px; margin: 0 auto 5px; border-radius: 5px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.grid-10 .card-item .thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.grid-10 .card-item h4 { font-size: 11px; margin: 3px 0; }
+.grid-10 .card-item .stars { font-size: 10px; margin: 2px 0; }
+.result-image { width: 100%; height: 180px; background: #16213e; border-radius: 10px; overflow: hidden; }
+.result-image img { width: 100%; height: 100%; object-fit: contain; }
+.result-info h2 { font-size: 22px; margin-bottom: 4px; }
+.result-rarity { font-size: 14px; letter-spacing: 2px; margin-bottom: 6px; }
+.result-desc { color: #aaa; font-size: 12px; line-height: 1.4; margin-bottom: 10px; }
+.result-stats-box { background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; margin-top: 10px; }
+.result-stats-box h4 { color: #e94560; font-size: 12px; margin-bottom: 8px; text-align: center; }
+.result-stats-box .stat-row { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.result-stats-box .stat-row:last-child { border-bottom: none; }
+.result-stats-box .stat-label { color: #888; }
+.result-stats-box .stat-value { color: #4ade80; font-weight: bold; text-align: right; }
+.result-actions { text-align: center; margin-top: 15px; }
+.result-actions.hidden { display: none; }
+.hidden { display: none !important; }
+.draw-btn { background: linear-gradient(135deg, #e94560, #c73e54); color: white; border: none; padding: 10px 30px; font-size: 16px; border-radius: 20px; cursor: pointer; min-width: 100px; }
+.draw-btn-10 { background: linear-gradient(135deg, #ffd700, #ffaa00); color: #000; }
+.cost-text { color: #ffd700; margin-top: 8px; font-size: 12px; }
+.my-cards { margin-top: 25px; }
+.my-cards h2 { color: #e94560; margin-bottom: 15px; border-bottom: 2px solid #0f3460; padding-bottom: 8px; }
+.view-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+.view-tab { padding: 8px 20px; background: #0f3460; color: #aaa; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
+.view-tab.active { background: #e94560; color: white; }
+.filter-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; align-items: center; }
+.filter-row input, .filter-row select { padding: 6px 10px; background: #0f3460; color: #eee; border: 1px solid #16213e; border-radius: 4px; font-size: 12px; }
+.filter-row input { width: 150px; }
+.filter-row select { min-width: 100px; }
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+.album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+.album-card { background: #0f3460; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; transition: transform 0.2s; }
+.album-card:hover { transform: scale(1.05); }
+.album-card.locked { background: #333; cursor: default; }
+.album-card.locked:hover { transform: none; }
+.album-card.locked .card-thumb { background: inherit; }
+.album-card .card-thumb { width: 80px; height: 80px; margin: 0 auto 8px; background: #0f3460; border-radius: 5px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.album-card .card-thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.album-card h4 { font-size: 12px; margin: 5px 0; }
+.album-card .count { font-size: 11px; color: #aaa; }
+.album-card.locked .count { color: #666; }
+.album-card.locked h4 { color: inherit; }
+.my-card { background: linear-gradient(145deg, #0f3460, #1a1a2e); border-radius: 10px; padding: 8px; text-align: center; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+.my-card:hover { transform: translateY(-3px); border-color: #e94560; }
+.my-card .card-thumb { width: 100%; height: 100px; background: #0f3460; border-radius: 6px; margin-bottom: 6px; overflow: hidden; }
+.my-card .card-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.my-card h4 { font-size: 12px; margin-bottom: 4px; }
+.my-card .count { background: #e94560; color: white; padding: 2px 6px; border-radius: 8px; font-size: 10px; }
+.empty { text-align: center; color: #666; padding: 30px; grid-column: 1/-1; }
+.rarity-1 { color: #aaa; }
+.rarity-2 { color: #00ff00; }
+.rarity-3 { color: #4169e1; }
+.rarity-4 { color: #9400d3; }
+.rarity-5 { color: #ffd700; }
+.rarity-6 { color: #f32b2b; }
+.card-name-1 { color: #ffffff; }
+.card-name-2 { color: #4caf50; }
+.card-name-3 { color: #2196f3; }
+.card-name-4 { color: #9c27b0; }
+.card-name-5 { color: #ff9800; font-weight: bold; }
+.card-name-6 { color: #f32b2b; font-weight: bold; }
+.card-popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto; justify-content: center; padding: 20px; }
+.card-popup.show { display: flex; }
+.popup-card { width: 95%; max-width: 750px; border-radius: 10px; padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); border: 2px solid rgba(233,69,96,0.4); position: relative; max-height: 90vh; overflow-y: auto; }
+.popup-card .close-btn { position: absolute; top: 15px; right: 15px; background: #e94560; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; }
+.popup-container { display: flex; gap: 20px; flex-wrap: wrap; }
+.popup-image { flex: 0 0 250px; max-height: 350px; overflow: hidden; display: flex; align-items: flex-start; }
+.popup-image img { max-width: 100%; max-height: 300px; width: auto; height: auto; border-radius: 10px; object-fit: contain; cursor: pointer; }
+.popup-info { flex: 1; min-width: 280px; }
+.popup-name { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+.popup-rarity { font-size: 18px; margin-bottom: 10px; }
+.popup-desc { color: #aaa; margin-bottom: 15px; line-height: 1.5; }
+.popup-stats { margin-top: 20px; }
+.popup-stats h4 { color: #e94560; margin-bottom: 10px; }
+.stats-grid-2 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; text-align: center; }
+.stats-grid-2 .stat-row { background: #0f3460; padding: 10px; border-radius: 5px; }
+.stats-grid-2 .stat-label { display: block; color: #aaa; font-size: 12px; margin-bottom: 5px; }
+.stats-grid-2 .stat-value { display: block; font-size: 18px; font-weight: bold; }
+.popup-radar { margin-top: 20px; }
+.popup-radar canvas { width: 100%; max-width: 300px; height: 300px; margin: 0 auto; display: block; }
+.popup-count { text-align: center; margin-top: 15px; font-size: 16px; color: #ffd700; }
+.image-popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
+.image-popup.show { display: flex; }
+.new-tag {
+    background: linear-gradient(135deg, #ffd700, #ffaa00);
+    color: #000;
+    padding: 3px 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    margin-left: 10px;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.8), 0 0 10px rgba(255, 215, 0, 0.5);
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+    display: inline-block;
+}
+.image-popup img { max-width: 95%; max-height: 95%; object-fit: contain; border-radius: 10px; }
+</style>
+</head>
+<body>
+<div class="header">
+<h1>馃幉 鎶藉崱</h1>
+<div style="display:flex;align-items:center;gap:8px;">
+        <select id="configSelect" onchange="changeConfig(this.value)" style="padding:5px;background:#1a1a2e;color:#eee;border:1px solid #0f3460;border-radius:5px;font-size:12px;max-width:140px;">
+            <option value="">鍔犺浇涓?..</option>
+        </select>
+        <button onclick="previewProbability()" style="padding:5px 10px;background:#2196f3;color:white;border:none;border-radius:5px;cursor:pointer;font-size:12px;">馃搳</button>
+        <button class="app-header-btn" onclick="AppCommon.openUserSheet()">馃懁</button>
+</div>
+</div>
+<div class="container">
+<div class="top-draw-area">
+<div class="card-back" id="cardBack" onclick="drawCard()"></div>
+<div class="result-card" id="resultCard"></div>
+<div class="result-card-10" id="resultCard10"></div>
+<div class="result-actions" id="resultActions">
+<button class="draw-btn" onclick="drawCard()">鍗曟娊</button>
+<button class="draw-btn draw-btn-10" onclick="drawCard10()">鍗佽繛</button>
+        
+<p class="cost-text">鍗曟娊娑堣€?<span id="drawCost">100</span> <span id="currencyUnit">鍏冨疂</span> | 鍗佽繛娑堣€?<span id="drawCost10">900</span> <span id="currencyUnit">鍏冨疂</span> (9鎶?</p>
+        <p id="userBalance" class="balance-text" style="color:#ffd700;font-size:16px;font-weight:bold;margin-top:10px;"></p>
+</div>
+</div>
+</div></div>
+
+
+<script>
+
+// 鎵撳紑/鍏抽棴姒傜巼棰勮寮圭獥
+function closeProbabilityPopup() {
+    document.getElementById('probabilityPopup').style.display = 'none';
+}
+
+// 姒傜巼棰勮璁＄畻锛堝鐢ㄦ娊鍗＄鐞嗛〉闈㈢殑绠楁硶锛屼絾浣跨敤褰撳墠閰嶇疆锛?async function previewProbability() {
+    // 浣跨敤宸插姞杞界殑allCards鏁版嵁锛屼笉鐢ㄥ啀浠巎son璇诲彇
+    let allCards = allCharacters || [];
+    const poolNames = drawConfig.card_pool || [currentPool];
+    const selectedTags = drawConfig.tag || [];
+    const rarityWeights = drawConfig.rarity_weight || [50, 30, 15, 4, 1];
+    const tagWeightMap = {};
+    (drawConfig.tag_weight || []).forEach(tw => {
+        const key = Object.keys(tw)[0];
+        tagWeightMap[key] = tw[key];
+    });
+    
+    // 杩囨护鍗℃睜
+    let filteredCards = allCards.filter(card => {
+        const cardPool = card.pool_name || '';
+        if (!poolNames.includes(cardPool) && poolNames.length > 0) return false;
+        const cardTags = card.tags || [];
+        return selectedTags.length === 0 || cardTags.some(t => selectedTags.includes(t));
+    });
+    
+    // 璁＄畻鏉冮噸
+    const remainingRarities = new Set();
+    filteredCards.forEach(card => {
+        const r = card.rarity || 1;
+        if (r >= 1 && r <= rarityWeights.length) remainingRarities.add(r);
+    });
+    
+    let totalWeightByRarity = {};
+    for (let r = 1; r <= rarityWeights.length; r++) totalWeightByRarity[r] = 0;
+    
+    filteredCards.forEach(card => {
+        const r = card.rarity || 1;
+        if (!remainingRarities.has(r)) { card._finalWeight = 0; return; }
+        const baseWeight = card.draw_weight || 100;
+        let tagAdj = 0;
+        (card.tags || []).forEach(t => { if (tagWeightMap[t] !== undefined) tagAdj += tagWeightMap[t]; });
+        const finalWeight = Math.max(0, baseWeight + tagAdj);
+        card._finalWeight = finalWeight;
+        if (finalWeight > 0) totalWeightByRarity[r] += finalWeight;
+    });
+    
+    // 璁＄畻姒傜巼
+    const results = filteredCards.map(card => {
+        const r = card.rarity || 1;
+        const w = card._finalWeight || 0;
+        const tw = totalWeightByRarity[r] || 1;
+        const totalRarityW = rarityWeights.reduce((a,b) => a+b, 0);
+        const rarityBase = (rarityWeights[r-1] || 0) / totalRarityW;
+        const prob = rarityBase * (tw > 0 ? w/tw : 0) * 100;
+        return { name: card.name, rarity: r, tags: (card.tags||[]).join(','), weight: w, probability: prob, isZero: w <= 0 };
+    });
+    
+    results.sort((a, b) => b.probability - a.probability);
+    
+    // 娓叉煋
+    const container = document.getElementById('probabilityList');
+    container.innerHTML = results.map(c => {
+        const color = getRarityColor(c.rarity);
+        return '<div class="prob-item' + (c.isZero ? ' zero-prob' : '') + '">' +
+            '<span class="card-name" style="color:' + color + '">' + c.name + '</span>' +
+            '<span class="card-rarity" style="color:' + getRarityColor(c.rarity) + '">' + getRarityName(c.rarity) + '</span>' +
+            '<span class="card-tags">' + (c.tags || '-') + '</span>' +
+            '<span class="card-weight">鏉冮噸:' + c.weight + '</span>' +
+            '<span class="card-prob">' + (c.isZero ? 0 : c.probability).toFixed(4) + '%</span></div>';
+    }).join('');
+    
+    document.getElementById('probabilityPopup').style.display = 'flex';
+}
+
+// 娣诲姞鍒濆鍖栭€夐」
+function initPreviewFilters() {
+    const rf = document.getElementById('previewRarityFilter');
+    const of = document.getElementById('previewOwnedFilter');
+    if (rf) rf.innerHTML = '<option value="">鍏ㄩ儴绋€鏈夊害</option>' + 
+        ['', '涓€鏄?, '浜屾槦', '涓夋槦', '鍥涙槦', '浜旀槦', '鍏槦'].map((r,i) => '<option value="'+i+'">'+r+'</option>').join('');
+    if (of) of.innerHTML = '<option value="">鍏ㄩ儴</option><option value="owned">鏈夋晥鏉冮噸</option><option value="zero">闆舵潈閲?/option>';
+}
+
+initPreviewFilters();
+
+
+var gameData = null;
+var drawConfig = { rarity_weight: [], tag: [], tag_weight: [] };
+var rarityConfig = [];
+var myGold = 0; var ownedCardIds = {}; var userAlbum = {}; var currencyName = "鍏冨疂"; var currencyId = 1; var drawCost = 100; // 浠嶢PI鑾峰彇
+var myCards = {};
+var isDrawing = false;
+var currentPool = "NIKKE";
+var currentView = 'my';
+var filterState = { name: '', rarity: '', owned: '' };
+var userId = null;
+var allCharacters = [];
+
+function changePool(pool) {
+    currentPool = pool;
+    resetFilter();
+    loadConfigList();
+    loadData();
+}
+
+function getImageUrl(card) {
+if (card.image) return card.image;
+return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300"><rect fill="#0f3460" width="200" height="300"/><text fill="#fff" font-size="30" x="50%" y="50%" text-anchor="middle" dy=".3em">'+card.name+'</text></svg>');
+}
+
+async function drawCard() {
+if (isDrawing) return;
+var cost = drawCost || 100;
+if (myGold < cost) { alert('璐у竵涓嶈冻锛?); return; }
+isDrawing = true;
+
+// 鏌ヨ鐢ㄦ埛宸叉湁鐨刢ard_id鍒楄〃
+ownedCardIds = {};
+await fetch('game_api.php?action=get_owned_card_ids&user_id=' + userId).then(r => r.json()).then(d => {
+    if (d.code === 200 && d.card_ids) d.card_ids.forEach(id => ownedCardIds[id] = true);
+});
+
+// 鍏堝埛鏂版湰鍦版暟鎹紝纭繚涓€鑷存€?await fetch('game_api.php?action=get_my_cards&user_id=' + userId).then(r => r.json()).then(d => {
+    if (d.code === 200 && d.cards) {
+        d.cards.forEach(c => { 
+            c.baseStats = typeof c.base_stats === 'string' ? JSON.parse(c.base_stats) : c.base_stats;
+            c.growthStats = typeof c.growth_stats === 'string' ? JSON.parse(c.growth_stats) : c.growth_stats;
+            c.tags = typeof c.tags === 'string' ? JSON.parse(c.tags) : c.tags;
+            myCards[c.instance_id] = c; 
+        });
+    }
+});
+
+// 鍏堟墸闄よ揣甯?var deductRes = await fetch('game_api.php?action=update_user_wallet&user_id=' + userId + '&currency_id=' + currencyId + '&change=-' + cost);
+var deductData = await deductRes.json();
+if (deductData.code !== 200) {
+    alert(deductData.msg || '鎵ｉ櫎璐у竵澶辫触');
+    isDrawing = false;
+    return;
+}
+myGold = deductData.new_amount || myGold - cost;
+var cardBack = document.getElementById('cardBack');
+var resultCard = document.getElementById('resultCard');
+var resultActions = document.getElementById('resultActions');
+resultCard.classList.remove('show');
+resultActions.classList.add('hidden');
+cardBack.style.display = 'flex';
+cardBack.classList.add('drawing');
+setTimeout(async function() {
+var card = doDraw();
+cardBack.classList.remove('drawing');
+cardBack.style.display = 'none';
+await showResult(card);
+updateAlbumProgress(allCharacters);
+if (currentView === 'album') renderAlbum();
+isDrawing = false;
+
+// 鏇存柊浣欓鏄剧ず
+var balanceEl = document.getElementById('userBalance');
+if (balanceEl) balanceEl.textContent = '鎴戠殑' + currencyName + ': ' + myGold;
+}, 2000);
+}
+
+function resetDraw() {
+var cardBack = document.getElementById('cardBack');
+var resultCard = document.getElementById('resultCard');
+var resultCard10 = document.getElementById('resultCard10');
+var resultActions = document.getElementById('resultActions');
+resultCard.classList.remove('show');
+resultCard10.classList.remove('show');
+var cost = drawCost || 100;
+var cost10 = Math.floor(cost * 10 * 0.9);
+resultActions.innerHTML = '<button class="draw-btn" onclick="drawCard()">鍗曟娊</button><button class="draw-btn draw-btn-10" onclick="drawCard10()">鍗佽繛</button></p><p class="cost-text">鍗曟娊娑堣€?<span id="drawCost">'+cost+'</span> <span id="currencyUnit">'+currencyName+'</span> | 鍗佽繛娑堣€?<span id="drawCost10">'+cost10+'</span> <span id="currencyUnit">'+currencyName+'</span> (9鎶?</p><p id="userBalance" class="balance-text" style="color:#ffd700;font-size:16px;font-weight:bold;margin-top:10px;">鎴戠殑' + currencyName + ': ' + myGold + '</p>';
+
+resultActions.classList.remove('hidden');
+cardBack.style.display = 'flex';
+}
+
+async function drawCard10() {
+if (isDrawing) return;
+var cost10 = Math.floor(drawCost * 10 * 0.9);
+if (myGold < cost10) { alert('璐у竵涓嶈冻锛?); return; }
+isDrawing = true;
+
+// 鏌ヨ鐢ㄦ埛宸叉湁鐨刢ard_id鍒楄〃
+ownedCardIds = {};
+await fetch('game_api.php?action=get_owned_card_ids&user_id=' + userId).then(r => r.json()).then(d => {
+    if (d.code === 200 && d.card_ids) d.card_ids.forEach(id => ownedCardIds[id] = true);
+});
+
+// 鍏堝埛鏂版湰鍦版暟鎹‘淇濅竴鑷存€?await fetch('game_api.php?action=get_my_cards&user_id=' + userId).then(r => r.json()).then(d => {
+    if (d.code === 200 && d.cards) {
+        d.cards.forEach(c => { 
+            c.baseStats = typeof c.base_stats === 'string' ? JSON.parse(c.base_stats) : c.base_stats;
+            c.growthStats = typeof c.growth_stats === 'string' ? JSON.parse(c.growth_stats) : c.growth_stats;
+            c.tags = typeof c.tags === 'string' ? JSON.parse(c.tags) : c.tags;
+            myCards[c.instance_id] = c; 
+        });
+    }
+});
+
+// 鍏堟墸闄よ揣甯?var deductRes10 = await fetch('game_api.php?action=update_user_wallet&user_id=' + userId + '&currency_id=' + currencyId + '&change=-' + cost10);
+var deductData10 = await deductRes10.json();
+if (deductData10.code !== 200) {
+    alert(deductData10.msg || '鎵ｉ櫎璐у竵澶辫触');
+    isDrawing = false;
+    return;
+}
+myGold = deductData10.new_amount || myGold - cost10;
+var cardBack = document.getElementById('cardBack');
+var resultCard = document.getElementById('resultCard');
+var resultCard10 = document.getElementById('resultCard10');
+var resultActions = document.getElementById('resultActions');
+resultCard.classList.remove('show');
+resultCard10.classList.remove('show');
+resultActions.classList.add('hidden');
+cardBack.style.display = 'flex';
+cardBack.classList.add('drawing');
+setTimeout(async function() {
+var cards = [];
+for (var i = 0; i < 10; i++) {
+cards.push(doDraw());
+}
+cardBack.classList.remove('drawing');
+cardBack.style.display = 'none';
+await showResult10(cards);
+updateAlbumProgress(allCharacters);
+renderAlbum();
+var cost10 = Math.floor(drawCost * 10 * 0.9);
+resultActions.innerHTML = '<button class="draw-btn draw-btn-10" onclick="drawCard10()">鍐嶆潵鍗佽繛</button><button class="draw-btn" onclick="resetDraw()">杩斿洖</button></p><p class="cost-text">鍗佽繛娑堣€?<span id="drawCost10">'+cost10+'</span> <span id="currencyUnit">'+currencyName+'</span> (9鎶?</p><p id="userBalance" class="balance-text" style="color:#ffd700;font-size:16px;font-weight:bold;margin-top:10px;">鎴戠殑' + currencyName + ': ' + myGold + '</p>';
+resultActions.classList.remove('hidden');
+isDrawing = false;
+// 鏇存柊浣欓鏄剧ず
+var balanceEl = document.getElementById('userBalance');
+if (balanceEl) balanceEl.textContent = '鎴戠殑' + currencyName + ': ' + myGold;
+}, 2000);
+}
+
+function doDraw() {
+    var config = drawConfig;
+    var rarityWeights = config.rarity_weight || [];
+    var selectedTags = config.tag || [];
+    var tagWeightMap = {};
+    (config.tag_weight || []).forEach(function(tw) {
+        var key = Object.keys(tw)[0];
+        var val = tw[key];
+        tagWeightMap[key] = val;
+    });
+    
+    var allCards = gameData.characters || [];
+    
+    // 1. Tag 杩囨护
+    var filteredCards = allCards.filter(function(card) {
+        var cardTags = card.tags || [];
+        return selectedTags.length === 0 || cardTags.some(function(t) { return selectedTags.includes(t); });
+    });
+    
+    // 鍔ㄦ€佷粠閰嶇疆璇诲彇绋€鏈夊害鏁伴噺锛堜娇鐢ㄦ潈閲嶆暟缁勯暱搴︿綔涓虹湡瀹炴潵婧愶級
+    var rarityCount = Math.max(rarityWeights.length || 1, rarityConfig.length || 1);
+    var totalRarityWeight = rarityWeights.reduce(function(a, b) { return a + b; }, 0);
+    
+    // 3. 纭畾绋€鏈夊害
+    var rand = Math.random() * totalRarityWeight;
+    var selectedRarity = 1;
+    var accumulated = 0;
+    for (var r = 1; r <= rarityCount; r++) {
+        accumulated += rarityWeights[r - 1] || 0;
+        if (rand < accumulated) {
+            selectedRarity = r;
+            break;
+        }
+        selectedRarity = r;
+    }
+    
+    // 5. 璇ョ█鏈夊害鍐呯殑鍗＄墝锛岃绠楁潈閲?    var rarityCards = filteredCards.filter(function(c) { return c.rarity === selectedRarity; });
+    var totalWeight = 0;
+    var cardWeights = [];
+    
+    rarityCards.forEach(function(card) {
+        var baseWeight = card.draw_weight || 100;
+        var tagAdjustment = 0;
+        (card.tags || []).forEach(function(t) {
+            if (tagWeightMap[t] !== undefined) {
+                tagAdjustment += tagWeightMap[t];
+            }
+        });
+        var finalWeight = Math.max(0, baseWeight + tagAdjustment);
+        cardWeights.push({ card: card, weight: finalWeight });
+        totalWeight += finalWeight;
+    });
+    
+    // 6. 鏍规嵁鏉冮噸鎶藉彇
+    if (totalWeight === 0 || rarityCards.length === 0) {
+        // 濡傛灉娌℃湁鏈夋晥鍗★紝闅忔満杩斿洖涓€涓?        return filteredCards[Math.floor(Math.random() * filteredCards.length)] || allCards[0];
+    }
+    
+    var drawRand = Math.random() * totalWeight;
+    var accumulatedWeight = 0;
+    for (var i = 0; i < cardWeights.length; i++) {
+        accumulatedWeight += cardWeights[i].weight;
+        if (drawRand <= accumulatedWeight) {
+            return cardWeights[i].card;
+        }
+    }
+    
+    return cardWeights[cardWeights.length - 1].card;
+}
+
+async function showResult(card) {
+var rarityColor = getRarityColor(card.rarity);
+var cost = gameData.settings.drawCost || 100;
+var stats = card.baseStats || {};
+
+var isNew = !ownedCardIds[card.id];
+console.log('showResult card:', card, 'baseStats:', card.baseStats); // 鐢ㄦ暟鎹簱鏌ヨ鐨勭粨鏋滃垽鏂槸鍚︽柊鍗?
+// 淇濆瓨鍒版暟鎹簱锛圓PI浼氳繑鍥炴槸鍚︽柊鍗★級
+var rc = document.getElementById('resultCard');
+console.log('淇濆瓨鍗＄墝: userId=' + userId + ', card_id=' + card.id + ', config_id=' + currentConfigId);
+await fetch('game_api.php?action=add_user_card&user_id=' + userId + '&card_id=' + card.id + '&config_id=' + currentConfigId + '&draw_count=1', {method: 'POST'})
+    .then(r => r.text())
+    .then(t => {
+        try { JSON.parse(t); } catch(e) {}
+        if (!myCards[card.id]) myCards[card.id] = JSON.parse(JSON.stringify(card));
+        myCards[card.id].count = (myCards[card.id].count || 0) + 1;
+        renderMyCards();
+    });
+
+var newTag = isNew ? '<span class="new-tag">鏂帮紒</span>' : '';
+var rarityColor = getRarityColor(card.rarity);
+var names = getRarityNames(card.rarity);
+rc.innerHTML = '<div class="result-image"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div><div class="result-info"><h2 class="rarity-'+card.rarity+'" style="color:'+rarityColor+'">'+card.name+newTag+'</h2><div class="result-rarity" style="color:'+rarityColor+'">'+'猸?.repeat(card.rarity)+' '+getRarityName(card.rarity)+'</div><p class="result-desc">'+(card.description||'')+'</p></div>';
+document.getElementById('resultActions').innerHTML = '<button class="draw-btn" onclick="drawCard()">鍐嶆娊涓€寮?/button><button class="draw-btn" onclick="resetDraw()">杩斿洖</button><p class="cost-text">娑堣€?'+cost+' '+currencyName+'</p><p id="userBalance" class="balance-text" style="color:#ffd700;font-size:16px;font-weight:bold;margin-top:10px;">鎴戠殑' + currencyName + ': ' + myGold + '</p>';
+resultActions.classList.remove('hidden');
+rc.classList.add('show');
+renderMyCards();
+}
+
+function renderMyCards() {
+var container = document.getElementById('myCards');
+if (!container) return;
+var cards = Object.values(myCards);
+
+// Apply filter
+cards = cards.filter(function(card) {
+    if (filterState.name && !card.name.toLowerCase().includes(filterState.name)) return false;
+    if (filterState.rarity && card.rarity !== parseInt(filterState.rarity)) return false;
+    return true;
+});
+
+// Sort by rarity (descending)
+cards.sort(function(a, b) { return b.rarity - a.rarity; });
+
+if (cards.length === 0) { container.innerHTML = '<div class="empty">杩樻病鏈夊崱鐗岋紝蹇幓鎶藉崱鍚э紒</div>'; return; }
+var html = '';
+cards.forEach(function(card) {
+html += '<div class="my-card" onclick="showCardPopup('+card.id+')"><div class="card-thumb"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div><h4 class="rarity-'+card.rarity+'">'+card.name+'</h4><span class="count">x'+card.count+'</span></div>';
+});
+container.innerHTML = html;
+}
+
+function getStatColor(value, statName) {
+var max = maxStats[statName];
+var min = minStats[statName];
+var range = max - min;
+if (range === 0) return '#aaa';
+var percent = (value - min) / range * 100;
+if (percent >= 100) return '#ff0000';
+if (percent >= 80) return '#ffd700';
+if (percent >= 60) return '#9400d3';
+if (percent >= 40) return '#4169e1';
+if (percent >= 20) return '#00ff00';
+return '#ffffff';
+}
+
+// 鑾峰彇绋€鏈夊害鍚嶇О - 浼樺厛浠?rarityConfig 鍔ㄦ€佽鍙栵紝鍚﹀垯浣跨敤 fallback
+function getRarityName(rarity) {
+    // 浼樺厛浠庡姩鎬侀厤缃幏鍙?    if (rarityConfig && rarityConfig.length > 0) {
+        var config = rarityConfig.find(function(c) { return c.rarity === rarity; });
+        if (config) return config.name;
+    }
+    // Fallback: 鏋勫缓鍔ㄦ€?fallback 鏁扮粍锛堟敮鎸佷换鎰忕█鏈夊害鏁伴噺锛?    var fallbackNames = ['', '鏅€?, '绋€鏈?, '鏉板嚭', '鍙茶瘲', '浼犺', '杩滃彜'];
+    // 鍔ㄦ€佹墿灞?fallback 鏁扮粍浠ユ敮鎸佹洿澶氱█鏈夊害
+    var extendedFallnames = ['', '鏅€?, '绋€鏈?, '鏉板嚭', '鍙茶瘲', '浼犺', '杩滃彜', '绁炶瘽', '鑷冲皧', '鐜嬭€?, '澶╀娇', '鎭堕瓟'];
+    if (rarity >= 1 && rarity < extendedFallnames.length) {
+        return extendedFallnames[rarity];
+    }
+    return '绋€鏈夊害' + rarity;
+}
+
+// 鑾峰彇绋€鏈夊害棰滆壊 - 浼樺厛浠?rarityConfig 鍔ㄦ€佽鍙栵紝鍚﹀垯浣跨敤 fallback
+function getRarityColor(rarity) {
+    // 浼樺厛浠庡姩鎬侀厤缃幏鍙?    if (rarityConfig && rarityConfig.length > 0) {
+        var config = rarityConfig.find(function(c) { return c.rarity === rarity; });
+        if (config) return config.color;
+    }
+    // Fallback: 鍔ㄦ€侀鑹叉暟缁?    var fallbackColors = ['', '#ffffff', '#4caf50', '#2196f3', '#9c27b0', '#ff9800', '#f32b2b', '#00ffff', '#ff00ff', '#ffa500', '#fffacd', '#ff6347'];
+    if (rarity >= 1 && rarity < fallbackColors.length) {
+        return fallbackColors[rarity];
+    }
+    return '#fff';
+}
+
+// 鑾峰彇绋€鏈夊害鍚嶇О
+function getRarityNames(rarity) {
+    if (typeof getRarityNamesFromConfig === 'function') {
+        var names = getRarityNamesFromConfig();
+        return names[rarity] || '鏈煡';
+    }
+    var fallback = ['', '鏅€?, '绋€鏈?, '鏉板嚭', '鍙茶瘲', '浼犺', '杩滃彜'];
+    return fallback[rarity] || '鏈煡';
+}
+
+// 鍔ㄦ€佸～鍏呯█鏈夊害绛涢€変笅鎷夋
+function populateRarityFilter() {
+    var select = document.getElementById('filterRarity');
+    if (!select || !rarityConfig || rarityConfig.length === 0) return;
+    
+    // 淇濈暀"鍏ㄩ儴绋€鏈夊害"閫夐」
+    select.innerHTML = '<option value="">鍏ㄩ儴绋€鏈夊害</option>';
+    
+    // 鍔ㄦ€佹坊鍔犵█鏈夊害閫夐」
+    rarityConfig.forEach(function(cfg) {
+        var option = document.createElement('option');
+        option.value = cfg.rarity;
+        var starStr = '猸?.repeat(cfg.rarity);
+        option.textContent = starStr + ' ' + cfg.name;
+        select.appendChild(option);
+    });
+}
+
+// 鍏ㄥ眬娣″寲棰滆壊鍑芥暟
+function lightenColor(hex, factor) {
+    var r = parseInt(hex.slice(1,3), 16);
+    var g = parseInt(hex.slice(3,5), 16);
+    var b = parseInt(hex.slice(5,7), 16);
+    r = Math.round(r + (255 - r) * factor);
+    g = Math.round(g + (255 - g) * factor);
+    b = Math.round(b + (255 - b) * factor);
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
+}
+
+// 鏇存柊鍥鹃壌杩涘害鏉?function updateAlbumProgress(allCards) {
+    var container = document.getElementById('progressBars');
+    var totalOwned = 0;
+    var totalCards = 0;
+    var allComplete = true;
+    
+    // 浠庢暟鎹簱鑾峰彇绋€鏈夊害鍚嶇О鍜岄鑹?    var rarityNames = [];
+    var rarityColors = [];
+    var maxRarity = rarityConfig.length;
+    
+    if (rarityConfig && rarityConfig.length > 0) {
+        rarityConfig.forEach(function(cfg) {
+            if (cfg.rarity >= 1 && cfg.rarity <= maxRarity) {
+                rarityNames[cfg.rarity] = cfg.name;
+                rarityColors[cfg.rarity] = cfg.color;
+            }
+        });
+    }
+    
+    // Fallback if config not loaded yet
+    if (rarityNames.length === 0) {
+        rarityNames = ['', '鏅€?, '绋€鏈?, '鏉板嚭', '鍙茶瘲', '浼犺', '杩滃彜'];
+        rarityColors = ['', '#ffffff', '#4caf50', '#2196f3', '#9c27b0', '#ff9800', '#f32b2b'];
+    }
+    
+    // 鐢熸垚娣″寲鐨勮儗鏅壊
+    function lightenColor(hex, factor) {
+        var r = parseInt(hex.slice(1,3), 16);
+        var g = parseInt(hex.slice(3,5), 16);
+        var b = parseInt(hex.slice(5,7), 16);
+        r = Math.round(r + (255 - r) * factor);
+        g = Math.round(g + (255 - g) * factor);
+        b = Math.round(b + (255 - b) * factor);
+        return 'rgb(' + r + ',' + g + ',' + b + ')';
+    }
+    
+    var html = '';
+    for (var r = 1; r <= rarityConfig.length; r++) {
+        var rCards = allCards.filter(function(c) { return c.rarity === r; });
+        var rOwned = rCards.filter(function(c) { return myCards[c.id]; }).length;
+        var rTotal = rCards.length;
+        var rRate = rTotal > 0 ? (rOwned / rTotal * 100) : 0;
+        
+        totalOwned += rOwned;
+        totalCards += rTotal;
+        if (rRate < 100) allComplete = false;
+        
+        var isComplete = rRate >= 100;
+        var rName = rarityNames[r] || '鏈煡';
+        var barColor = rarityColors[r] || '#fff';
+        
+        var rowStyle = '';
+        var nameStyle = 'width:70px;font-size:12px;color:'+barColor+';';
+        var textStyle = "width:90px;font-size:12px;text-align:right;color:" + barColor + ";";
+        
+        if (isComplete) {
+            rowStyle = 'background:rgba(255,215,0,0.15);padding:5px;border-radius:5px;';
+            nameStyle = 'width:70px;font-size:12px;color:'+barColor+';font-weight:bold;';
+            textStyle = 'width:90px;font-size:12px;text-align:right;color:'+barColor+';font-weight:bold;';
+        }
+        
+        // 杩涘害鏉℃笎鍙樿儗鏅拰濉厖
+        var barFillStyle = 'height:16px;border-radius:8px;transition:width 0.3s;position:relative;';
+        var innerBar = '<div style="height:8px;background:'+barColor+';border-radius:4px;margin-top:4px;opacity:0.6;"></div>';
+        var gradientFill = '';
+        if (isComplete) {
+            gradientFill = 'background:linear-gradient(180deg, '+barColor+' 0%, ' + lightenColor(barColor, 0.4) + ' 50%, '+barColor+' 100%);box-shadow:0 0 10px '+barColor+';';
+        } else {
+            gradientFill = 'background:linear-gradient(180deg, '+barColor+' 0%, ' + lightenColor(barColor, 0.3) + ' 100%);';
+        }
+        
+        html += '<div style="display:flex;align-items:center;gap:10px;'+rowStyle+'">' +
+            '<span style="'+nameStyle+'">' + r + ' ' + rName + '</span>' +
+            '<div style="flex:1;height:20px;background:#1a1a2e;border-radius:10px;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,0.3);border:1px solid #333;">' +
+                '<div style="width:'+rRate+'%;'+barFillStyle+gradientFill+'"></div>' +
+            '</div>' +
+            '<span style="'+textStyle+'">' + rOwned + '/' + rTotal + '</span>' +
+        '</div>';
+    }
+    
+    if (container) container.innerHTML = html;
+    
+    // 鏇存柊鎬昏揪鎴愮巼
+    var overallRate = totalCards > 0 ? (totalOwned / totalCards * 100) : 0;
+    var totalDisplay = document.getElementById('totalRateDisplay');
+    if (totalDisplay) totalDisplay.textContent = overallRate.toFixed(0) + '%';
+    
+    if (allComplete && totalCards > 0) {
+        if (totalDisplay) {
+            totalDisplay.style.color = '#ffd700';
+            totalDisplay.style.textShadow = '0 0 30px #ffd700, 0 0 60px #ffd700';
+            totalDisplay.style.fontSize = '32px';
+        }
+        if (container) container.style.boxShadow = '0 0 30px rgba(255, 215, 0, 0.5), inset 0 0 20px rgba(255, 215, 0, 0.1)';
+    } else {
+        if (totalDisplay) {
+            totalDisplay.style.color = '#4caf50';
+            totalDisplay.style.textShadow = 'none';
+            totalDisplay.style.fontSize = '24px';
+        }
+        if (container) container.style.boxShadow = 'none';
+    }
+    
+    // 鏄剧ず/闅愯棌杩涘害鏉?    // document.getElementById('albumProgress').style.display = 'block'; // 宸插垹闄?}
+
+function switchView(view) {
+    currentView = view;
+    document.getElementById('tabMyCards').classList.toggle('active', view === 'my');
+    document.getElementById('tabAlbum').classList.toggle('active', view === 'album');
+    // document.getElementById('myCards').classList.toggle('hidden', view !== 'my'); // 宸插垹闄?    // document.getElementById('albumGrid').classList.toggle('hidden', view !== 'album'); // 宸插垹闄?    document.getElementById('filterOwned').classList.toggle('hidden', view !== 'album');
+    if (view === 'my') renderMyCards();
+    else renderAlbum();
+}
+
+function applyFilter() {
+    filterState.name = document.getElementById('filterName').value.trim().toLowerCase();
+    filterState.rarity = document.getElementById('filterRarity').value;
+    filterState.owned = document.getElementById('filterOwned').value;
+    if (currentView === 'my') renderMyCards();
+    else renderAlbum();
+}
+
+function resetFilter() {
+    document.getElementById('filterName').value = '';
+    document.getElementById('filterRarity').value = '';
+    document.getElementById('filterOwned').value = '';
+    filterState = { name: '', rarity: '', owned: '' };
+    if (currentView === 'my') renderMyCards();
+    else renderAlbum();
+}
+
+function renderAlbum() {
+    var container = document.getElementById('albumGrid');
+    if (!container) return;
+    var allCards = allCharacters || [];
+    
+    
+    var rarityNames = [];
+    var rarityColors = [];
+    
+    if (rarityConfig && rarityConfig.length > 0) {
+        rarityConfig.forEach(function(cfg) {
+            if (cfg.rarity >= 1) {
+                rarityNames[cfg.rarity] = cfg.name;
+                rarityColors[cfg.rarity] = cfg.color;
+            }
+        });
+    }
+    
+    // Fallback if config not loaded yet
+    if (rarityNames.length === 0) {
+        rarityNames = ['', '鏅€?, '绋€鏈?, '鏉板嚭', '鍙茶瘲', '浼犺', '杩滃彜'];
+        rarityColors = ['', '#ffffff', '#4caf50', '#2196f3', '#9c27b0', '#ff9800', '#f32b2b'];
+    }
+    
+    // 鐢熸垚娣″寲鐨勮儗鏅壊
+    function lightenColor(hex, factor) {
+        var r = parseInt(hex.slice(1,3), 16);
+        var g = parseInt(hex.slice(3,5), 16);
+        var b = parseInt(hex.slice(5,7), 16);
+        r = Math.round(r + (255 - r) * factor);
+        g = Math.round(g + (255 - g) * factor);
+        b = Math.round(b + (255 - b) * factor);
+        return 'rgb(' + r + ',' + g + ',' + b + ')';
+    }
+    
+    // 閬嶅巻鎵€鏈夊崱鐗囷紝璁剧疆鑳屾櫙鑹?    allCards.forEach(function(card) {
+        card._bgColor = lightenColor(rarityColors[card.rarity] || '#666', 0.85);
+    });
+    
+    var filtered = allCards.filter(function(card) {
+        var owned = userAlbum[card.id];
+        if (filterState.name && !card.name.toLowerCase().includes(filterState.name)) return false;
+        if (filterState.rarity && card.rarity !== parseInt(filterState.rarity)) return false;
+        if (filterState.owned === 'owned' && !owned) return false;
+        if (filterState.owned === 'unowned' && owned) return false;
+        return true;
+    });
+    
+    // Sort by rarity (descending)
+    filtered.sort(function(a, b) { return b.rarity - a.rarity; });
+    
+    if (filtered.length === 0) { container.innerHTML = '<div class="empty">娌℃湁鎵惧埌鍗＄墝</div>'; return; }
+    
+    // 璁＄畻鍚勭█鏈夊害杈炬垚鐜囧苟鏇存柊杩涘害鏉?    updateAlbumProgress(allCards);
+    
+    var html = '';
+    filtered.forEach(function(card) {
+        var owned = userAlbum[card.id];
+        var rarityName = '猸?.repeat(card.rarity);
+        if (owned) {
+            html += '<div class="album-card" onclick="showCardPopup('+card.id+')" style="background:'+card._bgColor+';"><div class="card-thumb" style="background:'+card._bgColor+';"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div><h4 style="color:'+rarityColors[card.rarity]+';">'+card.name+'</h4><div class="album-stars" style="font-size:10px;color:'+rarityColors[card.rarity]+';word-break:break-all;">'+rarityName+'</div><span class="count">x'+owned.count+'</span></div>';
+        } else {
+            html += '<div class="album-card locked"><div class="card-thumb" style="background:inherit;"><img src="'+getImageUrl(card)+'" alt="'+card.name+'" style="filter:grayscale(100%) brightness(0.7);"></div><h4 style="color:'+rarityColors[card.rarity]+';">'+card.name+'</h4><div class="album-stars" style="font-size:10px;color:'+rarityColors[card.rarity]+';word-break:break-all;filter:grayscale(50%);">'+rarityName+'</div><span class="count">鏈嫢鏈?/span></div>';
+        }
+    });
+    container.innerHTML = html;
+}
+
+function showCardPopup(id) {
+var card = myCards[id];
+if (!card) return;
+var rarityColor = getRarityColor(card.rarity);
+var rarityName = '猸?.repeat(card.rarity);
+document.getElementById('popupImage').src = getImageUrl(card);
+document.getElementById('popupName').textContent = card.name;
+document.getElementById('popupName').style.color = rarityColor;
+document.getElementById('popupRarity').innerHTML = '<span style="color:'+rarityColor+'">' + rarityName + '</span>';
+document.getElementById('popupDesc').textContent = card.description || '';
+document.getElementById('popupStatsBox').innerHTML = 
+    '<div class="stat-row"><span class="stat-label">HP</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || {}).HP, 'HP')+'">'+(card.baseStats || {}).HP+'</span></div>' +
+    '<div class="stat-row"><span class="stat-label">ATK</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || {}).ATK, 'ATK')+'">'+(card.baseStats || {}).ATK+'</span></div>' +
+    '<div class="stat-row"><span class="stat-label">DEF</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || {}).DEF, 'DEF')+'">'+(card.baseStats || {}).DEF+'</span></div>' +
+    '<div class="stat-row"><span class="stat-label">SKL</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || {}).SKL, 'SKL')+'">'+(card.baseStats || {}).SKL+'</span></div>' +
+    '<div class="stat-row"><span class="stat-label">SPD</span><span class="stat-value" style="color:'+getStatColor((card.baseStats || {}).SPD, 'SPD')+'">'+(card.baseStats || {}).SPD+'</span></div>';
+document.getElementById('popupCount').textContent = '鎸佹湁: ' + card.count + ' 寮?;
+            
+            // document.getElementById('cardPopup').classList.add('show'); // 宸插垹闄?setTimeout(function() { drawRadar(card); }, 100);
+}
+
+function closePopup() {
+// document.getElementById('cardPopup').classList.remove('show'); // 宸插垹闄?}
+
+function showFullImage(src) {
+document.getElementById('fullImage').src = src;
+// document.getElementById('imagePopup').classList.add('show'); // 宸插垹闄?}
+
+function closeImagePopup() {
+// document.getElementById('imagePopup').classList.remove('show'); // 宸插垹闄?}
+
+function drawRadar(card) {
+var canvas = document.getElementById('radarCanvas');
+var ctx = canvas.getContext('2d');
+var w = canvas.width = canvas.offsetWidth;
+var h = canvas.height = canvas.offsetHeight;
+var cx = w / 2;
+var cy = h / 2;
+var r = Math.min(w, h) / 2 - 30;
+var labels = ['HP', 'MP', '鏀诲嚮', '闃插尽', '鏁忔嵎'];
+var stats = [
+Math.round((card.baseStats || card.base_stats || {}).HP / maxStats.HP * 100),
+Math.round((card.baseStats || card.base_stats || {}).SKL / maxStats.SKL * 100),
+Math.round((card.baseStats || card.base_stats || {}).ATK / maxStats.ATK * 100),
+Math.round((card.baseStats || card.base_stats || {}).DEF / maxStats.DEF * 100),
+Math.round((card.baseStats || card.base_stats || {}).SKL / maxStats.SKL * 100)
+];
+var maxVal = 100;
+var angleStep = (Math.PI * 2) / 5;
+ctx.clearRect(0, 0, w, h);
+// 鐢昏儗鏅渾
+for (var i = 1; i <= 5; i++) {
+ctx.beginPath();
+ctx.arc(cx, cy, r * i / 5, 0, Math.PI * 2);
+ctx.strokeStyle = '#333';
+ctx.stroke();
+}
+// 鐢昏酱绾?for (var i = 0; i < 5; i++) {
+ctx.beginPath();
+ctx.moveTo(cx, cy);
+ctx.lineTo(cx + Math.cos(i * angleStep - Math.PI/2) * r, cy + Math.sin(i * angleStep - Math.PI/2) * r);
+ctx.strokeStyle = '#333';
+ctx.stroke();
+ctx.fillStyle = '#aaa';
+ctx.font = '12px Arial';
+ctx.textAlign = 'center';
+ctx.fillText(labels[i], cx + Math.cos(i * angleStep - Math.PI/2) * (r + 20), cy + Math.sin(i * angleStep - Math.PI/2) * (r + 20));
+}
+// 鐢绘暟鎹尯鍩?ctx.beginPath();
+for (var i = 0; i < 5; i++) {
+var x = cx + Math.cos(i * angleStep - Math.PI/2) * (r * stats[i] / maxVal);
+var y = cy + Math.sin(i * angleStep - Math.PI/2) * (r * stats[i] / maxVal);
+if (i === 0) ctx.moveTo(x, y);
+else ctx.lineTo(x, y);
+}
+ctx.closePath();
+ctx.fillStyle = 'rgba(233, 69, 96, 0.3)';
+ctx.fill();
+ctx.strokeStyle = '#e94560';
+ctx.lineWidth = 2;
+ctx.stroke();
+// 鐢绘暟鎹偣
+for (var i = 0; i < 5; i++) {
+var x = cx + Math.cos(i * angleStep - Math.PI/2) * (r * stats[i] / maxVal);
+var y = cy + Math.sin(i * angleStep - Math.PI/2) * (r * stats[i] / maxVal);
+ctx.beginPath();
+ctx.arc(x, y, 5, 0, Math.PI * 2);
+ctx.fillStyle = '#e94560';
+ctx.fill();
+}
+}
+
+var maxStats = {HP:0, ATK:0, DEF:0, SKL:0, SPD:0};
+var minStats = {hp:Infinity, mp:Infinity, attack:Infinity, defense:Infinity, agility:Infinity};
+
+function calcMaxStats() {
+if (!gameData || !gameData.characters) return;
+gameData.characters.forEach(function(c) {
+    var stats = c.baseStats || c.base_stats || {};
+    if (stats.HP > maxStats.HP) maxStats.HP = stats.HP;
+    if (stats.HP < minStats.HP) minStats.HP = stats.HP;
+    if (stats.SKL > maxStats.SKL) maxStats.SKL = stats.SKL;
+    if (stats.SKL < minStats.SKL) minStats.SKL = stats.SKL;
+    if (stats.ATK > maxStats.ATK) maxStats.ATK = stats.ATK;
+    if (stats.ATK < minStats.ATK) minStats.ATK = stats.ATK;
+    if (stats.DEF > maxStats.DEF) maxStats.DEF = stats.DEF;
+    if (stats.DEF < minStats.DEF) minStats.DEF = stats.DEF;
+    if (stats.SKL > maxStats.SKL) maxStats.SKL = stats.SKL;
+    if (stats.SKL < minStats.SKL) minStats.SKL = stats.SKL;
+});
+if (minStats.HP === Infinity) minStats.HP = 0;
+if (minStats.SKL === Infinity) minStats.SKL = 0;
+if (minStats.ATK === Infinity) minStats.ATK = 0;
+if (minStats.DEF === Infinity) minStats.DEF = 0;
+if (minStats.SKL === Infinity) minStats.SKL = 0;
+}
+
+function updateCostDisplay() {
+    var cost = drawCost;
+    var cost10 = Math.floor(cost * 10 * 0.9);
+    document.getElementById('drawCost').textContent = cost;
+    document.getElementById('drawCost10').textContent = cost10;
+}
+
+// 褰撳墠閫変腑鐨勯厤缃甀D
+var currentConfigId = 5;
+
+// 鍔犺浇閰嶇疆鍒楄〃
+function loadConfigList() {
+    fetch('game_api.php?action=get_draw_configs').then(r => r.json()).then(d => {
+        console.log('閰嶇疆鏁版嵁:', d);
+        if (d.code === 200 && d.configs) {
+            const select = document.getElementById('configSelect');
+            select.innerHTML = '';
+            d.configs.forEach(function(cfg) {
+                const option = document.createElement('option');
+                option.value = cfg.id;
+                option.textContent = cfg.config_name + ' (娑堣€? + cfg.draw_cost + ' ' + cfg.currency_name + ')';
+                select.appendChild(option);
+            });
+            // 榛樿閫変腑绗竴涓?            if (d.configs.length > 0) {
+                select.value = currentConfigId;
+            }
+        }
+    }).catch(e => console.error('鍔犺浇閰嶇疆鍒楄〃澶辫触:', e));
+}
+
+// 鍒囨崲閰嶇疆
+function changeConfig(configId) {
+    configId = parseInt(configId);
+    if (!configId) return;
+    
+    console.log('鍒囨崲閰嶇疆:', configId);
+    currentConfigId = configId;
+    localStorage.setItem('drawConfigId', configId);
+    
+    // 鍏堟竻绌烘暟鎹己鍒堕噸鏂拌幏鍙?    myGold = 0;
+    document.getElementById('userBalance').textContent = '鍔犺浇涓?..';
+    
+    // 閲嶆柊鍔犺浇鏁版嵁
+    loadConfigList();
+    loadData();
+}
+
+function loadData() {
+    // 鑾峰彇鐢ㄦ埛ID
+    userId = localStorage.getItem('user_id') || localStorage.getItem('userId');
+    if (!userId) {
+        window.location.href = 'login.html';
+        return;
+    }
+    
+    // 鑾峰彇鐢ㄦ埛璐у竵鍜屾娊鍗￠厤缃紙甯onfig_id鍙傛暟锛?    Promise.all([
+        fetch('game_api.php?action=get_user_currency&user_id=' + userId + '&config_id=' + currentConfigId).then(r => r.json()),
+        fetch('game_api.php?action=get_config&config_id=' + currentConfigId).then(r => r.json())
+    ]).then(([userData, configData]) => {
+        // 璁剧疆鐢ㄦ埛璐у竵
+        if (userData.code === 200) {
+            myGold = userData.gold || 0;
+            console.log('璐у竵鏁版嵁:', userData);
+        }
+        
+        // 璁剧疆璐у竵鍚嶇О鍜屾秷鑰楋紙鍏ㄥ眬鍙橀噺锛?        currencyName = '鍏冨疂';
+        drawCost = 100;
+        if (configData.code === 200 && configData.config) {
+            currencyName = configData.config.currency_name || '鍏冨疂';
+            drawCost = configData.config.draw_cost || 100;
+            currencyId = configData.config.currency_id || 1;
+            // 璁剧疆drawConfig渚涙鐜囬瑙堜娇鐢?            drawConfig = {
+                rarity_weight: configData.config.rarity_weight || [],
+                tag: configData.config.tag || [],
+                tag_weight: configData.config.tag_weight || [],
+                card_pool: configData.config.card_pool || []
+            };
+        }
+        
+        // 鏇存柊鏄剧ず
+        try {
+            var el = document.getElementById('userBalance');
+            if (el) {
+                el.textContent = '鎴戠殑' + currencyName + ': ' + myGold;
+                console.log('浣欓鏇存柊:', '鎴戠殑' + currencyName + ': ' + myGold);
+            } else {
+                console.log('userBalance鍏冪礌鏈壘鍒?);
+            }
+            var goldAmountEl = document.getElementById('goldAmount');
+            var goldUnitEl = document.getElementById('goldUnit');
+            if (goldAmountEl) goldAmountEl.textContent = myGold;
+            if (goldUnitEl) goldUnitEl.textContent = currencyName;
+        } catch(e) {
+            console.error('鏇存柊浣欓澶辫触:', e);
+        }
+        document.querySelectorAll('#currencyUnit').forEach(function(el) { el.textContent = currencyName; });
+        document.getElementById('drawCost').textContent = drawCost;
+        document.getElementById('drawCost10').textContent = Math.floor(drawCost * 10 * 0.9);
+        
+        // 鏇存柊鎶藉崱娑堣€楁枃瀛?        var costText = '娑堣€?' + drawCost + ' ' + currencyName;
+        var cost10Text = '娑堣€?' + Math.floor(drawCost * 10 * 0.9) + ' ' + currencyName + ' (9鎶?';
+    }).catch(e => console.error('鍔犺浇澶辫触:', e));
+    // 鍔犺浇绋€鏈夊害閰嶇疆 - 浠庢暟鎹簱璇诲彇
+    fetch('game_api.php?action=get_rarity').then(function(res) { return res.json(); }).then(function(data) {
+        rarityConfig = data.rarity || [];
+        populateRarityFilter();
+    }).catch(function(e) {
+        console.error('鍔犺浇绋€鏈夊害閰嶇疆澶辫触:', e);
+        rarityConfig = [];
+    });
+    
+    // 鍏堣幏鍙栧浘閴存暟鎹紝鐒跺悗鍔犺浇鍗＄墝鏁版嵁锛屼竴璧峰畬鎴愬悗娓叉煋
+    Promise.all([
+        fetch('game_api.php?action=get_user_album&user_id=' + userId).then(r => r.json()),
+        fetch('game_api.php?action=get_all&user_id=' + userId).then(r => r.json())
+    ]).then(function(results) {
+        var albumData = results[0];
+        var cardsData = results[1];
+        
+        if (albumData.code === 200 && albumData.album) {
+            userAlbum = albumData.album;
+        }
+        
+        if (cardsData.code === 200) {
+            gameData = cardsData;
+            allCharacters = cardsData.characters || [];
+            calcMaxStats();
+        }
+        
+        renderMyCards();
+        renderAlbum();
+    }).catch(function(e) { 
+        console.error(e); 
+    });
+}
+loadConfigList();
+    loadData();
+
+async function showResult10(cards) {
+var container = document.getElementById('resultCard10');
+console.log('showResult10 cards:', cards);
+var rarityColors = getRarityColorsFromConfig();
+var rarityNames = getRarityNamesFromConfig();
+console.log(' rarityColors:', rarityColors, ' rarityNames:', rarityNames);
+
+function getRarityColorsFromConfig() {
+    if (rarityConfig && rarityConfig.length > 0) {
+        var colors = [''];
+        rarityConfig.forEach(function(cfg) {
+            colors[cfg.rarity] = cfg.color;
+        });
+        return colors;
+    }
+    return ['', '#ffffff', '#4caf50', '#2196f3', '#9c27b0', '#ff9800', '#f32b2b'];
+}
+
+function getRarityNamesFromConfig() {
+    if (rarityConfig && rarityConfig.length > 0) {
+        var names = [''];
+        rarityConfig.forEach(function(cfg) {
+            names[cfg.rarity] = cfg.name;
+        });
+        return names;
+    }
+    return ['', '鏅€?, '绋€鏈?, '鏉板嚭', '鍙茶瘲', '浼犺', '杩滃彜'];
+}
+
+// Before updating, record which cards are newly obtained
+var wasNewBefore = {};
+cards.forEach(function(card) {
+if (!ownedCardIds[card.id] && !wasNewBefore[card.id]) {
+wasNewBefore[card.id] = true;
+}
+});
+
+// Update counts and save to DB - 鍚屾绛夊緟淇濆瓨瀹屾垚
+for (var ci = 0; ci < cards.length; ci++) {
+    var card = cards[ci];
+    if (!myCards[card.id]) myCards[card.id] = JSON.parse(JSON.stringify(card));
+    myCards[card.id].count = (myCards[card.id].count || 0) + 1;
+    if (userId && card.id) {
+        console.log('淇濆瓨鍗＄墝: userId=' + userId + ', card_id=' + card.id + ', config_id=' + currentConfigId);
+        await fetch('game_api.php?action=add_user_card&user_id=' + userId + '&card_id=' + card.id + '&config_id=' + currentConfigId + '&draw_count=1', {method: 'POST'});
+    }
+}
+
+// Display: only first occurrence of each new card shows "鏂帮紒"
+var firstSeen = {};
+var html = '<h3>馃帀 鍗佽繛鎶界粨鏋?/h3><div class="grid-10">';
+// 2-3-3-2 layout
+var layout = [2, 3, 3, 2];
+var idx = 0;
+layout.forEach(function(count, rowIdx) {
+  html += '<div class="grid-row">';
+  for (var i = 0; i < count && idx < cards.length; i++) {
+    var card = cards[idx++];
+    var showNew = false;
+    if (wasNewBefore[card.id] && !firstSeen[card.id]) {
+      showNew = true;
+      firstSeen[card.id] = true;
+    }
+    var newTag = showNew ? '<span class="new-tag">鏂帮紒</span>' : '';
+    var rname = rarityNames[card.rarity] || '';
+    var stars = '猸?.repeat(card.rarity);
+    html += '<div class="card-item rarity-'+card.rarity+'"><div class="thumb"><img src="'+getImageUrl(card)+'" alt="'+card.name+'"></div><h4 class="card-name-'+card.rarity+'">'+card.name+'</h4><div class="stars" style="color:'+rarityColors[card.rarity]+';text-align:center;">'+stars+'</div><div style="color:'+rarityColors[card.rarity]+';text-align:center;font-size:10px;">'+rname+'</div>'+newTag+'</div>';
+  }
+  html += '</div>';
+});
+html += '</div>';
+container.innerHTML = html;
+container.classList.add('show');
+renderMyCards();
+}
+</script>
+    <!-- 杩斿洖涓婚〉閾炬帴宸茬Щ闄わ紝鐢卞簳閮═ab Bar鏇夸唬 -->
+
+<!-- 姒傜巼棰勮寮圭獥 -->
+<div class="modal" id="probabilityPopup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:2000;overflow-y:auto;justify-content:center;padding:20px;">
+    <div class="modal-content" style="max-width:900px;max-height:90vh;background:transparent;border-radius:10px;padding:20px;display:flex;flex-direction:column;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+            <h3 style="color:#e94560;margin:0;">馃搳 姒傜巼棰勮</h3>
+            <button onclick="closeProbabilityPopup()" style="background:#e94560;color:white;border:none;padding:8px 15px;border-radius:5px;cursor:pointer;">鍏抽棴</button>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;">
+        </div>
+        <div id="probabilityList" style="overflow-y:auto;flex:1;background:transparent;"></div>
+    </div>
+</div>
+
+<style>
+.prob-item { display: flex; align-items: center; padding: 8px; margin-bottom: 5px; background: transparent; border-radius: 5px; }
+.prob-item:hover { background: rgba(255,255,255,0.1); }
+.prob-item .card-name { flex: 1; }
+.prob-item .card-rarity { color: #aaa; margin-right: 10px; font-size: 12px; }
+.prob-item .card-tags { color: #888; font-size: 11px; margin-right: 10px; }
+.prob-item .card-weight { color: #aaa; margin-right: 10px; font-size: 12px; }
+.prob-item .card-prob { font-weight: bold; color: #4caf50; }
+.prob-item.zero-prob { opacity: 0.5; }
+.prob-item.zero-prob .card-prob { color: #666; }
+</style>
+
+<!-- 搴曢儴 Tab Bar -->
+<nav class="app-tabbar">
+  <a href="draw_card.html" class="tab-item"><span class="tab-icon">馃幉</span><span class="tab-label">鎶藉崱</span></a>
+  <a href="my_cards.html" class="tab-item"><span class="tab-icon">馃摉</span><span class="tab-label">鍥鹃壌</span></a>
+  <a href="formation.html" class="tab-item"><span class="tab-icon">馃洝锔?/span><span class="tab-label">缂栭槦</span></a>
+  <a href="battle.html" class="tab-item"><span class="tab-icon">⚔️</span><span class="tab-label">战斗</span></a>
+</nav>
+
+<!-- 鐢ㄦ埛鑿滃崟搴曢儴 Sheet -->
+<div class="sheet-overlay" id="sheetOverlay"></div>
+<div class="user-sheet" id="userSheet"></div>
+
+<script src="app-common.js"></script>
+</body>
+</html>

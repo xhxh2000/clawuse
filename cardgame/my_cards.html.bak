@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -655,9 +655,9 @@ function showMyCardPopup(instanceId) {
     document.getElementById('popupName').textContent = card.name + ' Lv.' + level;
     document.getElementById('popupName').style.color = getRarityColor(card.rarity);
     document.getElementById('popupRarity').innerHTML =  '⭐'.repeat(card.rarity) + ' <span style="color:'+getRarityColor(card.rarity)+'">' + getRarityName(card.rarity) + '</span>' + 
-        '<div style="color:#888;font-size:14px;margin:5px 0;">' + (level >= levelUpConfig.maxLevel ? '<span style="color:#FFD700;font-weight:bold;">经验：MAX</span>' : '经验：' + exp + '/' + getExpNeeded(level)) + '</div>' +
+        '<div style="color:#888;font-size:14px;margin:5px 0;">' + (level >= levelUpConfig.maxLevel ? '<span style="color:#FFD700;font-weight:bold;">经验：MAX</span>' : '经验：' + exp + '/' + levelUpConfig.expPerLevel) + '</div>' +
         '<div style="background:rgba(255,255,255,0.3);border-radius:4px;height:6px;margin:2px 0 8px;overflow:hidden;">' +
-        '<div style="background:' + (level >= levelUpConfig.maxLevel ? 'linear-gradient(90deg,#FFD700,#FFA000)' : 'linear-gradient(90deg,#4fc3f7,#29b6f6)') + ';height:100%;width:' + (level >= levelUpConfig.maxLevel ? 100 : Math.min(100, exp/getExpNeeded(level)*100)) + '%;border-radius:4px;transition:width 0.3s;' + (level >= levelUpConfig.maxLevel ? 'box-shadow:0 0 6px #FFD700;' : '') + '"></div>' +
+        '<div style="background:' + (level >= levelUpConfig.maxLevel ? 'linear-gradient(90deg,#FFD700,#FFA000)' : 'linear-gradient(90deg,#4fc3f7,#29b6f6)') + ';height:100%;width:' + (level >= levelUpConfig.maxLevel ? 100 : Math.min(100, exp/levelUpConfig.expPerLevel*100)) + '%;border-radius:4px;transition:width 0.3s;' + (level >= levelUpConfig.maxLevel ? 'box-shadow:0 0 6px #FFD700;' : '') + '"></div>' +
         '</div>';
     // 移除描述文字（我的卡牌弹窗不显示）
     
@@ -910,44 +910,33 @@ function cancelDelete() {
 }
 
 // ========== 升级功能 ==========
-var levelUpConfig = { maxLevel: 100, materialBaseExp: 20, materialRarityFactor: 1.3, materialExpReturnRate: 0.5 };
+var levelUpConfig = { maxLevel: 100, expPerLevel: 100, materialBaseExp: 5, materialRarityFactor: 1.3 };
 var selectedMaterialIds = {};
-
-// Progressive exp curve: 15 + 15 * level
-function getExpNeeded(level) { return 15 + 15 * level; }
 
 function loadLevelUpConfig() {
     fetch('game_api.php?action=get_game_config').then(function(r) { return r.json(); }).then(function(d) {
         if (d.code === 200 && d.config) {
             var c = d.config;
             levelUpConfig.maxLevel = parseInt(c.max_level) || 100;
-            levelUpConfig.materialBaseExp = parseFloat(c.material_base_exp) || 20;
+            levelUpConfig.expPerLevel = parseInt(c.exp_per_level) || 100;
+            levelUpConfig.materialBaseExp = parseFloat(c.material_base_exp) || 5;
             levelUpConfig.materialRarityFactor = parseFloat(c.material_rarity_factor) || 1.3;
-            levelUpConfig.materialExpReturnRate = parseFloat(c.material_exp_return_rate) || 0.5;
         }
     });
 }
 
 function calcMaterialExp(matCard, targetRarity) {
     var diff = matCard.rarity - targetRarity;
-    var baseExp = levelUpConfig.materialBaseExp * (matCard.level || 1) * Math.pow(levelUpConfig.materialRarityFactor, diff);
-    // Calculate total exp the material card has accumulated
-    var totalMatExp = matCard.exp || 0;
-    for (var i = 1; i < (matCard.level || 1); i++) {
-        totalMatExp += 15 + 15 * i;
-    }
-    var returnExp = Math.round(totalMatExp * levelUpConfig.materialExpReturnRate);
-    return Math.max(1, Math.round(baseExp) + returnExp);
+    var exp = levelUpConfig.materialBaseExp * (matCard.level || 1) * Math.pow(levelUpConfig.materialRarityFactor, diff);
+    return Math.max(1, Math.round(exp));
 }
 
 function calcPreviewLevel(currentLevel, currentExp, totalExpGained) {
     var newExp = currentExp + totalExpGained;
     var newLevel = currentLevel;
-    var needed = getExpNeeded(newLevel);
-    while (newExp >= needed && newLevel < levelUpConfig.maxLevel) {
-        newExp -= needed;
+    while (newExp >= levelUpConfig.expPerLevel && newLevel < levelUpConfig.maxLevel) {
+        newExp -= levelUpConfig.expPerLevel;
         newLevel++;
-        needed = getExpNeeded(newLevel);
     }
     return { level: newLevel, exp: newLevel >= levelUpConfig.maxLevel ? 0 : newExp };
 }
@@ -990,9 +979,9 @@ function updateLevelUpDisplay() {
     
     document.getElementById('levelUpTargetInfo').textContent = card.name + ' ⭐' + targetRarity;
     document.getElementById('levelUpCurrentLevel').textContent = 'Lv.' + level;
-    document.getElementById('levelUpExpText').textContent = exp + '/' + getExpNeeded(level);
+    document.getElementById('levelUpExpText').textContent = exp + '/' + levelUpConfig.expPerLevel;
     
-    var barWidth = (level >= levelUpConfig.maxLevel) ? 100 : (exp / getExpNeeded(level) * 100);
+    var barWidth = (level >= levelUpConfig.maxLevel) ? 100 : (exp / levelUpConfig.expPerLevel * 100);
     document.getElementById('levelUpExpBar').style.width = barWidth + '%';
     
     // Calculate total exp from selected materials
@@ -1204,9 +1193,9 @@ if (!userId) {
 <!-- 底部 Tab Bar -->
 <nav class="app-tabbar">
   <a href="draw_card.html" class="tab-item"><span class="tab-icon">🎲</span><span class="tab-label">抽卡</span></a>
-  <a href="my_cards.html" class="tab-item active"><span class="tab-icon">📖</span><span class="tab-label">图鉴</span></a>
+  <a href="my_cards.html" class="tab-item"><span class="tab-icon">📖</span><span class="tab-label">图鉴</span></a>
   <a href="formation.html" class="tab-item"><span class="tab-icon">🛡️</span><span class="tab-label">编队</span></a>
-    <a href="battle.html" class="tab-item"><span class="tab-icon">⚔️</span><span class="tab-label">战斗</span></a>
+  <a href="battle.html" class="tab-item"><span class="tab-icon">⚔️</span><span class="tab-label">战斗</span></a>
 </nav>
 
 <!-- 用户菜单底部 Sheet -->
